@@ -1,0 +1,637 @@
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation } from "wouter";
+import {
+  Loader2,
+  ChevronLeft,
+  Bell,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Gift,
+  Search,
+  Package,
+  UserRoundPlus,
+  Home as HomeIcon,
+  Grid2X2,
+  Store,
+  ShoppingCart,
+  Send,
+  WalletCards,
+} from "lucide-react";
+import Hero from "@/components/Hero";
+import Header from "@/components/Header";
+import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
+import BrandVoucherModal from "@/components/BrandVoucherModal";
+import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
+import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import { Input } from "@/components/ui/input";
+import { useBrands } from "@/hooks/useBrands";
+import { useBrandNames } from "@/hooks/useBrandNames";
+import type { Brand } from "@/types/brand";
+import gift360Wordmark from "@/assets/gift360-wordmark.png";
+import { getImageUrl } from "@/utils/imageUrl";
+import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { brandApi } from "@/lib/valuedesignApi";
+
+type BrandItem = {
+  name: string;
+  image?: string;
+};
+
+function getRecommendedBrandImage(brand: Brand): string | null {
+  return getImageUrl(brand);
+}
+
+function HomeHeader() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <header className="relative h-[142px] overflow-hidden rounded-b-[34px] bg-[linear-gradient(135deg,#523da9_0%,#4c42b8_48%,#5365df_100%)] px-[21px] pt-[40px] text-white">
+      <div className="flex items-center justify-between">
+        <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi User!</h1>
+        <div className="flex items-center gap-[14px]">
+          <button onClick={() => setLocation("/notifications")} className="grid h-[20px] w-[20px] place-items-center active:scale-95" aria-label="Notifications">
+            <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
+          </button>
+          <button onClick={() => setLocation("/profile")} className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#e99da8] text-[12px] font-semibold leading-none active:scale-95" aria-label="Profile">
+            H
+          </button>
+        </div>
+      </div>
+    </header>
+  );
+}
+
+function BalanceCard() {
+  const [visible, setVisible] = useState(true);
+  const { user } = useAuthContext();
+  const { data: walletData } = useFetchWallet(user?.clientId);
+  const balance = walletData?.totalBalance ?? 0;
+
+  return (
+    <section className="absolute left-0 right-0 top-[86px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
+      <div className="absolute left-1/2 top-[22px] h-[112px] w-[calc(100%-56px)] -translate-x-1/2 translate-y-[18px] rounded-[18px] border border-white/15 bg-white/10 shadow-lg backdrop-blur-sm" />
+      <div className="absolute left-1/2 top-[12px] h-[112px] w-[calc(100%-32px)] -translate-x-1/2 translate-y-[12px] rounded-[18px] border border-white/20 bg-white/15 shadow-xl backdrop-blur-sm" />
+      <div className="relative h-[112px] overflow-hidden rounded-[18px] border border-white/35 bg-white/20 px-[18px] py-[14px] text-white shadow-[0_18px_38px_rgba(27,25,75,0.24)] backdrop-blur-md animate-[float-y_4s_ease-in-out_infinite]">
+        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))]" />
+        <div className="absolute inset-0 opacity-[0.16]">
+          <Gift className="absolute left-[148px] top-[12px] h-[42px] w-[42px] rotate-[-18deg] text-[#5b5b72]" strokeWidth={1.2} />
+          <Gift className="absolute left-[82px] top-[63px] h-[42px] w-[42px] rotate-[-21deg] text-[#5b5b72]" strokeWidth={1.2} />
+          <Gift className="absolute right-[25px] top-[62px] h-[34px] w-[34px] rotate-[-20deg] text-[#5b5b72]" strokeWidth={1.2} />
+          <WalletCards className="absolute left-[-9px] bottom-[9px] h-[34px] w-[34px] rotate-[-17deg] text-[#5b5b72]" strokeWidth={1.2} />
+          <WalletCards className="absolute right-[30px] top-[15px] h-[37px] w-[37px] rotate-[-14deg] text-[#5b5b72]" strokeWidth={1.2} />
+        </div>
+        <p className="relative text-[15px] font-normal leading-none tracking-[-0.01em] text-white/95">Gift360 Balance</p>
+        <div className="relative mt-[15px] flex items-center gap-[14px]">
+          <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-white">
+            <span className="text-[30px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
+            {visible ? `₹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹ •••••••"}
+          </p>
+          <button onClick={() => setVisible((value) => !value)} className="mt-[4px] active:scale-95" aria-label="Toggle balance">
+            {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
+          </button>
+        </div>
+        <img src={gift360Wordmark} alt="Gift360" className="absolute bottom-[11px] right-[12px] h-[25px] w-[73px] object-contain" />
+      </div>
+    </section>
+  );
+}
+
+function ActionGrid({ onBuyVoucher }: { onBuyVoucher: () => void }) {
+  const [, setLocation] = useLocation();
+  const actions = [
+    { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
+    { label: "Near by stores", Icon: Send, href: "/nearby" },
+    { label: "Orders", Icon: Package, href: "/orders" },
+    { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
+  ];
+
+  return (
+    <section className="grid grid-cols-4 gap-[17px] px-[31px] pt-[52px]">
+      {actions.map(({ label, Icon, href, onClick }) => (
+        <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95">
+          <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
+            <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
+          </span>
+          <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-medium leading-[9px] text-[#161616]">{label}</span>
+        </button>
+      ))}
+    </section>
+  );
+}
+
+function PromoCard() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <section className="px-[21px] pt-[18px]">
+      <InstantGiftingBanner onExplore={() => setLocation("/brands")} />
+    </section>
+  );
+}
+
+function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => void }) {
+  const [, setLocation] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
+  const { data: brandNames = [] } = useBrandNames();
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        searchInputRef.current &&
+        !searchInputRef.current.contains(event.target as Node) &&
+        suggestionsRef.current &&
+        !suggestionsRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const filteredSuggestions = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+
+    const query = searchQuery.toLowerCase();
+
+    return (brandNames as any[])
+      .filter((brand: any) =>
+        (brand.BrandName || brand.brandName || "")
+          .toLowerCase()
+          .includes(query)
+      )
+      .slice(0, 8);
+  }, [brandNames, searchQuery]);
+
+  return (
+    <section className="relative px-[21px] pt-[18px]">
+      <div className="relative">
+        <Search className="pointer-events-none absolute left-3.5 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-[#6b7280]" />
+        <Input
+          ref={searchInputRef}
+          value={searchQuery}
+          onChange={(event) => {
+            setSearchQuery(event.target.value);
+            setShowSuggestions(true);
+          }}
+          onFocus={() => {
+            if (searchQuery.trim()) setShowSuggestions(true);
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && searchQuery.trim()) {
+              setLocation(`/brands?search=${encodeURIComponent(searchQuery.trim())}`);
+              setShowSuggestions(false);
+            }
+          }}
+          placeholder="Search brands, vouchers..."
+          className="h-[44px] rounded-[16px] border border-[#e5e7eb] bg-white pl-10 pr-4 text-[13px] font-medium shadow-[0_4px_10px_rgba(0,0,0,0.06)]"
+        />
+        {showSuggestions && filteredSuggestions.length > 0 && (
+          <div
+            ref={suggestionsRef}
+            className="absolute left-0 right-0 top-full z-40 mt-2 overflow-hidden rounded-[16px] border border-[#e5e7eb] bg-white shadow-[0_8px_24px_rgba(0,0,0,0.12)]"
+          >
+            {filteredSuggestions.map((brand: any, index: number) => (
+              <button
+                key={`${brand.BrandId || brand.brandId || brand.BrandName}-${index}`}
+                onClick={() => {
+                  const brandId = brand.BrandId || brand.brandId;
+                  if (brandId) {
+                    onBrandSelect(brandId);
+                  }
+                  setSearchQuery("");
+                  setShowSuggestions(false);
+                }}
+                className="flex w-full flex-col gap-0.5 border-b border-[#f3f4f6] px-4 py-3 text-left last:border-0"
+              >
+                <span className="text-sm font-semibold text-[#111827]">
+                  {brand.BrandName || brand.brandName}
+                </span>
+                {brand.Category && (
+                  <span className="text-xs text-[#6b7280]">{brand.Category}</span>
+                )}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
+  const { data: brands = [] } = useBrands();
+  const [, setLocation] = useLocation();
+
+  const recommended = useMemo(
+    () =>
+      [...(brands as Brand[])]
+        .filter((b) => parseFloat(b.Discount || "0") > 0)
+        .sort(
+          (a, b) => parseFloat(b.Discount || "0") - parseFloat(a.Discount || "0")
+        )
+        .slice(0, 6),
+    [brands]
+  );
+
+  return (
+    <section className="pt-[27px]">
+      <h2 className="px-[21px] text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Recommended</h2>
+      <div className="no-scrollbar mt-[11px] flex snap-x gap-3 overflow-x-auto scroll-smooth px-[21px] pb-[3px]">
+        {recommended.map((brand) => {
+          const imageSrc = getRecommendedBrandImage(brand);
+          const priceValue = brand.MinPrice || brand.MaxPrice || 0;
+
+          return (
+            <article
+              key={brand.BrandId}
+              className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
+              style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
+            >
+              <div className="flex items-start gap-2" style={{ height: 32 }}>
+                <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  {imageSrc ? (
+                    <img src={imageSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+                  ) : (
+                    <div style={{ width: 34, height: 28 }} />
+                  )}
+                </div>
+
+                <div className="min-w-0" style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <span className="text-[12px] font-semibold text-[#111827] truncate">{brand.BrandName}</span>
+                    <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `₹${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
+
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div className="text-[12px] font-bold text-[#111827]">{priceValue > 0 ? `₹${priceValue.toLocaleString()}` : '-'}</div>
+                <button
+                  onClick={() => { if (onBuy) onBuy(brand.BrandId); else setLocation(`/brand/${brand.BrandId}`); }}
+                  style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}
+                >
+                  Buy
+                </button>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function TopBrandsGrid({
+  onOpenBrand,
+}: {
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const [topBrands, setTopBrands] = useState<Brand[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTopBrands = async () => {
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        const response = await fetchTopBrands();
+
+        if (isMounted) {
+          setTopBrands(response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch top brands:", error);
+        if (isMounted) {
+          setHasError(true);
+          setTopBrands([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadTopBrands();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const firstRowBrands = topBrands.filter((_, index) => index % 2 === 0);
+  const secondRowBrands = topBrands.filter((_, index) => index % 2 === 1);
+  const topRowItems =
+    firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
+  const bottomRowItemsSource =
+    secondRowBrands.length > 0 ? secondRowBrands : firstRowBrands;
+  const bottomRowItems =
+    bottomRowItemsSource.length > 0
+      ? [...bottomRowItemsSource, ...bottomRowItemsSource]
+      : [];
+
+  const handleTopBrandBuy = async (brandId: string) => {
+    try {
+      setLoadingBrandId(brandId);
+      await onOpenBrand(brandId);
+    } finally {
+      setLoadingBrandId(null);
+    }
+  };
+
+  const renderBrandCard = (brand: Brand, index: number) => {
+    const image = getImageUrl(brand);
+    const meta = brand.Discount
+      ? `${brand.Discount}% Cashback`
+      : brand.Category || "Gift Voucher";
+
+    return (
+      <button
+        key={`${brand.BrandId}-${index}`}
+        onClick={() => void handleTopBrandBuy(brand.BrandId)}
+        disabled={loadingBrandId === brand.BrandId}
+        className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80"
+      >
+        <div className="grid h-[40px] w-[40px] place-items-center">
+          {loadingBrandId === brand.BrandId ? (
+            <Loader2 className="h-5 w-5 animate-spin text-[#7C3AED]" />
+          ) : image ? (
+            <img
+              src={image}
+              alt={brand.BrandName}
+              className="h-[40px] w-[40px] object-contain"
+            />
+          ) : (
+            <Store className="h-6 w-6 text-[#94a3b8]" strokeWidth={2} />
+          )}
+        </div>
+        <div className="mt-2 w-full">
+          <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+            {brand.BrandName}
+          </p>
+          <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+            {meta}
+          </p>
+        </div>
+      </button>
+    );
+  };
+
+  return (
+    <section className="px-[21px] pt-[26px]">
+      <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Top Brands</h2>
+      {isLoading ? (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="g-skeleton h-[96px] min-w-[88px] flex-shrink-0 rounded-[12px]"
+            />
+          ))}
+        </div>
+      ) : hasError ? (
+        <div className="mt-[11px] rounded-[12px] bg-white px-4 py-5 shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center justify-center gap-2 text-[#b42318]">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-[13px] font-semibold">Unable to load top brands right now.</p>
+          </div>
+          <p className="mt-1 text-center text-[11px] text-[#667085]">
+            Please try again in a moment.
+          </p>
+        </div>
+      ) : topBrands.length === 0 ? (
+        <div className="mt-[11px] rounded-[12px] bg-[#f5f5f5] px-4 py-4 text-center text-[12px] text-[#888888]">
+          No top brands available right now.
+        </div>
+      ) : (
+        <div className="marquee-mask mt-[11px] overflow-hidden">
+          <div
+            className="flex w-max gap-3 pb-3 anim-marquee-ltr"
+            style={{ animationDuration: "200s" }}
+          >
+            {topRowItems.map(renderBrandCard)}
+          </div>
+          <div
+            className="mt-3 flex w-max gap-3 anim-marquee-rtl"
+            style={{ animationDuration: "220s" }}
+          >
+            {bottomRowItems.map(renderBrandCard)}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RecentlyUsed() {
+  const [items, setItems] = useState<BrandItem[]>([]);
+  const { user, isAuthenticated } = useAuthContext();
+
+  useEffect(() => {
+    if (!user?.clientId) return;
+    (async () => {
+      try {
+        const res = await brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12 });
+        const orders: any[] = Array.isArray(res?.data?.orders) ? res.data.orders : [];
+        const paid = orders
+          .filter((o: any) => o.status?.toUpperCase() === "PAID")
+          .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        const seen = new Set<string>();
+        const unique: BrandItem[] = [];
+        for (const order of paid) {
+          const item = order.items?.[0];
+          const meta = item?.meta || item || {};
+          const name = meta.brand_name || meta.brandName || meta.name;
+          if (name && !seen.has(name)) {
+            seen.add(name);
+            const image = getImageUrl(meta) || undefined;
+            unique.push({ name, image });
+            if (unique.length >= 6) break;
+          }
+        }
+        setItems(unique);
+      } catch {
+        setItems([]);
+      }
+    })();
+  }, [user?.clientId]);
+
+  if (!items.length) return null;
+
+  return (
+    <section className="px-[21px] pt-[27px]">
+      <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Recently Used</h2>
+      <div className="mt-[12px] flex items-center justify-between">
+        {items.map((item) => (
+          <div key={item.name} className="grid h-[44px] w-[44px] place-items-center overflow-hidden rounded-full bg-white shadow-[0_2px_6px_rgba(26,30,49,0.22)]">
+            <img src={item.image || "/brand-placeholder.png"} alt={item.name} className="h-[35px] w-[35px] rounded-full object-contain" />
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BottomNav() {
+  const [location, setLocation] = useLocation();
+  const items = [
+    { label: "Home", Icon: HomeIcon, href: "/" },
+    { label: "Categories", Icon: Grid2X2, href: "/categories" },
+    { label: "Brand", Icon: Store, href: "/brands" },
+    { label: "Cart", Icon: ShoppingCart, href: "/cart" },
+  ];
+
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-50 h-[63px] w-full bg-white/82 shadow-[0_-8px_18px_rgba(31,40,68,0.08)] backdrop-blur-[16px]">
+      <div className="grid h-full grid-cols-4 px-[16px]">
+        {items.map(({ label, Icon, href }) => {
+          const active = href === "/" ? location === "/" : location.startsWith(href);
+          return (
+            <button key={label} onClick={() => setLocation(href)} className="flex flex-col items-center justify-center gap-[3px] active:scale-95">
+              <Icon className="h-[20px] w-[20px]" strokeWidth={2.4} color={active ? "#10aeec" : "#092f82"} fill={label === "Cart" ? (active ? "#10aeec" : "#092f82") : "none"} />
+              <span className={`text-[7px] font-medium leading-none ${active ? "text-[#10aeec]" : "text-[#092f82]"}`}>{label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
+
+function MobileHomeScreen() {
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [buySheetOpen, setBuySheetOpen] = useState(false);
+  const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
+  const [sheetInitialAmount, setSheetInitialAmount] = useState<number | undefined>(
+    undefined
+  );
+  const [topBrandName, setTopBrandName] = useState("");
+  const [topBrandVouchers, setTopBrandVouchers] = useState<TopBrandVoucher[]>([]);
+  const [topBrandModalOpen, setTopBrandModalOpen] = useState(false);
+  const [topBrandLoading, setTopBrandLoading] = useState(false);
+  const [topBrandError, setTopBrandError] = useState<string | null>(null);
+  const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
+
+  const openStandardPaymentSheet = (brandId: string) => {
+    setSheetBrandId(brandId);
+    setSheetInitialAmount(undefined);
+    setBuySheetOpen(true);
+  };
+
+  const openTopBrandModal = async (brandId: string) => {
+    setActiveTopBrandId(brandId);
+    setTopBrandError(null);
+    setTopBrandVouchers([]);
+    setTopBrandName("");
+    setTopBrandModalOpen(true);
+    setTopBrandLoading(true);
+
+    try {
+      const vouchers = await fetchBrandVoucherList(brandId);
+      setTopBrandVouchers(vouchers);
+      setTopBrandName(vouchers[0]?.brandName || "Brand Vouchers");
+    } catch (error: any) {
+      console.error("Failed to fetch brand voucher details:", error);
+      setTopBrandError(error?.message || "Please try again.");
+      setTopBrandVouchers([]);
+      setTopBrandName("");
+    } finally {
+      setTopBrandLoading(false);
+    }
+  };
+
+  const retryTopBrandModal = async () => {
+    if (!activeTopBrandId) return;
+    await openTopBrandModal(activeTopBrandId);
+  };
+
+  const handleTopBrandVoucherSelect = (voucher: TopBrandVoucher) => {
+    setSheetBrandId(voucher.brandId);
+    const voucherAmount =
+      voucher.minPrice > 0
+        ? voucher.minPrice
+        : voucher.maxPrice > 0
+          ? voucher.maxPrice
+          : undefined;
+    setSheetInitialAmount(voucherAmount);
+    setBuySheetOpen(true);
+  };
+
+  return (
+    <>
+      <Header />
+      <main className="min-h-screen w-full overflow-x-hidden bg-[#F3F5F9] pb-[84px] font-body text-[#101010] md:hidden">
+      <div className="relative overflow-visible pb-[70px]">
+        <HomeHeader />
+        <BalanceCard />
+      </div>
+      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} />
+      <SearchSection onBrandSelect={openStandardPaymentSheet} />
+      <PromoCard />
+      <RecommendedList
+        onBuy={(id) => {
+          openStandardPaymentSheet(id);
+        }}
+      />
+      <TopBrandsGrid
+        onOpenBrand={openTopBrandModal}
+      />
+      <RecentlyUsed />
+      <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
+      <BrandVoucherModal
+        open={topBrandModalOpen}
+        vouchers={topBrandVouchers}
+        brandName={topBrandName}
+        loading={topBrandLoading}
+        error={topBrandError}
+        onClose={() => {
+          setTopBrandModalOpen(false);
+          setTopBrandLoading(false);
+          setTopBrandError(null);
+          setActiveTopBrandId(null);
+          setTopBrandVouchers([]);
+          setTopBrandName("");
+        }}
+        onRetry={retryTopBrandModal}
+        onVoucherSelect={handleTopBrandVoucherSelect}
+      />
+      <PaymentDetailsSheet
+        brandId={sheetBrandId}
+        open={buySheetOpen}
+        initialAmount={sheetInitialAmount}
+        onClose={() => {
+          setBuySheetOpen(false);
+          setSheetInitialAmount(undefined);
+        }}
+      />
+      <BottomNav />
+      </main>
+    </>
+  );
+}
+
+export default function Home() {
+  return (
+    <>
+      <MobileHomeScreen />
+      <div className="hidden md:block">
+        <Hero />
+      </div>
+    </>
+  );
+}

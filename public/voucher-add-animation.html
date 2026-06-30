@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voucher Add Animation</title>
+    <style>
+      :root {
+        --purple: #6c5ce7;
+        --purple-light: #d0c9ff;
+        --text: #1a1a2e;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(180deg, #f7f5ff 0%, #efeafe 100%);
+        font-family: Poppins, Arial, sans-serif;
+        color: var(--text);
+      }
+
+      .demo-shell {
+        display: grid;
+        gap: 20px;
+        justify-items: center;
+      }
+
+      .demo-button {
+        border: 0;
+        border-radius: 999px;
+        padding: 12px 20px;
+        font-size: 15px;
+        font-weight: 700;
+        color: #fff;
+        background: linear-gradient(135deg, #6c5ce7, #a29bfe);
+        cursor: pointer;
+        box-shadow: 0 18px 40px rgba(108, 92, 231, 0.24);
+      }
+
+      .voucher-card {
+        width: min(300px, calc(100vw - 32px));
+        height: 280px;
+        background: #fff;
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(108, 92, 231, 0.12);
+        box-shadow: 0 24px 60px rgba(17, 24, 39, 0.14);
+      }
+
+      .cart-stage {
+        position: relative;
+        width: 140px;
+        height: 120px;
+        margin: 0 auto;
+      }
+
+      .cart-shell {
+        position: absolute;
+        left: 50%;
+        top: 42px;
+        width: 78px;
+        height: 78px;
+        transform: translateX(-50%);
+        opacity: 0.3;
+      }
+
+      .cart-shell.state-2 {
+        opacity: 1;
+        animation: cart-race-in 600ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      }
+
+      .cart-shell.state-3 {
+        opacity: 1;
+        transform: translateX(-50%);
+        animation: cart-impact 320ms ease-out;
+      }
+
+      .cart-shell.state-4 {
+        opacity: 1;
+        animation: cart-exit 380ms ease-in forwards;
+      }
+
+      .streaks {
+        position: absolute;
+        left: 12px;
+        top: 56px;
+        width: 70px;
+        opacity: 0;
+      }
+
+      .streaks.active {
+        opacity: 1;
+        animation: streak-fade 560ms ease-out forwards;
+      }
+
+      .streak {
+        height: 6px;
+        border-radius: 999px;
+        background: var(--purple-light);
+        margin-bottom: 10px;
+      }
+
+      .streak:nth-child(1) { width: 62px; }
+      .streak:nth-child(2) { width: 48px; margin-left: 12px; }
+      .streak:nth-child(3) { width: 34px; margin-left: 24px; margin-bottom: 0; }
+
+      .voucher-drop {
+        position: absolute;
+        left: 50%;
+        top: 4px;
+        width: 90px;
+        height: 60px;
+        transform: translateX(-50%);
+        opacity: 0;
+      }
+
+      .voucher-drop.active {
+        opacity: 1;
+        animation: voucher-drop 540ms cubic-bezier(0.2, 0.9, 0.2, 1) forwards;
+      }
+
+      .message {
+        margin-top: 22px;
+        text-align: center;
+        color: var(--text);
+        font-size: 16px;
+        font-weight: 700;
+        line-height: 1.35;
+        opacity: 0;
+      }
+
+      .message.visible {
+        animation: message-fade 340ms ease-out forwards;
+      }
+
+      .message-underline {
+        width: 0;
+        height: 4px;
+        border-radius: 999px;
+        margin: 10px auto 0;
+        background: var(--purple-light);
+      }
+
+      .message-underline.visible {
+        animation: underline-grow 420ms ease-out forwards;
+      }
+
+      @keyframes cart-race-in {
+        0% { opacity: 0; transform: translateX(calc(-50% - 120px)); }
+        70% { opacity: 1; transform: translateX(calc(-50% + 10px)); }
+        100% { opacity: 1; transform: translateX(-50%); }
+      }
+
+      @keyframes cart-impact {
+        0% { transform: translateX(-50%) scaleX(1); }
+        40% { transform: translateX(-50%) scaleX(1.1) scaleY(0.95); }
+        100% { transform: translateX(-50%) scaleX(1) scaleY(1); }
+      }
+
+      @keyframes cart-exit {
+        0% { opacity: 1; transform: translateX(-50%); }
+        100% { opacity: 0; transform: translateX(calc(-50% + 110px)); }
+      }
+
+      @keyframes streak-fade {
+        0% { opacity: 0; transform: translateX(-8px); }
+        20% { opacity: 1; }
+        100% { opacity: 0; transform: translateX(8px); }
+      }
+
+      @keyframes voucher-drop {
+        0% { opacity: 0; transform: translate(-50%, -56px) scale(0.96); }
+        75% { opacity: 1; transform: translate(-50%, 38px) scale(1); }
+        100% { opacity: 1; transform: translate(-50%, 34px) scale(1); }
+      }
+
+      @keyframes message-fade {
+        from { opacity: 0; transform: translateY(8px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes underline-grow {
+        from { width: 0; opacity: 0; }
+        to { width: 132px; opacity: 1; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="demo-shell">
+      <button class="demo-button" onclick="triggerVoucherAnimation()">Trigger Animation</button>
+
+      <div class="voucher-card">
+        <div class="cart-stage">
+          <div class="streaks" id="streaks">
+            <div class="streak"></div>
+            <div class="streak"></div>
+            <div class="streak"></div>
+          </div>
+
+          <div class="cart-shell" id="cartShell">
+            <svg viewBox="0 0 64 64" width="78" height="78" fill="none" aria-hidden="true">
+              <path
+                d="M10 15h7l4.5 21.5a3 3 0 0 0 2.94 2.39h22.78a3 3 0 0 0 2.92-2.29L55 22H21"
+                stroke="#6C5CE7"
+                stroke-width="4.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <circle cx="28" cy="49" r="4.5" fill="#6C5CE7" />
+              <circle cx="47" cy="49" r="4.5" fill="#6C5CE7" />
+            </svg>
+          </div>
+
+          <div class="voucher-drop" id="voucherDrop">
+            <svg viewBox="0 0 90 60" width="90" height="60" fill="none" aria-hidden="true">
+              <rect x="4" y="8" width="82" height="44" rx="12" fill="#6C5CE7" />
+              <rect x="14" y="18" width="24" height="24" rx="6" fill="rgba(255,255,255,0.18)" />
+              <path
+                d="M27 22l2.5 5 5.5.8-4 4 .95 5.7-4.95-2.65L22.05 37l.95-5.7-4-4 5.5-.8L27 22z"
+                fill="#fff"
+              />
+              <rect x="46" y="20" width="28" height="4" rx="2" fill="#fff" opacity="0.92" />
+              <rect x="46" y="29" width="18" height="4" rx="2" fill="#fff" opacity="0.72" />
+            </svg>
+          </div>
+        </div>
+
+        <div class="message" id="message">
+          Voucher added to cart successfully!
+          <div class="message-underline" id="messageUnderline"></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const cartShell = document.getElementById("cartShell");
+        const streaks = document.getElementById("streaks");
+        const voucherDrop = document.getElementById("voucherDrop");
+        const message = document.getElementById("message");
+        const messageUnderline = document.getElementById("messageUnderline");
+        let timers = [];
+
+        function clearTimers() {
+          timers.forEach(window.clearTimeout);
+          timers = [];
+        }
+
+        function resetAnimation() {
+          cartShell.className = "cart-shell";
+          streaks.className = "streaks";
+          voucherDrop.className = "voucher-drop";
+          message.className = "message";
+          messageUnderline.className = "message-underline";
+        }
+
+        window.triggerVoucherAnimation = function triggerVoucherAnimation() {
+          clearTimers();
+          resetAnimation();
+
+          timers.push(
+            window.setTimeout(() => {
+              cartShell.className = "cart-shell state-2";
+              streaks.className = "streaks active";
+            }, 400)
+          );
+
+          timers.push(
+            window.setTimeout(() => {
+              cartShell.className = "cart-shell state-3";
+              voucherDrop.className = "voucher-drop active";
+              message.className = "message visible";
+            }, 1000)
+          );
+
+          timers.push(
+            window.setTimeout(() => {
+              cartShell.className = "cart-shell state-4";
+              messageUnderline.className = "message-underline visible";
+            }, 1800)
+          );
+        };
+      })();
+    </script>
+  </body>
+</html>
