@@ -6,6 +6,10 @@ interface SendEmailRequest {
   clientId: string;
   orderNumber: string;
   templateName: string;
+  recipientEmail?: string;
+  personalMessage?: string;
+  brandName?: string;
+  voucherAmount?: string;
 }
 
 const sendEmail = async (data: SendEmailRequest): Promise<void> => {
