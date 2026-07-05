@@ -53,6 +53,7 @@ const getImageUrl = (meta: any): string => {
 
 interface VoucherView {
   key: string; cardNumber: string; cardPin: string; expiryDate: string; amount: string;
+  orderItemId: string; isScratched: boolean; isGift: boolean; brandName: string;
 }
 
 const extractVouchers = (order: any): VoucherView[] => {
@@ -63,10 +64,14 @@ const extractVouchers = (order: any): VoucherView[] => {
         (b?.items || []).forEach((v: any, vi: number) => {
           results.push({
             key: `${item.order_item_id}-${ci}-${vi}`,
+            orderItemId: item.order_item_id || "",
+            brandName: item?.meta?.brand_name || "",
             cardNumber: v?.getCardNo || "",
             cardPin: v?.getCardPin || "",
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
+            isScratched: Boolean(item.is_scratched),
+            isGift: Boolean(item.is_gift),
           });
         });
       });
@@ -134,16 +139,20 @@ function RedeemSheet({
             <>
               <h3 className="text-base font-extrabold mb-4">{brandName}</h3>
 
-              {/* Voucher codes — plain display */}
+              {/* Voucher codes — gated by scratch/gift state */}
               <div className="space-y-3 mb-5">
                 {vouchers.map((v, i) => {
                   const bal = balances[v.cardNumber];
                   const isUsed = bal !== undefined && parseFloat(bal) === 0;
+                  const isLocked = v.isGift;
+                  const isRevealed = v.isScratched;
                   return (
                     <div key={v.key} className="rounded-2xl border border-border p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#888888" }}>Voucher {vouchers.length > 1 ? i + 1 : ""}</p>
-                        {bal !== undefined ? (
+                        {isLocked ? (
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🎁 Gifted</span>
+                        ) : bal !== undefined ? (
                           <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isUsed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                             {isUsed ? "✓ USED" : `Balance: ₹${bal}`}
                           </span>
@@ -151,15 +160,29 @@ function RedeemSheet({
                           <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-primary/10 text-primary">₹{v.amount}</span>
                         )}
                       </div>
-                      <div className="bg-muted rounded-xl p-3">
-                        <div className="flex items-center gap-1.5 mb-1"><CreditCard size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>Card Number</p></div>
-                        <p className="font-mono font-black text-lg tracking-widest text-foreground break-all">{v.cardNumber || "—"}</p>
-                      </div>
-                      {v.cardPin && (
-                        <div className="bg-muted rounded-xl p-3">
-                          <div className="flex items-center gap-1.5 mb-1"><Lock size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>PIN</p></div>
-                          <p className="font-mono font-black text-lg tracking-widest text-foreground">{v.cardPin}</p>
+                      {isLocked ? (
+                        <div className="bg-muted rounded-xl p-4 flex items-center gap-2">
+                          <Lock size={14} style={{ color: "#888888" }} />
+                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>This voucher was gifted — the code was sent only to the recipient.</p>
                         </div>
+                      ) : !isRevealed ? (
+                        <div className="bg-muted rounded-xl p-4 flex items-center gap-2">
+                          <Lock size={14} style={{ color: "#888888" }} />
+                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>Reveal this voucher from "View Vouchers" first (choose "Use myself").</p>
+                        </div>
+                      ) : (
+                        <>
+                          <div className="bg-muted rounded-xl p-3">
+                            <div className="flex items-center gap-1.5 mb-1"><CreditCard size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>Card Number</p></div>
+                            <p className="font-mono font-black text-lg tracking-widest text-foreground break-all">{v.cardNumber || "—"}</p>
+                          </div>
+                          {v.cardPin && (
+                            <div className="bg-muted rounded-xl p-3">
+                              <div className="flex items-center gap-1.5 mb-1"><Lock size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>PIN</p></div>
+                              <p className="font-mono font-black text-lg tracking-widest text-foreground">{v.cardPin}</p>
+                            </div>
+                          )}
+                        </>
                       )}
                       {v.expiryDate && <p className="text-xs" style={{ color: "#888888" }}>Expires: <span className="font-bold" style={{ color: "#1a1a1a" }}>{v.expiryDate}</span></p>}
                     </div>
@@ -231,8 +254,8 @@ function RedeemSheet({
 }
 
 // ── Voucher Card (PAID, not redeemed) ─────────────────────────────────────────
-function VoucherCard({ order, expanded, onToggle, onRedeemed }: {
-  order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void;
+function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
+  order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
 }) {
   const [showSheet, setShowSheet] = useState(false);
   const item = order.items?.[0];
@@ -291,7 +314,12 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed }: {
             <div className="grid sm:grid-cols-2 gap-3">
               {vouchers.map((v, i) => (
                 <ScratchCard key={v.key} cardNumber={v.cardNumber} cardPin={v.cardPin}
-                  expiryDate={v.expiryDate} amount={v.amount} index={i} />
+                  expiryDate={v.expiryDate} amount={v.amount} index={i}
+                  brandName={v.brandName}
+                  orderItemId={v.orderItemId}
+                  orderNumber={order.order_number}
+                  clientId={clientId}
+                  initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"} />
               ))}
             </div>
           ) : (
@@ -599,7 +627,8 @@ export default function Orders() {
                     <VoucherCard key={id} order={order}
                       expanded={expandedId === id}
                       onToggle={() => setExpandedId(prev => prev === id ? null : id)}
-                      onRedeemed={handleRedeemed} />
+                      onRedeemed={handleRedeemed}
+                      clientId={user?.clientId ?? ""} />
                   );
                 })}
               </div>
