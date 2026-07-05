@@ -22,6 +22,7 @@ import {
   Gift,
 } from "lucide-react";
 import { format } from "date-fns";
+import { getVoucherState } from "@/types/order";
 
 const FALLBACK_IMAGE = "/brand-placeholder.png";
 
@@ -335,7 +336,12 @@ export default function OrderDetails() {
                                 cardPin={coupon.getCardPin}
                                 expiryDate={coupon.getExpiryDate}
                                 amount={coupon.balanceTotal}
+                                brandName={brandName}
                                 index={idx}
+                                orderItemId={item.order_item_id}
+                                clientId={user?.clientId ?? ""}
+                                orderNumber={order.order_number}
+                                initialState={getVoucherState(item)}
                               />
                             ))}
                           </div>
