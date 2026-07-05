@@ -142,11 +142,11 @@ export function ScratchGate({
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
-        className="sm:max-w-md w-[calc(100%-2rem)] rounded-2xl p-0 overflow-hidden"
+        className="sm:max-w-md w-[calc(100%-2rem)] rounded-2xl p-0 overflow-hidden max-h-[85vh] flex flex-col"
         onInteractOutside={(e) => { if (isLoading) e.preventDefault(); }}
       >
-        {/* Header */}
-        <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 text-white">
+        {/* Header — fixed, never scrolls */}
+        <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 text-white shrink-0">
           <DialogHeader>
             <DialogTitle className="text-white text-xl font-semibold font-[Outfit]">
               {step === "choice" ? "What would you like to do?" : "Gift this voucher"}
@@ -157,7 +157,12 @@ export function ScratchGate({
           </DialogHeader>
         </div>
 
-        <div className="p-6">
+        {/* Body — the only scrollable region, so long forms (gift_form step
+            with WhatsApp/email fields, message, media upload, and the
+            Back/Send Gift buttons) never get clipped on short phone
+            viewports the way they were under the old plain overflow-hidden
+            container. */}
+        <div className="p-6 overflow-y-auto">
           {step === "choice" && (
             <ChoiceStep
               onScratch={handleScratchConfirm} onGift={() => setStep("gift_form")} onLater={handleClose}
