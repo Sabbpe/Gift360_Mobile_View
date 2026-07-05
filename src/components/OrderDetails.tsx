@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Gift } from "lucide-react";
 import { ScratchCard } from "@/components/ScratchCard";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { getVoucherState } from "@/types/order";
 import type { Order } from "@/types/order";
 
 interface PaidAmountBreakdown {
@@ -21,14 +23,19 @@ interface OrderDetailsProps {
 
 interface VoucherView {
   key: string;
+  orderItemId: string;
   brandName: string;
   cardNumber: string;
   cardPin: string;
   expiryDate: string;
   amount: string;
+  isScratched: boolean;
+  isGift: boolean;
 }
 
 export default function OrderDetails({ order, paidBreakdown }: OrderDetailsProps) {
+  const { user } = useAuthContext();
+
   const vouchers = useMemo<VoucherView[]>(() => {
     return order.items.flatMap((item, itemIndex) => {
       const brandName =
@@ -40,11 +47,15 @@ export default function OrderDetails({ order, paidBreakdown }: OrderDetailsProps
 
       return couponItems.map((coupon, couponIndex) => ({
         key: `${item.order_item_id}-${itemIndex}-${couponIndex}`,
+        orderItemId: item.order_item_id,
         brandName,
         cardNumber: coupon.getCardNo,
         cardPin: coupon.getCardPin,
         expiryDate: coupon.getExpiryDate,
         amount: coupon.balanceTotal,
+        // Gifting state comes from the server — these are the source of truth
+        isScratched: item.is_scratched ?? false,
+        isGift: item.is_gift ?? false,
       }));
     });
   }, [order.items]);
@@ -76,18 +87,27 @@ export default function OrderDetails({ order, paidBreakdown }: OrderDetailsProps
               {vouchers.map((voucher, index) => (
                 <ScratchCard
                   key={voucher.key}
+                  orderItemId={voucher.orderItemId}
+                  orderNumber={order.order_number}
+                  clientId={user?.clientId ?? ""}
                   cardNumber={voucher.cardNumber}
                   cardPin={voucher.cardPin}
                   expiryDate={voucher.expiryDate}
                   amount={voucher.amount}
+                  brandName={voucher.brandName}
                   index={index}
+                  initialState={getVoucherState({
+                    is_scratched: voucher.isScratched,
+                    is_gift: voucher.isGift,
+                  })}
                 />
               ))}
             </div>
 
             <div className="p-3 rounded-lg border border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
               <p className="text-sm text-blue-800 dark:text-blue-300">
-                💡 <strong>Tip:</strong> Scratch the cards above to reveal your voucher codes. Screenshot or note them down for later use!
+                💡 <strong>Tip:</strong> Tap a card to reveal the code for yourself or gift it to someone else.
+                Once you choose, the action cannot be undone.
               </p>
             </div>
           </>
