@@ -12,6 +12,7 @@ type SuperCoinStatusCardProps = {
   onStateChange?: (state: { eligible: boolean; balance: number; enabled: boolean }) => void;
   maxRedeemable?: number;
   walletActive?: boolean;
+  estimatedEarn?: number;
 };
 
 export default function SuperCoinStatusCard({
@@ -21,6 +22,7 @@ export default function SuperCoinStatusCard({
   onStateChange,
   maxRedeemable,
   walletActive = false,
+  estimatedEarn,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
   const autoSearchKeyRef = useRef<string | null>(null);
@@ -98,17 +100,14 @@ export default function SuperCoinStatusCard({
         : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
 
   const hasError = searchUserMutation.isError || balanceMutation.isError;
-  const errorMessage =
-    searchUserMutation.error?.message ||
-    balanceMutation.error?.message ||
-    "SuperCoin request failed.";
+  const errorMessage = "Unable to fetch SuperCoin details right now. Please try again later.";
   const activeDeduction = localEnabled && isEligible ? Math.min(balance, maxRedeemable ?? balance) : 0;
   const balanceLabel = isBusy
     ? "Checking..."
     : hasError
       ? "Unavailable"
       : balanceResult
-        ? `\u20b9${balance.toFixed(2)}`
+        ? `${balance.toFixed(2)} SC`
         : "-";
 
   return (
@@ -124,11 +123,17 @@ export default function SuperCoinStatusCard({
       <div className="space-y-3">
         <div className="flex items-center justify-between">
           <label className="text-sm sm:text-base font-medium flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-[var(--cart-primary)]" />
-            SuperCoin
+            <img
+              src="/supercoin-logo.png"
+              alt="SuperCoin"
+              className="h-10 w-auto object-contain"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = "none";
+              }}
+            />
             {isEligible && (
               <span className="text-xs text-muted-foreground ml-1">
-                · Balance: ₹{balance.toFixed(2)}
+                · Balance: {balance.toFixed(2)} SC
               </span>
             )}
           </label>
@@ -144,7 +149,7 @@ export default function SuperCoinStatusCard({
                   {walletActive
                     ? ""
                     : maxRedeemable !== undefined && maxRedeemable > 0 && maxRedeemable < balance
-                      ? `Up to ₹${maxRedeemable.toFixed(2)} can be redeemed`
+                      ? `Up to ${maxRedeemable.toFixed(2)} SC can be redeemed`
                       : "Reduce your payable amount"}
                 </p>
               </div>
@@ -164,6 +169,18 @@ export default function SuperCoinStatusCard({
                 You save ₹{activeDeduction.toFixed(2)}
               </p>
             )}
+          </>
+        )}
+
+        {estimatedEarn !== undefined && estimatedEarn > 0 && (
+          <>
+            <p className="text-xs text-muted-foreground pt-1 border-t border-border/50">
+              <Sparkles className="h-3 w-3 inline mr-1 text-amber-400" />
+              You'll earn <span className="font-semibold text-emerald-600 dark:text-emerald-400">{estimatedEarn.toFixed(2)} SC</span> back on this purchase
+            </p>
+            <p className="text-[10px] text-muted-foreground/70">
+              Fractional earnings carry over to your next purchase.
+            </p>
           </>
         )}
 

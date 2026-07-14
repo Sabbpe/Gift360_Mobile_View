@@ -777,138 +777,6 @@ export default function Cart() {
     });
   };
 
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="relative flex-1 flex items-center justify-center pb-20 md:pb-0 overflow-hidden">
-          <div className="absolute inset-0 bg-hero-aurora">
-            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
-          </div>
-          <div className="relative z-10 text-center space-y-5 p-6 max-w-md w-full">
-            <div className="relative inline-block">
-              <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
-              <div className="relative w-20 h-20 rounded-3xl bg-blackcard card-edge flex items-center justify-center g-float mx-auto">
-                <ShoppingBag className="h-9 w-9 text-amber-300" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-3xl font-extrabold mb-1">
-                <span className="text-gold-gradient">Please Login</span>
-              </h1>
-              <p className="text-sm text-white/70 font-medium">
-                You need to be logged in to view your cart
-              </p>
-            </div>
-            {guestCartCount > 0 && (
-              <div className="rounded-2xl bg-blackcard card-edge p-4 text-left">
-                <p className="text-sm text-white/80 mb-1">
-                  You have <strong className="text-amber-200">{guestCartCount} item(s)</strong> in your cart
-                </p>
-                <p className="text-xs text-white/60">
-                  Login to sync your cart and proceed to checkout
-                </p>
-              </div>
-            )}
-            <Link href="/login">
-              <button className="h-12 px-8 rounded-2xl bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all mt-2">
-                Login to Continue
-              </button>
-            </Link>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
-      </div>
-    );
-  }
-
-  if (cartLoading) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="relative flex-1 flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-hero-aurora">
-            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
-          </div>
-          <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-amber-300" />
-        </main>
-        <Footer />
-        <MobileBottomNav />
-      </div>
-    );
-  }
-
-  if (cartError) {
-    return (
-      <div className="min-h-screen flex flex-col bg-background">
-        <Header />
-        <main className="relative flex-1 flex items-center justify-center px-4 overflow-hidden">
-          <div className="absolute inset-0 bg-hero-aurora">
-            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
-          </div>
-          <div className="relative z-10 text-center space-y-4">
-            <h1 className="text-2xl font-extrabold"><span className="text-gold-gradient">Error Loading Cart</span></h1>
-            <p className="text-white/70">Please try again</p>
-            <Link href="/brands">
-              <button className="h-11 px-6 rounded-2xl bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all">Back to Shopping</button>
-            </Link>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
-      </div>
-    );
-  }
-
-  // Show the hard empty-cart state only for the cart tab.
-  if (activeTab === "cart" && (!cart || !cart.items || cart.items.length === 0)) {
-    return (
-      <div className="cart-color-system cart-page min-h-screen flex flex-col">
-        <Header />
-        <main className="relative flex-1 flex items-center justify-center pb-20 md:pb-0 px-4">
-          <div className="empty-cart text-center">
-            <h3 className="empty-text">Your cart is empty</h3>
-            <p>Add vouchers to get started</p>
-            <Link href="/brands">
-              <button className="h-11 px-6 rounded-2xl cart-gradient-fill font-bold shadow-lg shadow-[rgba(151,71,255,0.25)] hover:brightness-110 active:scale-95 transition-all mt-4">
-                Start Shopping
-              </button>
-            </Link>
-          </div>
-        </main>
-        <Footer />
-        <MobileBottomNav />
-      </div>
-    );
-  }
-
-  const handleQuantityUpdate = (itemId: string, newQuantity: number) => {
-    if (updatingItemId === itemId) return;
-    setUpdatingItemId(itemId);
-    updateQuantity(itemId, newQuantity);
-    setTimeout(() => setUpdatingItemId(null), 650);
-  };
-
-  const handleRemoveClick = (itemId: string, brandName: string) => {
-    setItemToDelete({ itemId, brandName });
-  };
-
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      removeFromCart(itemToDelete.itemId);
-      toast({
-        title: "Item Removed",
-        description: `${itemToDelete.brandName} has been removed from your cart`,
-      });
-      setItemToDelete(null);
-    }
-  };
-
-  const cancelDelete = () => {
-    setItemToDelete(null);
-  };
-
   const cartItems = cart?.items ?? [];
   const cartItemCount = cartItems.length;
 
@@ -944,6 +812,32 @@ export default function Cart() {
       cancelled = true;
     };
   }, [cartItems.map((i) => i.brandId).join(",")]);
+
+  const handleQuantityUpdate = (itemId: string, newQuantity: number) => {
+    if (updatingItemId === itemId) return;
+    setUpdatingItemId(itemId);
+    updateQuantity(itemId, newQuantity);
+    setTimeout(() => setUpdatingItemId(null), 650);
+  };
+
+  const handleRemoveClick = (itemId: string, brandName: string) => {
+    setItemToDelete({ itemId, brandName });
+  };
+
+  const confirmDelete = () => {
+    if (itemToDelete) {
+      removeFromCart(itemToDelete.itemId);
+      toast({
+        title: "Item Removed",
+        description: `${itemToDelete.brandName} has been removed from your cart`,
+      });
+      setItemToDelete(null);
+    }
+  };
+
+  const cancelDelete = () => {
+    setItemToDelete(null);
+  };
 
   // Calculate brand totals
   const brandTotals = cartItems.reduce((acc, item) => {
@@ -1548,6 +1442,112 @@ export default function Cart() {
     setSheetOpen(true);
   };
 
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="relative flex-1 flex items-center justify-center pb-20 md:pb-0 overflow-hidden">
+          <div className="absolute inset-0 bg-hero-aurora">
+            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
+          </div>
+          <div className="relative z-10 text-center space-y-5 p-6 max-w-md w-full">
+            <div className="relative inline-block">
+              <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
+              <div className="relative w-20 h-20 rounded-3xl bg-blackcard card-edge flex items-center justify-center g-float mx-auto">
+                <ShoppingBag className="h-9 w-9 text-amber-300" />
+              </div>
+            </div>
+            <div>
+              <h1 className="text-3xl font-extrabold mb-1">
+                <span className="text-gold-gradient">Please Login</span>
+              </h1>
+              <p className="text-sm text-white/70 font-medium">
+                You need to be logged in to view your cart
+              </p>
+            </div>
+            {guestCartCount > 0 && (
+              <div className="rounded-2xl bg-blackcard card-edge p-4 text-left">
+                <p className="text-sm text-white/80 mb-1">
+                  You have <strong className="text-amber-200">{guestCartCount} item(s)</strong> in your cart
+                </p>
+                <p className="text-xs text-white/60">
+                  Login to sync your cart and proceed to checkout
+                </p>
+              </div>
+            )}
+            <Link href="/login">
+              <button className="h-12 px-8 rounded-2xl bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all mt-2">
+                Login to Continue
+              </button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
+  if (cartLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="relative flex-1 flex items-center justify-center overflow-hidden">
+          <div className="absolute inset-0 bg-hero-aurora">
+            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
+          </div>
+          <div className="relative z-10 animate-spin rounded-full h-12 w-12 border-b-2 border-amber-300" />
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
+  if (cartError) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="relative flex-1 flex items-center justify-center px-4 overflow-hidden">
+          <div className="absolute inset-0 bg-hero-aurora">
+            <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
+          </div>
+          <div className="relative z-10 text-center space-y-4">
+            <h1 className="text-2xl font-extrabold"><span className="text-gold-gradient">Error Loading Cart</span></h1>
+            <p className="text-white/70">Please try again</p>
+            <Link href="/brands">
+              <button className="h-11 px-6 rounded-2xl bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all">Back to Shopping</button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
+  // Show the hard empty-cart state only for the cart tab.
+  if (activeTab === "cart" && (!cart || !cart.items || cart.items.length === 0)) {
+    return (
+      <div className="cart-color-system cart-page min-h-screen flex flex-col">
+        <Header />
+        <main className="relative flex-1 flex items-center justify-center pb-20 md:pb-0 px-4">
+          <div className="empty-cart text-center">
+            <h3 className="empty-text">Your cart is empty</h3>
+            <p>Add vouchers to get started</p>
+            <Link href="/brands">
+              <button className="h-11 px-6 rounded-2xl cart-gradient-fill font-bold shadow-lg shadow-[rgba(151,71,255,0.25)] hover:brightness-110 active:scale-95 transition-all mt-4">
+                Start Shopping
+              </button>
+            </Link>
+          </div>
+        </main>
+        <Footer />
+        <MobileBottomNav />
+      </div>
+    );
+  }
+
   return (
     <div className="cart-color-system cart-page min-h-screen flex flex-col">
       <Header />
@@ -1771,6 +1771,7 @@ export default function Cart() {
                       enabled={superCoinState.enabled}
                       maxRedeemable={maxSuperCoinRedeemable}
                       walletActive={useWalletBalance}
+                      estimatedEarn={estimatedEarn}
                       onEnabledChange={(enabled) => {
                         setSuperCoinState((prev) => ({ ...prev, enabled }));
                         if (enabled) {
@@ -1944,17 +1945,6 @@ export default function Cart() {
                       ₹{uiTotalToPay.toFixed(2)}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between text-sm text-emerald-500 dark:text-emerald-400">
-                    <span className="flex items-center gap-1">
-                      <Sparkles className="h-4 w-4" />
-                      Estimated SuperCoin earn
-                    </span>
-                    <span className="font-medium">{estimatedEarn.toFixed(2)} SC</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Earn 1% back as SuperCoins. Fractional earnings carry over to your next purchase.
-                  </p>
 
                   {/* Payment Gateway Selection - SINGLE SABBPE BUTTON */}
                   <div className="space-y-3">
