@@ -83,20 +83,20 @@ export default function Login() {
 
   return (
     <div className="auth-page auth-page--login">
-      {/* ── Aurora backdrop (matches Home) ── */}
+      {/* ── Purple backdrop (matches Home header) ── */}
       <div className="absolute inset-0">
         <FloatingCoins count={10} />
         <div
           className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, hsla(280,90%,60%,0.22), transparent 70%)" }}
+          style={{ background: "radial-gradient(circle, #523da9, transparent 70%)" }}
         />
         <div
           className="absolute top-32 -right-16 w-80 h-80 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, hsla(220,90%,55%,0.18), transparent 70%)", animationDelay: "3s" }}
+          style={{ background: "radial-gradient(circle, #4c42b8, transparent 70%)", animationDelay: "3s" }}
         />
         <div
           className="absolute bottom-20 left-1/4 w-56 h-56 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, hsla(48,95%,60%,0.14), transparent 70%)", animationDelay: "6s" }}
+          style={{ background: "radial-gradient(circle, #5365df, transparent 70%)", animationDelay: "6s" }}
         />
         <div className="absolute inset-0 hero-grain opacity-30 pointer-events-none" />
       </div>
@@ -106,25 +106,25 @@ export default function Login() {
         <div className="flex flex-col items-center anim-fade-up">
           <div className="relative mb-4">
             <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
-            <div className="relative w-20 h-20 rounded-3xl bg-blackcard card-edge flex items-center justify-center g-float">
+            <div className="relative w-20 h-20 rounded-3xl bg-[#5343B2] card-edge flex items-center justify-center g-float">
               <Gift size={40} className="text-amber-300" />
             </div>
           </div>
           <h1 className="text-3xl font-extrabold tracking-tight">
-            <span className="text-gold-gradient">
+            <span className="text-black">
               {isSessionExpired ? "Session Expired" : "Welcome Back"}
             </span>
           </h1>
-          <p className="text-white/70 text-sm mt-1.5 font-medium">
+          <p className="text-black text-sm mt-1.5 font-medium">
             {isSessionExpired ? "Please login to continue" : "Sign in to Gift360"}
           </p>
         </div>
 
-        {/* ── Premium black card ── */}
+        {/* ── Premium purple card ── */}
         <div className="mt-8 anim-fade-up delay-200">
-          <div className="relative rounded-3xl bg-blackcard card-edge p-6 overflow-hidden">
+          <div className="relative rounded-3xl bg-[#5343B2] card-edge p-6 overflow-hidden">
             {/* hologram sheen */}
-            <div className="pointer-events-none absolute -top-12 -left-12 w-72 h-32 bg-gradient-to-r from-transparent via-amber-200/15 to-transparent anim-hologram" />
+            <div className="pointer-events-none absolute -top-12 -left-12 w-72 h-32 bg-gradient-to-r from-transparent via-white/10 to-transparent anim-hologram" />
 
             <div className="flex items-center gap-2 mb-5">
               <Sparkles className="h-4 w-4 text-amber-300" />
