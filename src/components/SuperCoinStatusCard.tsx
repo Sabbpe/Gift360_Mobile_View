@@ -1,10 +1,8 @@
 ﻿import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { AlertCircle, Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type SuperCoinStatusCardProps = {
@@ -12,6 +10,8 @@ type SuperCoinStatusCardProps = {
   enabled?: boolean;
   onEnabledChange?: (enabled: boolean) => void;
   onStateChange?: (state: { eligible: boolean; balance: number; enabled: boolean }) => void;
+  maxRedeemable?: number;
+  walletActive?: boolean;
 };
 
 export default function SuperCoinStatusCard({
@@ -19,6 +19,8 @@ export default function SuperCoinStatusCard({
   enabled = false,
   onEnabledChange,
   onStateChange,
+  maxRedeemable,
+  walletActive = false,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
   const autoSearchKeyRef = useRef<string | null>(null);
@@ -100,7 +102,7 @@ export default function SuperCoinStatusCard({
     searchUserMutation.error?.message ||
     balanceMutation.error?.message ||
     "SuperCoin request failed.";
-  const activeDeduction = localEnabled && isEligible ? balance : 0;
+  const activeDeduction = localEnabled && isEligible ? Math.min(balance, maxRedeemable ?? balance) : 0;
   const balanceLabel = isBusy
     ? "Checking..."
     : hasError
@@ -110,91 +112,69 @@ export default function SuperCoinStatusCard({
         : "-";
 
   return (
-    <Card className="rounded-3xl border-0 bg-gradient-to-br from-[#1b1533] via-[#251e47] to-[#12101f] text-white shadow-[0_20px_45px_rgba(32,18,68,0.18)]">
-      <CardHeader className="space-y-2 pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs uppercase tracking-[0.24em] text-white/55">SuperCoin</p>
-            <h3 className="text-lg font-bold text-white">Flipkart Wallet Check</h3>
-          </div>
+    <div
+      className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
+        isEligible
+          ? "bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.3)]"
+          : isBusy
+            ? "bg-[rgba(151,71,255,0.04)] border-[rgba(151,71,255,0.15)]"
+            : "bg-muted/50 border-muted-foreground/20 opacity-60"
+      }`}
+    >
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <label className="text-sm sm:text-base font-medium flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-[var(--cart-primary)]" />
+            SuperCoin
+            {isEligible && (
+              <span className="text-xs text-muted-foreground ml-1">
+                · Balance: ₹{balance.toFixed(2)}
+              </span>
+            )}
+          </label>
           <Badge className={statusTone}>{statusLabel}</Badge>
         </div>
-        <p className="text-sm text-white/65">
-          Eligibility and balance are fetched automatically on this checkout screen.
-        </p>
-      </CardHeader>
 
-      <CardContent className="space-y-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <div className="flex items-center justify-between gap-3 text-sm">
-            <span className="text-white/60">Identity</span>
-            <span className="font-medium text-white">
-              {mobile || "No mobile number found"}
-            </span>
-          </div>
-          <div className="mt-3 flex items-center justify-between gap-3 text-sm">
-            <span className="text-white/60">Balance</span>
-            <span className="flex items-center gap-2 font-semibold text-white">
-              {isBusy ? (
-                <Loader2 className="h-4 w-4 animate-spin text-white/70" />
-              ) : (
-                <Sparkles className="h-4 w-4 text-amber-300" />
-              )}
-              {balanceLabel}
-            </span>
-          </div>
-          {searchResult?.state && (
-            <p className="mt-3 text-xs text-white/55">
-              Flipkart state: {String(searchResult.state)}
-            </p>
-          )}
-        </div>
-
-        <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
-          <div>
-            <p className="text-sm font-medium text-white">Use SuperCoin</p>
-            <p className="text-xs text-white/55">
-              Turn on to reduce the payable amount using your full eligible balance.
-            </p>
-          </div>
-          <Switch
-            checked={localEnabled}
-            onCheckedChange={(checked) => {
-              const nextEnabled = Boolean(checked);
-              setLocalEnabled(nextEnabled);
-              onEnabledChange?.(nextEnabled);
-            }}
-            disabled={!identity || isBusy}
-          />
-        </div>
-
-        {activeDeduction > 0 && (
-          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-emerald-50/80">SuperCoin deduction</span>
-              <span className="font-semibold">{`\u20b9${activeDeduction.toFixed(2)}`}</span>
-            </div>
-          </div>
-        )}
-
-        {!identity ? (
-          <div className="flex items-start gap-2 rounded-2xl border border-amber-400/20 bg-amber-400/10 p-3 text-sm text-amber-100">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-            <p>Login with a user that has a mobile number to check SuperCoin.</p>
-          </div>
-        ) : null}
-
-        {hasError && (
+        {isEligible && (
           <>
-            <Separator className="bg-white/10" />
-            <p className="text-sm text-red-300">{errorMessage}</p>
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium cart-text-primary">Use SuperCoin</p>
+                <p className="text-xs text-muted-foreground">
+                  {walletActive
+                    ? ""
+                    : maxRedeemable !== undefined && maxRedeemable > 0 && maxRedeemable < balance
+                      ? `Up to ₹${maxRedeemable.toFixed(2)} can be redeemed`
+                      : "Reduce your payable amount"}
+                </p>
+              </div>
+              <Switch
+                checked={localEnabled}
+                onCheckedChange={(checked) => {
+                  const nextEnabled = Boolean(checked);
+                  setLocalEnabled(nextEnabled);
+                  onEnabledChange?.(nextEnabled);
+                }}
+                disabled={isBusy || (maxRedeemable !== undefined && maxRedeemable <= 0) || walletActive}
+              />
+            </div>
+
+            {activeDeduction > 0 && (
+              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                You save ₹{activeDeduction.toFixed(2)}
+              </p>
+            )}
           </>
         )}
 
-        <p className="text-xs leading-5 text-white/50">
-          Manual check, enrol, and balance controls are hidden here so checkout stays clean. If the user is eligible, the balance appears automatically.
-        </p>
-      </CardContent>
-    </Card>
+        {!identity && (
+          <p className="text-xs text-muted-foreground italic">Add a mobile number to use SuperCoin.</p>
+        )}
+
+        {hasError && (
+          <p className="text-xs text-red-500">{errorMessage}</p>
+        )}
+      </div>
+    </div>
   );
 }

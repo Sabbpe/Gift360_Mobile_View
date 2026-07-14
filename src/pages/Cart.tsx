@@ -912,22 +912,58 @@ export default function Cart() {
   const cartItems = cart?.items ?? [];
   const cartItemCount = cartItems.length;
 
+  const [brandDiscountMap, setBrandDiscountMap] = useState<Record<string, number>>({});
+  const fetchedBrandIdsRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    if (cartItems.length === 0) return;
+    const uniqueBrandIds = [...new Set(cartItems.map((i) => i.brandId))];
+    const unknownBrandIds = uniqueBrandIds.filter((id) => !fetchedBrandIdsRef.current.has(id));
+    if (unknownBrandIds.length === 0) return;
+
+    unknownBrandIds.forEach((id) => fetchedBrandIdsRef.current.add(id));
+    let cancelled = false;
+    Promise.all(
+      unknownBrandIds.map((brandId) =>
+        brandApi
+          .post<{ discount?: string | number } | null>(`/brands/${brandId}`, {})
+          .then((r) => ({ brandId, discount: Number(r?.data?.discount) || 0 }))
+          .catch(() => ({ brandId, discount: 0 }))
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      setBrandDiscountMap((prev) => {
+        const next = { ...prev };
+        results.forEach((r) => {
+          next[r.brandId] = r.discount;
+        });
+        return next;
+      });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [cartItems.map((i) => i.brandId).join(",")]);
+
   // Calculate brand totals
   const brandTotals = cartItems.reduce((acc, item) => {
     const key = `${item.brandId}-${item.unitValue}`;
+    const discount = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
     if (acc[key]) {
       acc[key].quantity += item.quantity;
       acc[key].total += item.lineTotal;
     } else {
       acc[key] = {
         brand: item.brandName,
+        brandId: item.brandId,
         quantity: item.quantity,
         price: item.unitValue,
         total: item.lineTotal,
+        discount,
       };
     }
     return acc;
-  }, {} as Record<string, { brand: string; quantity: number; price: number; total: number }>);
+  }, {} as Record<string, { brand: string; brandId: string; quantity: number; price: number; total: number; discount: number }>);
 
   const walletBalance = walletData?.totalBalance || 0;
   const subtotal = cart?.totalAmount ?? 0;
@@ -946,10 +982,24 @@ export default function Cart() {
     subtotal + processingFee - couponDiscount
   );
 
+  const discountsLoaded = cartItems.every(
+    (item) => item.discount !== undefined || brandDiscountMap[item.brandId] !== undefined
+  );
+
+  const maxSuperCoinRedeemable = discountsLoaded
+    ? cartItems.reduce(
+        (sum, item) => {
+          const discount = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
+          return sum + (item.lineTotal * discount) / 100;
+        },
+        0
+      )
+    : superCoinState.balance;
+
   const superCoinDeduction = superCoinState.enabled && superCoinState.eligible
     ? Math.min(
         superCoinState.balance,
-        Math.max(0, couponAdjustedAmount - walletDeduction)
+        maxSuperCoinRedeemable
       )
     : 0;
 
@@ -959,6 +1009,7 @@ export default function Cart() {
     couponAdjustedAmount - walletDeduction - superCoinDeduction
   );
   const uiTotalToPay = Number(finalPayable.toFixed(2));
+  const estimatedEarn = finalPayable * 0.01;
 
   const buildPaymentBreakdown = (
     walletEnabled: boolean,
@@ -978,7 +1029,7 @@ export default function Cart() {
       superCoinEnabled && superCoinState.eligible
         ? Math.min(
             superCoinState.balance,
-            Math.max(0, currentCouponAdjustedAmount - currentWalletDeduction)
+            maxSuperCoinRedeemable
           )
         : 0;
     const currentFinalPayable = Math.max(
@@ -1605,6 +1656,11 @@ export default function Cart() {
                         <div className="flex items-center justify-between">
                           <span className="text-xs sm:text-sm cart-text-secondary">
                             {data.brand}
+                            {data.discount > 0 && (
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 dark:text-green-400">
+                                {data.discount}% Cashback
+                              </span>
+                            )}
                           </span>
                           <span className="font-medium text-xs sm:text-sm cart-text-primary">
                             {data.quantity} × ₹{data.price.toFixed(2)} = ₹
@@ -1615,6 +1671,11 @@ export default function Cart() {
                     ))}
 
                     <Separator className="my-3 sm:my-4" />
+
+                    {/* Redeem Rewards section header */}
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Redeem Rewards
+                    </p>
 
                     {/* NEW: Wallet Balance Section - Always show, disable if zero */}
                     <div
@@ -1631,10 +1692,14 @@ export default function Cart() {
                         <Checkbox
                           id="useWallet"
                           checked={useWalletBalance}
-                          onCheckedChange={(checked) =>
-                            setUseWalletBalance(checked as boolean)
-                          }
-                          disabled={walletBalance <= 0}
+                          onCheckedChange={(checked) => {
+                            const isChecked = checked as boolean;
+                            setUseWalletBalance(isChecked);
+                            if (isChecked) {
+                              setSuperCoinState((prev) => ({ ...prev, enabled: false }));
+                            }
+                          }}
+                          disabled={walletBalance <= 0 || superCoinState.enabled}
                           className="mt-0.5"
                         />
                         <div className="flex-1">
@@ -1695,12 +1760,23 @@ export default function Cart() {
                       </div>
                     </div>
 
+                    <div className="flex items-center gap-2 py-1">
+                      <Separator className="flex-1" />
+                      <span className="text-xs text-muted-foreground whitespace-nowrap">OR</span>
+                      <Separator className="flex-1" />
+                    </div>
+
                     <SuperCoinStatusCard
                       mobile={user?.mobile}
                       enabled={superCoinState.enabled}
-                      onEnabledChange={(enabled) =>
-                        setSuperCoinState((prev) => ({ ...prev, enabled }))
-                      }
+                      maxRedeemable={maxSuperCoinRedeemable}
+                      walletActive={useWalletBalance}
+                      onEnabledChange={(enabled) => {
+                        setSuperCoinState((prev) => ({ ...prev, enabled }));
+                        if (enabled) {
+                          setUseWalletBalance(false);
+                        }
+                      }}
                       onStateChange={({ eligible, balance, enabled }) =>
                         setSuperCoinState({
                           eligible,
@@ -1709,6 +1785,11 @@ export default function Cart() {
                         })
                       }
                     />
+
+                    {/* Coupons section header */}
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">
+                      Coupons
+                    </p>
 
                     {/* Coupon Code Section */}
                     <div
@@ -1863,6 +1944,17 @@ export default function Cart() {
                       ₹{uiTotalToPay.toFixed(2)}
                     </span>
                   </div>
+
+                  <div className="flex items-center justify-between text-sm text-emerald-500 dark:text-emerald-400">
+                    <span className="flex items-center gap-1">
+                      <Sparkles className="h-4 w-4" />
+                      Estimated SuperCoin earn
+                    </span>
+                    <span className="font-medium">{estimatedEarn.toFixed(2)} SC</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Earn 1% back as SuperCoins. Fractional earnings carry over to your next purchase.
+                  </p>
 
                   {/* Payment Gateway Selection - SINGLE SABBPE BUTTON */}
                   <div className="space-y-3">

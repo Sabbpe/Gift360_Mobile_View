@@ -629,7 +629,7 @@ export default function PaymentResult() {
                       </p>
                     ) : (
                       <p className="text-sm text-purple-700 dark:text-purple-300">
-                        SuperCoin reward will appear here once it is posted by the backend.
+                        SuperCoins earned will appear here once the order is processed.
                       </p>
                     )}
                   </div>

@@ -292,15 +292,15 @@ useEffect(() => {
     };
 
     // Convert guest cart to cart items
-    const guestItems = guestCart.map((item, index) => ({
-      itemId: `guest-${Date.now()}-${index}`,
-      brandId: item.brandId,
-      brandName: item.brandName,
-      quantity: item.quantity,
-      unitValue: item.unitValue,
-      lineTotal: item.quantity * item.unitValue,
-      image: item.image,
-    }));
+      const guestItems = guestCart.map((item, index) => ({
+        itemId: `guest-${Date.now()}-${index}`,
+        brandId: item.brandId,
+        brandName: item.brandName,
+        quantity: item.quantity,
+        unitValue: item.unitValue,
+        lineTotal: item.quantity * item.unitValue,
+        image: item.image,
+      }));
 
     // Combine current cart with guest items
     const combinedItems = [...currentCart.items, ...guestItems];
@@ -381,7 +381,10 @@ useEffect(() => {
         quantity: item.quantity,
         unitValue: item.unitValue,
         lineTotal: item.lineTotal,
-        meta: "{}",
+        meta: JSON.stringify({
+          brand_id: item.brandId,
+          brand_name: item.brandName,
+        }),
       })),
     } as OrderRequest;
   };

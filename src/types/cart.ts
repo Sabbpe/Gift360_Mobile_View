@@ -7,6 +7,7 @@ export interface CartItem {
   unitValue: number;
   lineTotal: number;
   image?: string;
+  discount?: number;
 }
 export interface Cart {
   clientId: string;
