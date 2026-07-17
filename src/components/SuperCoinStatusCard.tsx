@@ -77,34 +77,52 @@ export default function SuperCoinStatusCard({
     onStateChange?.(nextState);
   }, [balance, balanceResult, identity, localEnabled, onStateChange, userExists]);
 
+  const hasSearchError = searchUserMutation.isError;
+  const hasBalanceError = balanceMutation.isError;
   const isEligible = Boolean(identity && userExists && balanceResult && balance > 0);
   const isBusy = searchUserMutation.isPending || balanceMutation.isPending;
   const statusLabel = !identity
     ? "Login required"
-    : searchUserMutation.isPending
-      ? "Checking..."
-      : balanceMutation.isPending
-        ? "Fetching balance..."
-        : userExists
-          ? "Eligible"
-          : searchUserMutation.data
-            ? "Not enrolled"
-            : "Check required";
+    : hasSearchError
+      ? "Unable to verify"
+      : searchUserMutation.isPending
+        ? "Checking..."
+        : !userExists && searchUserMutation.data
+          ? "Not enrolled"
+          : balanceMutation.isPending
+            ? "Fetching balance..."
+            : userExists
+              ? "Eligible"
+              : "Check required";
 
   const statusTone = !identity
     ? "bg-muted text-muted-foreground"
-    : isBusy
-      ? "bg-sky-500/10 text-sky-300 border-sky-500/20"
-      : userExists
-        ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
-        : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
+    : hasSearchError
+      ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
+      : isBusy
+        ? "bg-sky-500/10 text-sky-300 border-sky-500/20"
+        : !userExists && searchUserMutation.data
+          ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+          : userExists
+            ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+            : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
 
-  const hasError = searchUserMutation.isError || balanceMutation.isError;
-  const errorMessage = "Unable to fetch SuperCoin details right now. Please try again later.";
+  const notEnrolledMessage =
+    !userExists && searchUserMutation.data && !hasSearchError
+      ? "Register on Flipkart SuperCoin to earn & redeem coins on every purchase."
+      : "";
+
+  const errorMessage = hasSearchError
+      ? "SuperCoin is unavailable at the moment. You can still continue with your purchase."
+    : hasBalanceError && (userExists || !searchUserMutation.data)
+      ? userExists
+        ? "Unable to load your SuperCoin balance. You can still continue with your purchase."
+        : "SuperCoin is unavailable at the moment. You can still continue with your purchase."
+      : "";
   const activeDeduction = localEnabled && isEligible ? Math.min(balance, maxRedeemable ?? balance) : 0;
   const balanceLabel = isBusy
     ? "Checking..."
-    : hasError
+    : (hasSearchError || hasBalanceError)
       ? "Unavailable"
       : balanceResult
         ? `${balance.toFixed(2)} SC`
@@ -172,7 +190,7 @@ export default function SuperCoinStatusCard({
           </>
         )}
 
-        {estimatedEarn !== undefined && estimatedEarn > 0 && (
+        {isEligible && estimatedEarn !== undefined && estimatedEarn > 0 && (
           <>
             <p className="text-xs text-muted-foreground pt-1 border-t border-border/50">
               <Sparkles className="h-3 w-3 inline mr-1 text-amber-400" />
@@ -188,7 +206,11 @@ export default function SuperCoinStatusCard({
           <p className="text-xs text-muted-foreground italic">Add a mobile number to use SuperCoin.</p>
         )}
 
-        {hasError && (
+        {notEnrolledMessage && (
+          <p className="text-xs text-amber-600 dark:text-amber-400">{notEnrolledMessage}</p>
+        )}
+
+        {(hasSearchError || hasBalanceError) && (
           <p className="text-xs text-red-500">{errorMessage}</p>
         )}
       </div>
