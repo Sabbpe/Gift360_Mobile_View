@@ -49,15 +49,15 @@ export default function SuperCoinStatusCard({
     searchUserMutation.reset();
     balanceMutation.reset();
     searchUserMutation.mutate();
-    balanceMutation.mutate();
   }, [identityKey, searchUserMutation, balanceMutation, onEnabledChange]);
 
   useEffect(() => {
     if (!identityKey || !searchResult) return;
-    if (autoBalanceKeyRef.current === identityKey) return;
     if (!userExists) return;
 
+    if (autoBalanceKeyRef.current === identityKey) return;
     autoBalanceKeyRef.current = identityKey;
+    balanceMutation.mutate();
   }, [identityKey, searchResult, userExists, balanceMutation]);
 
   useEffect(() => {
