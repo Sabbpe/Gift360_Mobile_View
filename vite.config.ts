@@ -14,8 +14,9 @@ export default defineConfig({
     },
   },
   server: {
-    host: "::",
-    port: 8080,
+    port: 6688,
+    open: true,
+    allowedHosts: ['giftvouchersuat.sabbpe.com','uat.gift360.io','pymntsuat.gift360.io','gvauth.sabbpe.com','vdspbck.sabbpe.com','notificationsuat.sabbpe.com']
   },
   preview: {
     host: "0.0.0.0",
