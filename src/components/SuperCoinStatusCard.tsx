@@ -79,7 +79,9 @@ export default function SuperCoinStatusCard({
 
   const hasSearchError = searchUserMutation.isError;
   const hasBalanceError = balanceMutation.isError;
-  const isEligible = Boolean(identity && userExists && balanceResult && balance > 0);
+  const hasBalanceData = Boolean(userExists && balanceResult);
+  const isEligible = hasBalanceData && balance > 0;
+  const isEnrolled = Boolean(identity && userExists);
   const isBusy = searchUserMutation.isPending || balanceMutation.isPending;
   const statusLabel = !identity
     ? "Login required"
@@ -91,8 +93,10 @@ export default function SuperCoinStatusCard({
           ? "Not enrolled"
           : balanceMutation.isPending
             ? "Fetching balance..."
-            : userExists
-              ? "Eligible"
+            : userExists && balanceResult && balance === 0
+              ? "No coins"
+              : userExists
+                ? "Eligible"
               : "Check required";
 
   const statusTone = !identity
@@ -103,8 +107,10 @@ export default function SuperCoinStatusCard({
         ? "bg-sky-500/10 text-sky-300 border-sky-500/20"
         : !userExists && searchUserMutation.data
           ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-          : userExists
-            ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
+          : userExists && balanceResult && balance === 0
+            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
+            : userExists
+              ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
             : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
 
   const notEnrolledMessage =
@@ -131,7 +137,7 @@ export default function SuperCoinStatusCard({
   return (
     <div
       className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-        isEligible
+        isEnrolled
           ? "bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.3)]"
           : isBusy
             ? "bg-[rgba(151,71,255,0.04)] border-[rgba(151,71,255,0.15)]"
@@ -149,7 +155,7 @@ export default function SuperCoinStatusCard({
                 (e.target as HTMLImageElement).style.display = "none";
               }}
             />
-            {isEligible && (
+            {hasBalanceData && (
               <span className="text-xs text-muted-foreground ml-1">
                 · Balance: {balance.toFixed(2)} SC
               </span>
@@ -190,7 +196,7 @@ export default function SuperCoinStatusCard({
           </>
         )}
 
-        {isEligible && estimatedEarn !== undefined && estimatedEarn > 0 && (
+        {isEnrolled && estimatedEarn !== undefined && estimatedEarn > 0 && (
           <>
             <p className="text-xs text-muted-foreground pt-1 border-t border-border/50">
               <Sparkles className="h-3 w-3 inline mr-1 text-amber-400" />
