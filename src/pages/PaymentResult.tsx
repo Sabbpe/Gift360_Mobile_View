@@ -12,12 +12,13 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, XCircle, Clock, Loader2, Coins } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { decrypt } from "@/utils/encryption";
 import {
   cancelSuperCoinHold,
   normalizeMobileToE164,
 } from "@/api/supercoinApi";
+import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { fetchOrderDetails } from "@/api/orderApi";
 import type { GiftcardOrderDetailsResponse } from "@/types/order";
 
@@ -611,7 +612,7 @@ export default function PaymentResult() {
                 {paymentData.status === "success" && (
                   <div className="p-3 rounded-lg border bg-purple-50 dark:bg-purple-900/20 space-y-2">
                     <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300 font-medium">
-                      <Coins className="h-4 w-4" />
+                      <img src={superCoinIcon} alt="" className="h-4 w-4" />
                       <span>SuperCoin Reward</span>
                     </div>
                     {orderDetailsLoading ? (

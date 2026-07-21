@@ -1,9 +1,10 @@
 ﻿import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { Loader2, Info, Check } from "lucide-react";
+import { Loader2, Check } from "lucide-react";
 import { useEffect, useRef, useState, useCallback } from "react";
 import confetti from "canvas-confetti";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import flipkartSuperCoinIcon from "@/assets/FlipKartSuperCoin-removebg-preview.png";
 import { Separator } from "@/components/ui/separator";
 
 type SuperCoinStatusCardProps = {
@@ -13,6 +14,7 @@ type SuperCoinStatusCardProps = {
   onStateChange?: (state: { eligible: boolean; balance: number; enabled: boolean }) => void;
   maxRedeemable?: number;
   estimatedEarn?: number;
+  hideToggle?: boolean;
 };
 
 export default function SuperCoinStatusCard({
@@ -22,6 +24,7 @@ export default function SuperCoinStatusCard({
   onStateChange,
   maxRedeemable,
   estimatedEarn,
+  hideToggle = false,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
   const autoSearchKeyRef = useRef<string | null>(null);
@@ -129,12 +132,15 @@ export default function SuperCoinStatusCard({
   return (
     <div className="space-y-3">
       {/* Section header */}
-      <div className="flex items-center gap-1.5">
-        <p className="text-sm font-semibold cart-text-primary">
-          Save more with{" "}
-          <span className="text-[#5B3FFF] font-bold">SuperCoin</span>
-        </p>
-        <Info className="h-4 w-4 text-muted-foreground/50" />
+      <div className="flex items-center gap-3">
+        <img src={flipkartSuperCoinIcon} alt="" className="h-14 w-auto max-w-[180px] shrink-0 object-contain" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold cart-text-primary leading-tight">
+            Save more with{" "}
+            <span className="text-[#5B3FFF] font-bold">SuperCoins</span>
+          </p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Powered by Flipkart</p>
+        </div>
       </div>
 
       {/* Main card */}
@@ -190,6 +196,7 @@ export default function SuperCoinStatusCard({
               </div>
 
               {/* Toggle */}
+              {!hideToggle && (
               <button
                 ref={toggleRef}
                 type="button"
@@ -218,6 +225,7 @@ export default function SuperCoinStatusCard({
                   )}
                 </span>
               </button>
+              )}
             </div>
 
             <Separator className="bg-gray-200 dark:bg-gray-700/60" />
