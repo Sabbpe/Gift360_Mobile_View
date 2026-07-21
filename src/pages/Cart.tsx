@@ -11,11 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
 import { useGeneratePaymentToken } from "@/hooks/useGeneratePaymentToken";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
@@ -46,6 +45,7 @@ import {
 } from "@/api/supercoinApi";
 import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
+import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 
 const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
@@ -222,6 +222,7 @@ export default function Cart() {
 
   // NEW: Wallet feature
   const [useWalletBalance, setUseWalletBalance] = useState(false);
+  const [earnCashback, setEarnCashback] = useState(true);
   const [superCoinState, setSuperCoinState] = useState({
     enabled: false,
     eligible: false,
@@ -242,6 +243,14 @@ export default function Cart() {
         type: "MOBILE" as const,
       }
     : null;
+
+  // Dependency: SuperCoin selected → lock out cashback + wallet selection
+  useEffect(() => {
+    if (superCoinState.enabled) {
+      setUseWalletBalance(false);
+      setEarnCashback(false);
+    }
+  }, [superCoinState.enabled]);
 
   // Coupon code feature
   const [couponCode, setCouponCode] = useState("");
@@ -499,6 +508,7 @@ export default function Cart() {
     const paymentBreakdown = buildPaymentBreakdown(useWalletBalance);
     orderRequest.order.walletUsed = useWalletBalance;
     orderRequest.order.walletAmount = paymentBreakdown.walletDeduction;
+    orderRequest.order.earnCashback = earnCashback;
 
     console.log("[ensureOrder] Creating order request", {
       orderNumber: orderRequest.order.orderNumber,
@@ -904,6 +914,18 @@ export default function Cart() {
   );
   const uiTotalToPay = Number(finalPayable.toFixed(2));
   const estimatedEarn = finalPayable * 0.01;
+
+  // Cashback percentage from brand discounts (weighted average across cart items)
+  const cashbackPercent = useMemo(() => {
+    if (!cartItems.length) return 0;
+    const totalLine = cartItems.reduce((s, i) => s + i.lineTotal, 0);
+    if (totalLine <= 0) return 0;
+    return cartItems.reduce((sum, item) => {
+      const disc = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
+      return sum + (item.lineTotal / totalLine) * disc;
+    }, 0);
+  }, [cartItems, brandDiscountMap]);
+  const cashbackAmount = finalPayable * (cashbackPercent / 100);
 
   const buildPaymentBreakdown = (
     walletEnabled: boolean,
@@ -1672,120 +1694,200 @@ export default function Cart() {
 
                     <Separator className="my-3 sm:my-4" />
 
-                    {/* Redeem Rewards section header */}
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      Redeem Rewards
-                    </p>
+                    {/* ── Rewards Section ── */}
+                    <div className="space-y-3">
 
-                    {/* NEW: Wallet Balance Section - Always show, disable if zero */}
-                    <div
-                      className={`
-                        p-3 sm:p-4 rounded-lg border transition-all
-                        ${
-                          walletBalance > 0
-                            ? "bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.3)]"
-                            : "bg-muted/50 border-muted-foreground/20 opacity-60"
-                        }
-                      `}
-                    >
-                      <div className="flex items-start gap-2 sm:gap-3">
-                        <Checkbox
-                          id="useWallet"
-                          checked={useWalletBalance}
-                          onCheckedChange={(checked) => {
-                            const isChecked = checked as boolean;
-                            setUseWalletBalance(isChecked);
-                            if (isChecked) {
-                              setSuperCoinState((prev) => ({ ...prev, enabled: false }));
-                            }
-                          }}
-                          disabled={walletBalance <= 0 || superCoinState.enabled}
-                          className="mt-0.5"
-                        />
-                        <div className="flex-1">
-                          <label
-                            htmlFor="useWallet"
-                            className={`
-                              text-sm sm:text-base font-medium flex items-center gap-2
-                              ${
-                                walletBalance > 0
-                                  ? "cursor-pointer"
-                                  : "cursor-not-allowed"
-                              }
-                            `}
-                          >
-                            <Wallet
-                              className={`
-                                h-4 w-4 
-                                ${
-                                  walletBalance > 0
-                                    ? "text-[var(--cart-primary)]"
-                                    : "text-muted-foreground"
-                                }
-                              `}
-                            />
-                            Redeem Wallet Points
-                          </label>
-
-                          {/* âœ… NEW: Show 50% limit info */}
-                          <p
-                            className={`text-xs sm:text-sm mt-1 ${
-                              walletBalance > 0
-                                ? "text-muted-foreground"
-                                : "text-muted-foreground/60"
-                            }`}
-                          >
-                            Available: ₹{walletBalance.toFixed(2)} • Max: ₹
-                            {maxWalletUsage.toFixed(2)} (50% of cart)
-                          </p>
-
-                          {walletBalance <= 0 && (
-                            <p className="text-xs sm:text-sm text-muted-foreground/60 mt-1 italic">
-                              No wallet balance available
-                            </p>
-                          )}
-
-                          {/* âœ… UPDATED: Show actual deduction amount */}
-                          {useWalletBalance && walletDeduction > 0 && (
-                            <p className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 mt-1">
-                              -₹{walletDeduction.toFixed(2)} will be deducted
-                              {walletBalance > maxWalletUsage && (
-                                <span className="block text-xs text-muted-foreground mt-0.5">
-                                  (Limited to 50% of cart value)
+                      {/* 1. Earn Cashback Toggle */}
+                      <div
+                        className={`
+                          p-3 sm:p-4 rounded-xl border transition-all duration-200 ease-in-out
+                          ${earnCashback && !superCoinState.enabled
+                            ? "bg-[rgba(52,211,153,0.06)] border-[rgba(52,211,153,0.25)]"
+                            : superCoinState.enabled
+                              ? "bg-muted/30 border-muted-foreground/15 opacity-50 pointer-events-none"
+                              : "bg-muted/50 border-muted-foreground/20"
+                          }
+                        `}
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm sm:text-base font-medium cart-text-primary">
+                              Earn Cashback
+                              {cashbackPercent > 0 && (
+                                <span className="ml-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                                  ({cashbackPercent.toFixed(0)}%)
                                 </span>
                               )}
                             </p>
-                          )}
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              {earnCashback && !superCoinState.enabled && cashbackAmount > 0
+                                ? `Get ₹${cashbackAmount.toFixed(2)} added to your wallet after this purchase`
+                                : "Skip cashback on this purchase"}
+                            </p>
+                            {superCoinState.enabled && (
+                              <p className="text-[11px] text-muted-foreground/70 mt-1 italic">
+                                Cashback is not earned when redeeming SuperCoins for this purchase.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Toggle */}
+                          <button
+                            type="button"
+                            role="switch"
+                            aria-checked={earnCashback}
+                            disabled={superCoinState.enabled}
+                            onClick={() => {
+                              if (!superCoinState.enabled) {
+                                setEarnCashback(!earnCashback);
+                              }
+                            }}
+                            className={`
+                              relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border-2 border-transparent transition-colors duration-200
+                              focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background
+                              disabled:cursor-not-allowed disabled:opacity-50
+                              ${earnCashback && !superCoinState.enabled
+                                ? "bg-gray-900 dark:bg-gray-100"
+                                : superCoinState.enabled
+                                  ? "bg-gray-200 dark:bg-gray-700"
+                                  : "bg-gray-300 dark:bg-gray-600"
+                              }
+                            `}
+                          >
+                            <span
+                              className={`
+                                pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 flex items-center justify-center
+                                ${earnCashback && !superCoinState.enabled ? "translate-x-5" : "translate-x-0"}
+                              `}
+                            >
+                              {earnCashback && !superCoinState.enabled && (
+                                <Check className="h-3 w-3 text-gray-900" strokeWidth={3} />
+                              )}
+                            </span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <Separator className="bg-muted-foreground/10" />
+
+                      {/* 2. Radio Group: Apply Rewards */}
+                      <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                        Apply Rewards <span className="normal-case tracking-normal font-medium">(choose one)</span>
+                      </p>
+
+                      <div className="space-y-2.5">
+                        {/* Radio A: Wallet */}
+                        <div
+                          role="radio"
+                          aria-checked={useWalletBalance}
+                          aria-disabled={superCoinState.enabled}
+                          tabIndex={0}
+                          onClick={() => {
+                            if (!superCoinState.enabled) {
+                              setUseWalletBalance(!useWalletBalance);
+                            }
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") {
+                              e.preventDefault();
+                              if (!superCoinState.enabled) {
+                                setUseWalletBalance(!useWalletBalance);
+                              }
+                            }
+                          }}
+                          className={`
+                            relative p-3 sm:p-4 rounded-xl border transition-all duration-200 ease-in-out outline-none
+                            ${superCoinState.enabled
+                              ? "bg-muted/30 border-muted-foreground/15 opacity-50 pointer-events-none"
+                              : useWalletBalance
+                                ? "bg-[rgba(151,71,255,0.08)] border-l-[3px] border-l-[var(--cart-primary)] border-t border-r border-b border-t-[rgba(151,71,255,0.3)] border-r-[rgba(151,71,255,0.3)] border-b-[rgba(151,71,255,0.3)]"
+                                : "bg-[rgba(151,71,255,0.05)] border-[rgba(151,71,255,0.2)] cursor-pointer"
+                            }
+                          `}
+                        >
+                          <div className="flex items-start gap-3">
+                            {/* Radio circle */}
+                            <span
+                              className={`
+                                mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors duration-200
+                                ${superCoinState.enabled
+                                  ? "border-muted-foreground/30 bg-muted/20"
+                                  : useWalletBalance
+                                    ? "border-[var(--cart-primary)] bg-[var(--cart-primary)]"
+                                    : "border-muted-foreground/40 bg-transparent"
+                                }
+                              `}
+                            >
+                              {!superCoinState.enabled && useWalletBalance && (
+                                <span className="h-2 w-2 rounded-full bg-white" />
+                              )}
+                            </span>
+
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <Wallet className={`h-4 w-4 ${
+                                  superCoinState.enabled
+                                    ? "text-muted-foreground/50"
+                                    : useWalletBalance
+                                      ? "text-[var(--cart-primary)]"
+                                      : "text-[var(--cart-primary)]/70"
+                                }`} />
+                                <span className="text-sm sm:text-base font-medium cart-text-primary">
+                                  Redeem Wallet Points
+                                </span>
+                              </div>
+                              <p className={`text-xs sm:text-sm mt-1 ${
+                                superCoinState.enabled
+                                  ? "text-muted-foreground/50"
+                                  : "text-muted-foreground"
+                              }`}>
+                                Available: ₹{walletBalance.toFixed(2)} • Max: ₹{maxWalletUsage.toFixed(2)} (50% of cart)
+                              </p>
+                              {!superCoinState.enabled && walletBalance <= 0 && (
+                                <p className="text-xs text-muted-foreground/60 mt-1 italic">
+                                  No wallet balance available
+                                </p>
+                              )}
+                              {!superCoinState.enabled && useWalletBalance && walletDeduction > 0 && (
+                                <p className="text-xs sm:text-sm font-medium text-green-600 dark:text-green-400 mt-1">
+                                  -₹{walletDeduction.toFixed(2)} will be deducted
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* SuperCoin Card with Toggle */}
+                        <div
+                          className={`
+                            rounded-xl border transition-all duration-200 ease-in-out
+                            ${superCoinState.enabled
+                              ? "bg-[rgba(151,71,255,0.08)] border-l-[3px] border-l-[var(--cart-primary)] border-t border-r border-b border-t-[rgba(151,71,255,0.3)] border-r-[rgba(151,71,255,0.3)] border-b-[rgba(151,71,255,0.3)]"
+                              : earnCashback
+                                ? "bg-muted/30 border-muted-foreground/15 opacity-50 pointer-events-none"
+                                : "bg-[rgba(151,71,255,0.05)] border-[rgba(151,71,255,0.2)]"
+                            }
+                          `}
+                        >
+                          <SuperCoinStatusCard
+                            mobile={user?.mobile}
+                            enabled={superCoinState.enabled}
+                            maxRedeemable={maxSuperCoinRedeemable}
+                            estimatedEarn={estimatedEarn}
+                            onEnabledChange={(enabled) => {
+                              setSuperCoinState((prev) => ({ ...prev, enabled }));
+                            }}
+                            onStateChange={({ eligible, balance, enabled }) =>
+                              setSuperCoinState({
+                                eligible,
+                                balance,
+                                enabled,
+                              })
+                            }
+                          />
                         </div>
                       </div>
                     </div>
-
-                    <div className="flex items-center gap-2 py-1">
-                      <Separator className="flex-1" />
-                      <span className="text-xs text-muted-foreground whitespace-nowrap">OR</span>
-                      <Separator className="flex-1" />
-                    </div>
-
-                    <SuperCoinStatusCard
-                      mobile={user?.mobile}
-                      enabled={superCoinState.enabled}
-                      maxRedeemable={maxSuperCoinRedeemable}
-                      walletActive={useWalletBalance}
-                      estimatedEarn={estimatedEarn}
-                      onEnabledChange={(enabled) => {
-                        setSuperCoinState((prev) => ({ ...prev, enabled }));
-                        if (enabled) {
-                          setUseWalletBalance(false);
-                        }
-                      }}
-                      onStateChange={({ eligible, balance, enabled }) =>
-                        setSuperCoinState({
-                          eligible,
-                          balance,
-                          enabled,
-                        })
-                      }
-                    />
 
                     {/* Coupons section header */}
                     <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground pt-2">
@@ -1915,9 +2017,9 @@ export default function Cart() {
 
                     {superCoinDeduction > 0 && (
                       <div className="flex items-center justify-between text-emerald-500 dark:text-emerald-400">
-                        <span className="text-sm sm:text-base flex items-center gap-1">
-                          <Sparkles className="h-4 w-4" />
-                          SuperCoin Deduction
+                        <span className="text-sm sm:text-base flex items-center gap-1.5">
+                          SuperCoins discount
+                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
                         </span>
                         <span className="font-medium text-sm sm:text-base">
                           -₹{superCoinDeduction.toFixed(2)}

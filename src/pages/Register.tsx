@@ -71,7 +71,7 @@ export default function Register() {
     });
   };
 
-  const inputBase = "h-11 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/40 font-medium focus-visible:ring-amber-300/50 focus-visible:border-amber-300/50";
+  const inputBase = "h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/40 font-medium focus-visible:ring-amber-300/50 focus-visible:border-amber-300/50";
 
   return (
     <div className="auth-page auth-page--register">
@@ -92,20 +92,20 @@ export default function Register() {
         <div className="flex flex-col items-center anim-fade-up">
           <div className="relative mb-3">
             <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
-            <div className="relative w-16 h-16 rounded-3xl bg-blackcard card-edge flex items-center justify-center g-float">
+            <div className="relative w-16 h-16 rounded-3xl bg-[#5343B2] card-edge flex items-center justify-center g-float">
               <Gift size={32} className="text-amber-300" />
             </div>
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight">
-            <span className="text-gold-gradient">Create Account</span>
+            <span className="text-black">Create Account</span>
           </h1>
-          <p className="text-white/70 text-sm mt-1 font-medium">Join Gift360 today</p>
+          <p className="text-black text-sm mt-1 font-medium">Join Gift360 today</p>
         </div>
 
-        {/* Premium black card */}
+        {/* Premium purple card */}
         <div className="mt-6 anim-fade-up delay-200">
-          <div className="relative rounded-3xl bg-blackcard card-edge p-6 overflow-hidden">
-            <div className="pointer-events-none absolute -top-12 -left-12 w-72 h-32 bg-gradient-to-r from-transparent via-amber-200/15 to-transparent anim-hologram" />
+          <div className="relative rounded-3xl bg-[#5343B2] card-edge p-6 overflow-hidden">
+            <div className="pointer-events-none absolute -top-12 -left-12 w-72 h-32 bg-gradient-to-r from-transparent via-white/10 to-transparent anim-hologram" />
 
             <div className="flex items-center gap-2 mb-5">
               <Sparkles className="h-4 w-4 text-amber-300" />
@@ -156,7 +156,7 @@ export default function Register() {
                   </div>
                   <button type="button" onClick={handleSendOtp}
                     disabled={!validateMobile(mobile) || !validateEmail(email) || !fullName.trim() || registerSendOtpMutation.isPending || otpSent}
-                    className={`h-11 px-3 rounded-2xl font-bold text-xs whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${
+                    className={`h-12 px-4 rounded-2xl font-bold text-xs whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${
                       otpSent
                         ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200"
                         : "bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/30 hover:brightness-110"
@@ -179,10 +179,10 @@ export default function Register() {
                   <div className="flex gap-2">
                     <Input type="text" placeholder="• • • • • •" value={otp} maxLength={6}
                       onChange={(e) => { if (!/^[0-9]*$/.test(e.target.value)) return; setOtp(e.target.value); }}
-                      className={`${inputBase} h-11 font-bold text-lg tracking-[0.4em] text-center placeholder:text-white/30`} />
+                      className={`${inputBase} h-12 font-bold text-lg tracking-[0.4em] text-center placeholder:text-white/30`} />
                     <button type="button" onClick={handleVerifyOtp}
                       disabled={!validateOtp(otp) || registerVerifyOtpMutation.isPending}
-                      className="h-11 px-3 rounded-2xl font-bold text-xs whitespace-nowrap bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 inline-flex items-center gap-1">
+                      className="h-12 px-4 rounded-2xl font-bold text-xs whitespace-nowrap bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 inline-flex items-center gap-1">
                       {registerVerifyOtpMutation.isPending ? "Verifying..." : (<>Verify <ChevronRight className="h-4 w-4" /></>)}
                     </button>
                   </div>
@@ -194,15 +194,15 @@ export default function Register() {
 
         {/* Footer */}
         <div className="mt-auto pt-6 text-center anim-fade-up delay-300">
-          <p className="text-sm text-black/70 font-medium">
+          <p className="text-sm text-black font-medium">
             Already have an account?{" "}
-            <Link href="/login"><button className="font-bold text-gold-gradient hover:underline">Sign in</button></Link>
+            <Link href="/login"><button className="font-bold text-black hover:underline">Sign in</button></Link>
           </p>
-          <p className="text-center text-[11px] text-black/40 mt-4 font-medium px-6">
+          <p className="text-center text-[11px] text-black mt-4 font-medium px-6">
             By creating an account, you agree to our{" "}
-            <Link href="/terms"><button className="text-black/60 hover:text-amber-300 underline-offset-2">Terms</button></Link>
+            <Link href="/terms"><button className="text-black hover:text-black underline-offset-2">Terms</button></Link>
             {" "}and{" "}
-            <Link href="/privacy"><button className="text-black/60 hover:text-amber-300 underline-offset-2">Privacy Policy</button></Link>
+            <Link href="/privacy"><button className="text-black hover:text-black underline-offset-2">Privacy Policy</button></Link>
           </p>
         </div>
       </div>

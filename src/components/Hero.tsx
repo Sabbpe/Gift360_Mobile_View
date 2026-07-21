@@ -1,4 +1,4 @@
-import { Bell, Eye, EyeOff, Gift, Send, ScanLine, UserPlus } from "lucide-react";
+import { Bell, Eye, EyeOff, Gift, Send, ScanLine, UserPlus, User } from "lucide-react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -125,9 +125,9 @@ export default function Hero() {
               <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-400" style={{ boxShadow: "0 0 0 2px hsl(252,80%,58%)" }} />
             </button>
             <button onClick={() => setLocation("/profile")}
-              className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-orange-900 active:scale-95 transition-transform"
+              className="w-10 h-10 rounded-full flex items-center justify-center active:scale-95 transition-transform"
               style={{ background: "#FCD34D" }}>
-              {firstName[0]?.toUpperCase()}
+              <User className="w-5 h-5 text-orange-900" />
             </button>
           </div>
         </div>

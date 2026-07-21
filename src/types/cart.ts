@@ -38,6 +38,7 @@ export interface OrderRequest {
     status: string;
     walletUsed?: boolean; 
     walletAmount?: number;
+    earnCashback?: boolean;
   };
   items: {
     brandId: string;

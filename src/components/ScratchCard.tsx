@@ -84,30 +84,30 @@ export function ScratchCard({
     canvas.style.height = rect.height + "px";
 
     const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
-    gradient.addColorStop(0,   "#4338ca");
-    gradient.addColorStop(0.5, "#6366f1");
-    gradient.addColorStop(1,   "#818cf8");
+    gradient.addColorStop(0,   "#2D1B69");
+    gradient.addColorStop(0.5, "#4A1F8E");
+    gradient.addColorStop(1,   "#6D28D9");
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, rect.width, rect.height);
 
     const shimmer = ctx.createLinearGradient(0, 0, rect.width, 0);
     shimmer.addColorStop(0,   "rgba(255,255,255,0)");
-    shimmer.addColorStop(0.5, "rgba(255,255,255,0.2)");
+    shimmer.addColorStop(0.5, "rgba(255,215,0,0.15)");
     shimmer.addColorStop(1,   "rgba(255,255,255,0)");
     ctx.fillStyle = shimmer;
     ctx.fillRect(0, 0, rect.width, rect.height);
 
-    ctx.font         = "bold 17px 'Outfit', system-ui, sans-serif";
+    ctx.font         = "bold 17px 'Poppins', system-ui, sans-serif";
     ctx.fillStyle    = "rgba(255,255,255,0.95)";
     ctx.textAlign    = "center";
     ctx.textBaseline = "middle";
-    ctx.shadowColor  = "rgba(0,0,0,0.25)";
-    ctx.shadowBlur   = 8;
+    ctx.shadowColor  = "rgba(0,0,0,0.3)";
+    ctx.shadowBlur   = 10;
     ctx.fillText("✨ Scratch to Reveal", rect.width / 2, rect.height / 2 - 10);
-    ctx.font      = "13px 'Outfit', system-ui, sans-serif";
-    ctx.fillStyle = "rgba(255,255,255,0.8)";
-    ctx.shadowBlur = 4;
-    ctx.fillText("Tap here to use or gift", rect.width / 2, rect.height / 2 + 12);
+    ctx.font      = "13px 'Poppins', system-ui, sans-serif";
+    ctx.fillStyle = "rgba(255,215,0,0.8)";
+    ctx.shadowBlur = 6;
+    ctx.fillText("Tap here to use or gift", rect.width / 2, rect.height / 2 + 14);
   }, [voucherState]);
 
   // ── Scratch interaction — opens gate instead of revealing directly ─────────
@@ -125,11 +125,12 @@ export function ScratchCard({
       <Card
         className={`relative overflow-hidden transition-all duration-300 ${
           voucherState === "SCRATCHED"
-            ? "ring-2 ring-indigo-400 shadow-xl shadow-indigo-200/40"
+            ? "ring-2 ring-amber-400/60"
             : voucherState === "GIFTED"
-            ? "ring-2 ring-rose-300 shadow-lg shadow-rose-100/40"
-            : "hover:shadow-lg hover:shadow-indigo-100/50"
-        } bg-gradient-to-br from-slate-50 to-slate-100`}
+            ? "ring-2 ring-amber-300/40"
+            : ""
+        } bg-gradient-to-br from-[#1E1335] to-[#2D1B69]`}
+        style={{ boxShadow: '4px 4px 6px 0px #6E66E74D' }}
       >
         <CardContent className="p-5">
           {/* ── Voucher body (always rendered underneath) ── */}
@@ -137,17 +138,17 @@ export function ScratchCard({
             {/* Header */}
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-indigo-700 flex items-center justify-center shadow-md">
-                  <Sparkles className="h-5 w-5 text-white" />
+                <div className="w-11 h-11 rounded-xl bg-gold-gradient flex items-center justify-center shadow-md">
+                  <Sparkles className="h-5 w-5 text-amber-950" />
                 </div>
                 <div>
-                  <p className="text-xs font-medium text-slate-500">Gift Voucher</p>
-                  <p className="font-bold text-sm text-slate-700">{brandName || `Card #${index + 1}`}</p>
+                  <p className="text-xs font-medium text-amber-300/70">Gift Voucher</p>
+                  <p className="font-bold text-sm text-white">{brandName || `Card #${index + 1}`}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs font-medium text-slate-500 mb-0.5">Value</p>
-                <p className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-indigo-800 bg-clip-text text-transparent">
+                <p className="text-xs font-medium text-amber-300/70 mb-0.5">Value</p>
+                <p className="text-3xl font-bold text-gold-gradient">
                   ₹{amount}
                 </p>
               </div>
@@ -155,49 +156,49 @@ export function ScratchCard({
 
             {/* Card details */}
             <div className="space-y-2.5">
-              <div className="p-3.5 bg-white rounded-lg border border-slate-200 shadow-sm">
+              <div className="p-3.5 bg-white/5 rounded-lg border border-white/10 shadow-sm backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <CreditCard className="h-3.5 w-3.5 text-indigo-600" />
-                  <p className="text-xs font-semibold text-slate-600">Card Number</p>
+                  <CreditCard className="h-3.5 w-3.5 text-amber-300" />
+                  <p className="text-xs font-semibold text-amber-300/70">Card Number</p>
                 </div>
-                <p className="font-mono font-bold text-base tracking-wide text-slate-800">
+                <p className="font-mono font-bold text-base tracking-wide text-white">
                   {voucherState === "SCRATCHED" ? cardNumber : "••••  ••••  ••••"}
                 </p>
               </div>
 
-              <div className="p-3.5 bg-white rounded-lg border border-slate-200 shadow-sm">
+              <div className="p-3.5 bg-white/5 rounded-lg border border-white/10 shadow-sm backdrop-blur-sm">
                 <div className="flex items-center gap-2 mb-1.5">
-                  <Lock className="h-3.5 w-3.5 text-indigo-700" />
-                  <p className="text-xs font-semibold text-slate-600">Card PIN</p>
+                  <Lock className="h-3.5 w-3.5 text-amber-300" />
+                  <p className="text-xs font-semibold text-amber-300/70">Card PIN</p>
                 </div>
-                <p className="font-mono font-bold text-base tracking-widest text-slate-800">
+                <p className="font-mono font-bold text-base tracking-widest text-white">
                   {voucherState === "SCRATCHED" ? cardPin : "••••••"}
                 </p>
               </div>
 
               <div className="flex items-center justify-between pt-1">
                 <div className="flex items-center gap-2">
-                  <Calendar className="h-3.5 w-3.5 text-slate-500" />
+                  <Calendar className="h-3.5 w-3.5 text-amber-300/50" />
                   <div>
-                    <p className="text-[10px] font-medium text-slate-500">Expires</p>
-                    <p className="text-xs font-bold text-slate-700">{expiryDate}</p>
+                    <p className="text-[10px] font-medium text-amber-300/50">Expires</p>
+                    <p className="text-xs font-bold text-white">{expiryDate}</p>
                   </div>
                 </div>
 
                 {/* Status badge */}
                 {voucherState === "SCRATCHED" && (
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full text-xs font-bold shadow-sm">
+                  <div className="px-3 py-1.5 bg-gold-gradient text-amber-950 rounded-full text-xs font-bold shadow-sm">
                     ✓ Revealed
                   </div>
                 )}
                 {voucherState === "GIFTED" && (
-                  <div className="px-3 py-1.5 bg-gradient-to-r from-rose-400 to-pink-500 text-white rounded-full text-xs font-bold shadow-sm flex items-center gap-1">
+                  <div className="px-3 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-full text-xs font-bold shadow-sm flex items-center gap-1">
                     <Send className="h-3 w-3" />
                     Gifted
                   </div>
                 )}
                 {voucherState === "PENDING" && (
-                  <div className="px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">
+                  <div className="px-3 py-1.5 bg-white/10 text-amber-300 rounded-full text-xs font-bold border border-white/20">
                     Active
                   </div>
                 )}
@@ -218,13 +219,13 @@ export function ScratchCard({
 
           {/* ── Gifted overlay ── */}
           {voucherState === "GIFTED" && (
-            <div className="absolute inset-0 z-10 bg-gradient-to-br from-rose-50/95 to-pink-50/95 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 rounded-lg">
-              <div className="w-14 h-14 rounded-full bg-rose-100 flex items-center justify-center">
-                <Gift className="h-7 w-7 text-rose-500" />
+            <div className="absolute inset-0 z-10 bg-gradient-to-br from-[#1E1335]/95 to-[#2D1B69]/95 backdrop-blur-[2px] flex flex-col items-center justify-center gap-3 rounded-lg anim-scale-in">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-amber-400 to-yellow-500 flex items-center justify-center shadow-lg shadow-amber-500/30">
+                <Gift className="h-7 w-7 text-amber-950" />
               </div>
               <div className="text-center">
-                <p className="font-bold text-slate-700 text-sm">Voucher Gifted</p>
-                <p className="text-xs text-slate-500 mt-0.5">Sent to the recipient's email</p>
+                <p className="font-bold text-white text-sm">Voucher Gifted</p>
+                <p className="text-xs text-amber-300/60 mt-0.5">Sent to the recipient</p>
               </div>
             </div>
           )}
@@ -232,8 +233,8 @@ export function ScratchCard({
           {/* ── Revealed celebration overlay ── */}
           {voucherState === "SCRATCHED" && (
             <div className="absolute inset-0 z-20 pointer-events-none">
-              <div className="absolute inset-0 bg-gradient-to-r from-indigo-400/5 via-transparent to-indigo-400/5 animate-pulse" />
-              <div className="absolute top-3 right-3 bg-gradient-to-r from-indigo-500 to-indigo-700 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg animate-bounce">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 via-transparent to-amber-400/10 animate-pulse" />
+              <div className="absolute top-3 right-3 bg-gold-gradient text-amber-950 px-3 py-1 rounded-full text-xs font-bold shadow-lg shadow-amber-500/30 animate-bounce">
                 🎉 Revealed!
               </div>
             </div>

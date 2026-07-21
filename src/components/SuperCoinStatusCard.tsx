@@ -1,9 +1,10 @@
-﻿import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
+﻿import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { Loader2, Sparkles } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { Loader2, Info, Check } from "lucide-react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import confetti from "canvas-confetti";
+import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import { Separator } from "@/components/ui/separator";
 
 type SuperCoinStatusCardProps = {
   mobile?: string;
@@ -11,7 +12,6 @@ type SuperCoinStatusCardProps = {
   onEnabledChange?: (enabled: boolean) => void;
   onStateChange?: (state: { eligible: boolean; balance: number; enabled: boolean }) => void;
   maxRedeemable?: number;
-  walletActive?: boolean;
   estimatedEarn?: number;
 };
 
@@ -21,7 +21,6 @@ export default function SuperCoinStatusCard({
   onEnabledChange,
   onStateChange,
   maxRedeemable,
-  walletActive = false,
   estimatedEarn,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
@@ -83,35 +82,6 @@ export default function SuperCoinStatusCard({
   const isEligible = hasBalanceData && balance > 0;
   const isEnrolled = Boolean(identity && userExists);
   const isBusy = searchUserMutation.isPending || balanceMutation.isPending;
-  const statusLabel = !identity
-    ? "Login required"
-    : hasSearchError
-      ? "Unable to verify"
-      : searchUserMutation.isPending
-        ? "Checking..."
-        : !userExists && searchUserMutation.data
-          ? "Not enrolled"
-          : balanceMutation.isPending
-            ? "Fetching balance..."
-            : userExists && balanceResult && balance === 0
-              ? "No coins"
-              : userExists
-                ? "Eligible"
-              : "Check required";
-
-  const statusTone = !identity
-    ? "bg-muted text-muted-foreground"
-    : hasSearchError
-      ? "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20"
-      : isBusy
-        ? "bg-sky-500/10 text-sky-300 border-sky-500/20"
-        : !userExists && searchUserMutation.data
-          ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-          : userExists && balanceResult && balance === 0
-            ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20"
-            : userExists
-              ? "bg-green-500/10 text-green-700 dark:text-green-400 border-green-500/20"
-            : "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20";
 
   const notEnrolledMessage =
     !userExists && searchUserMutation.data && !hasSearchError
@@ -126,100 +96,169 @@ export default function SuperCoinStatusCard({
         : "SuperCoin is unavailable at the moment. You can still continue with your purchase."
       : "";
   const activeDeduction = localEnabled && isEligible ? Math.min(balance, maxRedeemable ?? balance) : 0;
-  const balanceLabel = isBusy
-    ? "Checking..."
-    : (hasSearchError || hasBalanceError)
-      ? "Unavailable"
-      : balanceResult
-        ? `${balance.toFixed(2)} SC`
-        : "-";
+
+  const toggleDisabled = isBusy || (maxRedeemable !== undefined && maxRedeemable <= 0);
+  const availableBalance = localEnabled && activeDeduction > 0
+    ? Math.max(0, balance - activeDeduction)
+    : balance;
+
+  const toggleRef = useRef<HTMLButtonElement>(null);
+
+  const prefersReducedMotion =
+    typeof window !== "undefined" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const fireToggleConfetti = useCallback(() => {
+    if (prefersReducedMotion) return;
+    const el = toggleRef.current;
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const x = (rect.left + rect.width / 2) / window.innerWidth;
+    const y = (rect.top + rect.height / 2) / window.innerHeight;
+    confetti({
+      particleCount: 40,
+      spread: 70,
+      startVelocity: 25,
+      scalar: 0.7,
+      origin: { x, y },
+      colors: ["#7C3AED", "#FBBF24", "#FFFFFF", "#34D399"],
+      ticks: 100,
+    });
+  }, [prefersReducedMotion]);
 
   return (
-    <div
-      className={`p-3 sm:p-4 rounded-xl border-2 transition-all ${
-        isEnrolled
-          ? "bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.3)]"
-          : isBusy
-            ? "bg-[rgba(151,71,255,0.04)] border-[rgba(151,71,255,0.15)]"
-            : "bg-muted/50 border-muted-foreground/20 opacity-60"
-      }`}
-    >
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <label className="text-sm sm:text-base font-medium flex items-center gap-2">
-            <img
-              src="/supercoin-logo.png"
-              alt="SuperCoin"
-              className="h-10 w-auto object-contain"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = "none";
-              }}
-            />
-            {hasBalanceData && (
-              <span className="text-xs text-muted-foreground ml-1">
-                · Balance: {balance.toFixed(2)} SC
-              </span>
-            )}
-          </label>
-          <Badge className={statusTone}>{statusLabel}</Badge>
-        </div>
+    <div className="space-y-3">
+      {/* Section header */}
+      <div className="flex items-center gap-1.5">
+        <p className="text-sm font-semibold cart-text-primary">
+          Save more with{" "}
+          <span className="text-[#5B3FFF] font-bold">SuperCoin</span>
+        </p>
+        <Info className="h-4 w-4 text-muted-foreground/50" />
+      </div>
 
-        {isEligible && (
+      {/* Main card */}
+      <div
+        className={`
+          rounded-xl border p-4 space-y-3 transition-all duration-200 ease-in-out
+          ${localEnabled && isEnrolled
+            ? "bg-[rgba(151,71,255,0.08)] border-l-[3px] border-l-[var(--cart-primary)] border-t border-r border-b border-t-[rgba(151,71,255,0.3)] border-r-[rgba(151,71,255,0.3)] border-b-[rgba(151,71,255,0.3)]"
+            : "border-gray-200 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/40"
+          }
+        `}
+      >
+        {/* Loading skeleton */}
+        {isBusy && !balanceResult && (
+          <div className="flex items-center justify-center py-5">
+            <Loader2 className="h-5 w-5 animate-spin text-[#6D5AE6]" />
+          </div>
+        )}
+
+        {/* No identity */}
+        {!identity && !isBusy && (
+          <p className="text-xs text-muted-foreground py-1">
+            Add a mobile number to use SuperCoin.
+          </p>
+        )}
+
+        {/* Not enrolled */}
+        {notEnrolledMessage && (
+          <p className="text-xs text-muted-foreground py-1">
+            {notEnrolledMessage}
+          </p>
+        )}
+
+        {/* Enrolled content */}
+        {isEnrolled && (
           <>
+            {/* Top row: used info + toggle */}
             <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-sm font-medium cart-text-primary">Use SuperCoin</p>
-                <p className="text-xs text-muted-foreground">
-                  {walletActive
-                    ? ""
-                    : maxRedeemable !== undefined && maxRedeemable > 0 && maxRedeemable < balance
-                      ? `Up to ${maxRedeemable.toFixed(2)} SC can be redeemed`
-                      : "Reduce your payable amount"}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm cart-text-primary">
+                  Used{" "}
+                  <img
+                    src={superCoinIcon}
+                    alt=""
+                    className="inline h-3.5 w-3.5 align-middle -mt-px"
+                  />{" "}
+                  <span className="font-bold">{activeDeduction > 0 ? Math.round(activeDeduction) : 0}</span>{" "}
+                  to save <span className="font-bold">₹{activeDeduction.toFixed(2)}</span>
+                </p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Available balance: {availableBalance.toFixed(2)}
                 </p>
               </div>
-              <Switch
-                checked={localEnabled}
-                onCheckedChange={(checked) => {
-                  const nextEnabled = Boolean(checked);
+
+              {/* Toggle */}
+              <button
+                ref={toggleRef}
+                type="button"
+                role="switch"
+                aria-checked={localEnabled}
+                disabled={toggleDisabled}
+                onClick={() => {
+                  const nextEnabled = !localEnabled;
                   setLocalEnabled(nextEnabled);
                   onEnabledChange?.(nextEnabled);
+                  if (nextEnabled) fireToggleConfetti();
                 }}
-                disabled={isBusy || (maxRedeemable !== undefined && maxRedeemable <= 0) || walletActive}
-              />
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 ${
+                  localEnabled
+                    ? "bg-gray-900 dark:bg-gray-100"
+                    : "bg-gray-300 dark:bg-gray-600"
+                }`}
+              >
+                <span
+                  className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform flex items-center justify-center ${
+                    localEnabled ? "translate-x-5" : "translate-x-0"
+                  }`}
+                >
+                  {localEnabled && (
+                    <Check className="h-3 w-3 text-gray-900" strokeWidth={3} />
+                  )}
+                </span>
+              </button>
             </div>
 
-            {activeDeduction > 0 && (
-              <p className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                You save ₹{activeDeduction.toFixed(2)}
+            <Separator className="bg-gray-200 dark:bg-gray-700/60" />
+
+            {/* Earn cashback line */}
+            {estimatedEarn !== undefined && estimatedEarn > 0 && (
+              <p className="text-xs text-muted-foreground">
+                Earn up to ₹{estimatedEarn.toFixed(2)} in cashback as SuperCoins on this booking
               </p>
+            )}
+
+            {/* Inline error inside card */}
+            {errorMessage && (
+              <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
+                <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+                  {errorMessage}
+                </p>
+              </div>
             )}
           </>
         )}
 
-        {isEnrolled && estimatedEarn !== undefined && estimatedEarn > 0 && (
-          <>
-            <p className="text-xs text-muted-foreground pt-1 border-t border-border/50">
-              <Sparkles className="h-3 w-3 inline mr-1 text-amber-400" />
-              You'll earn <span className="font-semibold text-emerald-600 dark:text-emerald-400">{estimatedEarn.toFixed(2)} SC</span> back on this purchase
+        {/* Error for non-enrolled or general errors when not in enrolled block */}
+        {!isEnrolled && errorMessage && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/40">
+            <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+              {errorMessage}
             </p>
-            <p className="text-[10px] text-muted-foreground/70">
-              Fractional earnings carry over to your next purchase.
-            </p>
-          </>
-        )}
-
-        {!identity && (
-          <p className="text-xs text-muted-foreground italic">Add a mobile number to use SuperCoin.</p>
-        )}
-
-        {notEnrolledMessage && (
-          <p className="text-xs text-amber-600 dark:text-amber-400">{notEnrolledMessage}</p>
-        )}
-
-        {(hasSearchError || hasBalanceError) && (
-          <p className="text-xs text-red-500">{errorMessage}</p>
+          </div>
         )}
       </div>
+
+      {/* Success banner below card */}
+      {localEnabled && isEligible && activeDeduction > 0 && (
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+          <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={2.5} />
+          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            Yay! You saved ₹{activeDeduction.toFixed(2)} on this booking!
+          </p>
+        </div>
+      )}
     </div>
   );
 }

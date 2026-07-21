@@ -146,12 +146,12 @@ export function ScratchGate({
         onInteractOutside={(e) => { if (isLoading) e.preventDefault(); }}
       >
         {/* Header — fixed, never scrolls */}
-        <div className="bg-gradient-to-br from-indigo-600 to-indigo-800 p-6 text-white shrink-0">
+        <div className="bg-[#9747FF] p-6 text-white shrink-0">
           <DialogHeader>
-            <DialogTitle className="text-white text-xl font-semibold font-[Outfit]">
+            <DialogTitle className="text-black text-xl font-semibold">
               {step === "choice" ? "What would you like to do?" : "Gift this voucher"}
             </DialogTitle>
-            <DialogDescription className="text-indigo-200 text-sm mt-1">
+            <DialogDescription className="text-black/60 text-sm mt-1">
               {step === "choice" ? `${brandName} · ₹${voucherAmount}` : "Personalise your gift below."}
             </DialogDescription>
           </DialogHeader>
@@ -162,7 +162,7 @@ export function ScratchGate({
             Back/Send Gift buttons) never get clipped on short phone
             viewports the way they were under the old plain overflow-hidden
             container. */}
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 overflow-y-auto" style={{ background: 'linear-gradient(179.75deg, #9747FF -117.65%, #FFFFFF 99.79%)' }}>
           {step === "choice" && (
             <ChoiceStep
               onScratch={handleScratchConfirm} onGift={() => setStep("gift_form")} onLater={handleClose}
@@ -199,20 +199,20 @@ function ChoiceStep({ onScratch, onGift, onLater, isScratchLoading, isLoading }:
   return (
     <div className="space-y-3">
       <button onClick={onScratch} disabled={isLoading}
-        className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-indigo-200 hover:border-indigo-500 hover:bg-indigo-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group">
-        <div className="w-11 h-11 rounded-xl bg-indigo-100 group-hover:bg-indigo-200 flex items-center justify-center flex-shrink-0 transition-colors">
-          {isScratchLoading ? <Loader2 className="h-5 w-5 text-indigo-600 animate-spin" /> : <Sparkles className="h-5 w-5 text-indigo-600" />}
+        className="w-full flex items-center gap-4 p-4 rounded-xl bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/20 hover:brightness-110 active:scale-[0.98] transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group">
+        <div className="w-11 h-11 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
+          {isScratchLoading ? <Loader2 className="h-5 w-5 text-amber-950 animate-spin" /> : <Sparkles className="h-5 w-5 text-amber-950" />}
         </div>
         <div>
-          <p className="font-semibold text-slate-800 text-sm">Use myself</p>
-          <p className="text-xs text-slate-500 mt-0.5">Reveal the code now for personal use</p>
+          <p className="font-bold text-sm">Use myself</p>
+          <p className="text-xs text-amber-950/70 mt-0.5">Reveal the code now for personal use</p>
         </div>
       </button>
 
       <button onClick={onGift} disabled={isLoading}
-        className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-rose-200 hover:border-rose-400 hover:bg-rose-50 transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group">
-        <div className="w-11 h-11 rounded-xl bg-rose-100 group-hover:bg-rose-200 flex items-center justify-center flex-shrink-0 transition-colors">
-          <Gift className="h-5 w-5 text-rose-500" />
+        className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-[rgba(151,71,255,0.3)] hover:border-[#9747FF] hover:bg-[rgba(151,71,255,0.05)] transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed group">
+        <div className="w-11 h-11 rounded-xl bg-[rgba(151,71,255,0.1)] group-hover:bg-[rgba(151,71,255,0.2)] flex items-center justify-center flex-shrink-0 transition-colors">
+          <Gift className="h-5 w-5 text-[#9747FF]" />
         </div>
         <div>
           <p className="font-semibold text-slate-800 text-sm">Gift to someone</p>
@@ -221,7 +221,7 @@ function ChoiceStep({ onScratch, onGift, onLater, isScratchLoading, isLoading }:
       </button>
 
       <button onClick={onLater} disabled={isLoading}
-        className="w-full flex items-center justify-center gap-2 p-3 rounded-xl text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-all text-sm font-medium disabled:opacity-50">
+        className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-slate-200 text-slate-500 hover:text-slate-700 hover:bg-slate-50 transition-all text-sm font-medium disabled:opacity-50 min-h-[44px]">
         <X className="h-4 w-4" /> Decide later
       </button>
     </div>
@@ -234,9 +234,9 @@ function ChannelPicker({ channel, setChannel, isLoading }: {
   channel: DeliveryChannel; setChannel: (c: DeliveryChannel) => void; isLoading: boolean;
 }) {
   const opts: { value: DeliveryChannel; label: string; sub: string; icon: React.ReactNode }[] = [
-    { value: "WHATSAPP", label: "WhatsApp",    sub: "Instant delivery",    icon: <MessageCircle className="h-4 w-4" /> },
-    { value: "EMAIL",    label: "Email",       sub: "Rich gift card",      icon: <Mail className="h-4 w-4" /> },
-    { value: "BOTH",     label: "Both",        sub: "Maximum reach",       icon: <><MessageCircle className="h-3.5 w-3.5" /><Mail className="h-3.5 w-3.5" /></> },
+    { value: "WHATSAPP", label: "WhatsApp",    sub: "Instant delivery",    icon: <MessageCircle className="h-4 w-4 text-emerald-500" /> },
+    { value: "EMAIL",    label: "Email",       sub: "Rich gift card",      icon: <Mail className="h-4 w-4 text-[#9747FF]" /> },
+    { value: "BOTH",     label: "Both",        sub: "Maximum reach",       icon: <><MessageCircle className="h-3.5 w-3.5 text-amber-500" /><Mail className="h-3.5 w-3.5 text-amber-500" /></> },
   ];
   return (
     <div className="grid grid-cols-3 gap-2">
@@ -244,12 +244,12 @@ function ChannelPicker({ channel, setChannel, isLoading }: {
         <button key={o.value} onClick={() => setChannel(o.value)} disabled={isLoading}
           className={`flex flex-col items-center gap-1 p-3 rounded-xl border-2 transition-all text-center disabled:opacity-50 ${
             channel === o.value
-              ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-              : "border-slate-200 hover:border-indigo-300 text-slate-600"
+              ? "border-[#9747FF] bg-[rgba(151,71,255,0.08)] text-[#9747FF]"
+              : "border-slate-200 hover:border-[#9747FF]/40 text-black/70"
           }`}>
           <div className="flex items-center gap-0.5">{o.icon}</div>
           <span className="text-xs font-semibold">{o.label}</span>
-          <span className="text-[10px] text-slate-400 leading-tight">{o.sub}</span>
+          <span className="text-[10px] text-black/60 leading-tight">{o.sub}</span>
         </button>
       ))}
     </div>
@@ -271,22 +271,22 @@ function GiftFormStep({
 
       {/* Channel picker */}
       <div className="space-y-1.5">
-        <Label className="text-sm font-medium text-slate-700">Send via</Label>
+        <Label className="text-sm font-medium text-black">Send via</Label>
         <ChannelPicker channel={channel} setChannel={setChannel} isLoading={isLoading} />
       </div>
 
       {/* WhatsApp number */}
       {(channel === "WHATSAPP" || channel === "BOTH") && (
         <div className="space-y-1.5">
-          <Label htmlFor="recipient-mobile" className="text-sm font-medium text-slate-700">
+          <Label htmlFor="recipient-mobile" className="text-sm font-medium text-black">
             WhatsApp number <span className="text-rose-500">*</span>
-            <span className="text-slate-400 font-normal ml-1">(with country code, e.g. 919876543210)</span>
+            <span className="text-black/60 font-normal ml-1">(with country code, e.g. 919876543210)</span>
           </Label>
           <div className="relative">
-            <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-green-500 pointer-events-none" />
+            <MessageCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-emerald-500 pointer-events-none" />
             <Input id="recipient-mobile" type="tel" placeholder="919876543210"
               value={recipientMobile} onChange={(e) => setRecipientMobile(e.target.value)}
-              disabled={isLoading} className={`pl-9 ${mobileError ? "border-red-400" : ""}`} autoComplete="off" />
+              disabled={isLoading} className={`pl-9 bg-white border-slate-200 text-black placeholder:text-black/30 focus-visible:ring-[#9747FF]/50 focus-visible:border-[#9747FF] ${mobileError ? "border-red-400" : ""}`} autoComplete="off" />
           </div>
           {mobileError && (
             <div className="flex items-center gap-1.5 text-xs text-red-600">
@@ -299,14 +299,14 @@ function GiftFormStep({
       {/* Email */}
       {(channel === "EMAIL" || channel === "BOTH") && (
         <div className="space-y-1.5">
-          <Label htmlFor="recipient-email" className="text-sm font-medium text-slate-700">
+          <Label htmlFor="recipient-email" className="text-sm font-medium text-black">
             Email address <span className="text-rose-500">*</span>
           </Label>
           <div className="relative">
-            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
             <Input id="recipient-email" type="email" placeholder="friend@example.com"
               value={recipientEmail} onChange={(e) => setRecipientEmail(e.target.value)}
-              disabled={isLoading} className={`pl-9 ${emailError ? "border-red-400" : ""}`} autoComplete="off" />
+              disabled={isLoading} className={`pl-9 bg-white border-slate-200 text-black placeholder:text-black/30 focus-visible:ring-[#9747FF]/50 focus-visible:border-[#9747FF] ${emailError ? "border-red-400" : ""}`} autoComplete="off" />
           </div>
           {emailError && (
             <div className="flex items-center gap-1.5 text-xs text-red-600">
@@ -318,47 +318,47 @@ function GiftFormStep({
 
       {/* Sender name */}
       <div className="space-y-1.5">
-        <Label htmlFor="sender-name" className="text-sm font-medium text-slate-700">
-          Your name <span className="text-slate-400 font-normal">(shown on the gift)</span>
+        <Label htmlFor="sender-name" className="text-sm font-medium text-black">
+          Your name <span className="text-black/60 font-normal">(shown on the gift)</span>
         </Label>
         <div className="relative">
-          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+          <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-black/40 pointer-events-none" />
           <Input id="sender-name" type="text" placeholder="e.g. Priya"
             value={senderName} onChange={(e) => setSenderName(e.target.value)}
-            disabled={isLoading} maxLength={100} className="pl-9" autoComplete="off" />
+            disabled={isLoading} maxLength={100} className="pl-9 bg-white border-slate-200 text-black placeholder:text-black/30 focus-visible:ring-[#9747FF]/50 focus-visible:border-[#9747FF]" autoComplete="off" />
         </div>
       </div>
 
       {/* Personal message */}
       <div className="space-y-1.5">
-        <Label htmlFor="personal-message" className="text-sm font-medium text-slate-700">
-          Personal message <span className="text-slate-400 font-normal">(optional)</span>
+        <Label htmlFor="personal-message" className="text-sm font-medium text-black">
+          Personal message <span className="text-black/60 font-normal">(optional)</span>
         </Label>
         <Textarea id="personal-message" placeholder="Add a note…"
           value={personalMessage} onChange={(e) => setPersonalMessage(e.target.value)}
-          disabled={isLoading} maxLength={500} rows={3} className="resize-none text-sm" />
-        <p className="text-xs text-slate-400 text-right">{personalMessage.length}/500</p>
+          disabled={isLoading} maxLength={500} rows={3} className="resize-none text-sm bg-white border-slate-200 text-black placeholder:text-black/30 focus-visible:ring-[#9747FF]/50 focus-visible:border-[#9747FF]" />
+        <p className="text-xs text-black/60 text-right">{personalMessage.length}/500</p>
       </div>
 
       {/* Media upload */}
       <div className="space-y-2">
-        <Label className="text-sm font-medium text-slate-700">
-          Add a photo or video <span className="text-slate-400 font-normal">(optional · max 20 MB)</span>
+        <Label className="text-sm font-medium text-black">
+          Add a photo or video <span className="text-black/60 font-normal">(optional · max 20 MB)</span>
         </Label>
         {mediaPreview ? (
-          <div className="relative rounded-xl overflow-hidden border border-slate-200">
+          <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white">
             {mediaType === "image"
               ? <img src={mediaPreview} alt="preview" className="w-full max-h-40 object-cover" />
               : <video src={mediaPreview} className="w-full max-h-40 object-cover" controls muted />}
             <button onClick={onClearMedia} disabled={isLoading}
-              className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors"
+              className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors shadow-sm"
               aria-label="Remove media">
-              <Trash2 className="h-3.5 w-3.5 text-slate-600" />
+              <Trash2 className="h-3.5 w-3.5 text-black/60" />
             </button>
           </div>
         ) : (
           <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 transition-all text-sm font-medium disabled:opacity-50">
+            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-[#9747FF]/40 hover:bg-[rgba(151,71,255,0.05)] text-black hover:text-[#9747FF] transition-all text-sm font-medium disabled:opacity-50">
             {isUploadingMedia
               ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</>
               : <><Camera className="h-4 w-4" /><Video className="h-4 w-4" /> Upload photo or video</>}
@@ -374,15 +374,15 @@ function GiftFormStep({
       </div>
 
       {/* Privacy notice */}
-      <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-amber-800">
+      <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-black">
         <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 mt-0.5 text-amber-600" />
         <span>Once gifted, the voucher code will be sent only to the recipient. You won't be able to view or use it.</span>
       </div>
 
       {/* Actions */}
       <div className="flex gap-3 pt-1">
-        <Button variant="outline" onClick={onBack} disabled={isLoading} className="flex-1">Back</Button>
-        <Button onClick={onConfirm} disabled={isLoading} className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white">
+        <Button variant="outline" onClick={onBack} disabled={isLoading} className="flex-1 border-slate-200 text-black hover:text-black/70 hover:bg-slate-50">Back</Button>
+        <Button onClick={onConfirm} disabled={isLoading} className="flex-1 bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/20 hover:brightness-110 border-0">
           {isGiftLoading || isUploadingMedia
             ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{isUploadingMedia ? "Uploading…" : "Sending…"}</>
             : <><Gift className="mr-2 h-4 w-4" />Send Gift</>}

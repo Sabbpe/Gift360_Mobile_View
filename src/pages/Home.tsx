@@ -17,6 +17,7 @@ import {
   ShoppingCart,
   Send,
   WalletCards,
+  User,
 } from "lucide-react";
 import Hero from "@/components/Hero";
 import Header from "@/components/Header";
@@ -28,7 +29,8 @@ import { Input } from "@/components/ui/input";
 import { useBrands } from "@/hooks/useBrands";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
-import gift360Wordmark from "@/assets/gift360-wordmark.png";
+import gWord from "@/assets/G word.png";
+import giftLogo from "@/assets/Gift.png";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -46,17 +48,19 @@ function getRecommendedBrandImage(brand: Brand): string | null {
 
 function HomeHeader() {
   const [, setLocation] = useLocation();
+  const { user } = useAuthContext();
+  const firstName = user?.name?.split(" ")[0];
 
   return (
     <header className="relative h-[142px] overflow-hidden rounded-b-[34px] bg-[linear-gradient(135deg,#523da9_0%,#4c42b8_48%,#5365df_100%)] px-[21px] pt-[40px] text-white">
       <div className="flex items-center justify-between">
-        <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi User!</h1>
+        <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi {firstName || "User"}!</h1>
         <div className="flex items-center gap-[14px]">
           <button onClick={() => setLocation("/notifications")} className="grid h-[20px] w-[20px] place-items-center active:scale-95" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </button>
-          <button onClick={() => setLocation("/profile")} className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#e99da8] text-[12px] font-semibold leading-none active:scale-95" aria-label="Profile">
-            H
+          <button onClick={() => setLocation("/profile")} className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#e99da8] text-white active:scale-95" aria-label="Profile">
+            <User className="h-[14px] w-[14px]" strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -93,7 +97,8 @@ function BalanceCard() {
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
           </button>
         </div>
-        <img src={gift360Wordmark} alt="Gift360" className="absolute bottom-[11px] right-[12px] h-[25px] w-[73px] object-contain" />
+        <img src={gWord} alt="Gift360" className="absolute bottom-[11px] right-[12px] h-[25px] w-[73px] object-contain" />
+        <img src={giftLogo} alt="" className="absolute bottom-[11px] right-[72px] h-[25px] w-auto object-contain" />
       </div>
     </section>
   );
