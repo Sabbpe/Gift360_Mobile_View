@@ -52,6 +52,7 @@ import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
+const SUPERCOIN_ACTIVE_HOLD_KEY = "superCoinActiveHold";
 
 type SuperCoinCountdownState = {
   display: string;
@@ -270,6 +271,7 @@ export default function Cart() {
       setCountdown(next);
       if (next.expired) {
         setSuperCoinAuthorized(false);
+        clearActiveSuperCoinHold();
         return;
       }
       timerRef.current = window.setTimeout(tick, 1000);
@@ -771,6 +773,51 @@ export default function Cart() {
     }
   };
 
+  const saveActiveSuperCoinHold = (holdContext: SuperCoinHoldContext) => {
+    try {
+      sessionStorage.setItem(SUPERCOIN_ACTIVE_HOLD_KEY, JSON.stringify(holdContext));
+    } catch {}
+  };
+
+  const loadActiveSuperCoinHold = (): SuperCoinHoldContext | null => {
+    try {
+      const raw = sessionStorage.getItem(SUPERCOIN_ACTIVE_HOLD_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw) as SuperCoinHoldContext;
+    } catch {
+      return null;
+    }
+  };
+
+  const clearActiveSuperCoinHold = () => {
+    try {
+      sessionStorage.removeItem(SUPERCOIN_ACTIVE_HOLD_KEY);
+    } catch {}
+  };
+
+  useEffect(() => {
+    const holdData = loadActiveSuperCoinHold();
+    if (!holdData) return;
+
+    const expiryMs =
+      holdData.stampExpiry ??
+      (holdData.transactionTime
+        ? new Date(holdData.transactionTime).getTime() + 15 * 60 * 1000
+        : 0);
+
+    if (expiryMs <= 0 || Date.now() >= expiryMs) {
+      clearActiveSuperCoinHold();
+      return;
+    }
+
+    superCoinHoldContextRef.current = holdData;
+    setSuperCoinHoldContext(holdData);
+    setSuperCoinAuthorized(true);
+    setSuperCoinHoldExpiryMs(expiryMs);
+    setTransactionTime(holdData.transactionTime ?? null);
+    setRewardMode("superCoins");
+  }, []);
+
   // Apply coupon function
   const applyCoupon = async () => {
     if (!cart?.items || cart.items.length === 0) return;
@@ -1042,6 +1089,7 @@ export default function Cart() {
     superCoinHoldContextRef.current = null;
     setSuperCoinHoldContext(null);
     setSuperCoinHoldExpiryMs(null);
+    clearActiveSuperCoinHold();
     if (orderNumber) {
       clearSuperCoinHoldForOrder(orderNumber);
     }
@@ -1067,6 +1115,7 @@ export default function Cart() {
       superCoinHoldContextRef.current = null;
       setSuperCoinHoldContext(null);
       setSuperCoinHoldExpiryMs(null);
+      clearActiveSuperCoinHold();
       clearSuperCoinHoldForOrder(orderNumber || superCoinOrderNumber || "");
     }
   };
@@ -1100,13 +1149,23 @@ export default function Cart() {
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (!superCoinIdentity || paymentInFlightRef.current) return;
+      const holdContext =
+        superCoinHoldContextRef.current || superCoinHoldContext || loadActiveSuperCoinHold();
+      if (!holdContext) return;
+      const payload = JSON.stringify({
+        identity: superCoinIdentity,
+        merchantTransactionId: holdContext.merchantTransactionId,
+        merchantWalletId: holdContext.merchantWalletId,
+      });
+      navigator.sendBeacon(
+        `${import.meta.env.VITE_API_BASE_URL || ""}/v1/supercoin/unhold`,
+        new Blob([payload], { type: "application/json" })
+      );
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
     return () => {
       window.removeEventListener("beforeunload", handleBeforeUnload);
-      if (paymentInFlightRef.current) return;
-      cancelSuperCoinHoldIfNeeded();
     };
   }, [superCoinIdentity]);
 
@@ -2320,6 +2379,7 @@ export default function Cart() {
               context.transactionTime ??
                 new Date((context.stampExpiry ?? Date.now() + 15 * 60 * 1000) - 15 * 60 * 1000).toISOString()
             );
+            saveActiveSuperCoinHold(context);
             if (superCoinOrderNumber) {
               saveSuperCoinHoldForOrder(superCoinOrderNumber, context);
             }
