@@ -13,13 +13,13 @@ export default defineConfig({
     },
   },
   server: {
-    port: 6688,
+    port: 7788,
     open: true,
     allowedHosts: ['giftvouchersuat.sabbpe.com','uat.gift360.io','pymntsuat.gift360.io','gvauth.sabbpe.com','vdspbck.sabbpe.com','notificationsuat.sabbpe.com']
   },
   preview: {
     host: "0.0.0.0",
-    port: 6688,
+    port: 7788,
     allowedHosts: ["gift360.io", "www.gift360.io", "uat.gift360.io"],
   },
 });
