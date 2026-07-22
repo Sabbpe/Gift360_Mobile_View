@@ -2,11 +2,16 @@
 import {
   enrolSuperCoinUser,
   fetchSuperCoinBalance,
+  initSuperCoinHold,
+  authorizeSuperCoinHold,
   normalizeMobileToE164,
   searchSuperCoinUser,
   type SuperCoinBalanceResponse,
   type SuperCoinIdentity,
+  type SuperCoinInitHoldResponse,
+  type SuperCoinAuthorizeHoldResponse,
   type SuperCoinSearchResponse,
+  type SuperCoinTransactionalPayload,
 } from "@/api/supercoinApi";
 
 export const useSuperCoinAccount = (mobile?: string) => {
@@ -47,3 +52,17 @@ export const useSuperCoinAccount = (mobile?: string) => {
     balanceMutation,
   };
 };
+
+export const useInitSuperCoinHold = () =>
+  useMutation<SuperCoinInitHoldResponse, Error, SuperCoinTransactionalPayload>({
+    mutationFn: (payload) => initSuperCoinHold(payload),
+  });
+
+export const useAuthorizeSuperCoinHold = () =>
+  useMutation<
+    SuperCoinAuthorizeHoldResponse,
+    Error,
+    Pick<SuperCoinTransactionalPayload, "identity" | "merchantWalletId" | "merchantTransactionId" | "otp">
+  >({
+    mutationFn: (payload) => authorizeSuperCoinHold(payload),
+  });

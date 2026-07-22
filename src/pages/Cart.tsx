@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check } from "lucide-react";
+import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check, Clock } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
 import { useGeneratePaymentToken } from "@/hooks/useGeneratePaymentToken";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
@@ -38,9 +38,11 @@ import CartTabs from "@/components/CartTabs";
 import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
+import SuperCoinOTPModal, {
+  type SuperCoinHoldContext,
+} from "@/components/SuperCoinOTPModal";
 import {
   cancelSuperCoinHold,
-  createSuperCoinHold as holdSuperCoin,
   normalizeMobileToE164,
 } from "@/api/supercoinApi";
 import { brandApi } from "@/lib/valuedesignApi";
@@ -51,22 +53,11 @@ const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
 
-type CheckoutState = {
-  orderId: string | null;
-  orderNumber: string | null;
-  reservationId: string | null;
-  couponCode: string;
-  couponApplied: boolean;
-  couponError: string | null;
-  discount: number;
-  finalAmount: number | null;
-  cartSignature: string;
-};
-
-type SuperCoinHoldContext = {
-  merchantTransactionId: string;
-  merchantWalletId: string;
-  amount: number;
+type SuperCoinCountdownState = {
+  display: string;
+  minutes: string;
+  seconds: string;
+  expired: boolean;
 };
 
 // Image validation function
@@ -229,8 +220,22 @@ export default function Cart() {
     eligible: false,
     balance: 0,
   });
+  const [superCoinOTPModalOpen, setSuperCoinOTPModalOpen] = useState(false);
+  const [superCoinAuthorized, setSuperCoinAuthorized] = useState(false);
   const [superCoinHoldContext, setSuperCoinHoldContext] = useState<SuperCoinHoldContext | null>(null);
   const superCoinHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
+  const paymentInFlightRef = useRef(false);
+  const [showSuperCoinRemoveDialog, setShowSuperCoinRemoveDialog] = useState(false);
+  const [superCoinOrderNumber, setSuperCoinOrderNumber] = useState("");
+  const [superCoinHoldExpiryMs, setSuperCoinHoldExpiryMs] = useState<number | null>(null);
+  const [transactionTime, setTransactionTime] = useState<string | null>(null);
+  const [countdown, setCountdown] = useState<SuperCoinCountdownState>({
+    display: "15:00",
+    minutes: "15",
+    seconds: "00",
+    expired: false,
+  });
+  const timerRef = useRef<number>(0);
   const { data: walletData } = useFetchWallet(user?.clientId);
   const superCoinMerchantWalletId =
     import.meta.env.VITE_SUPERCOIN_MERCHANT_WALLET_ID?.trim() || "";
@@ -245,13 +250,53 @@ export default function Cart() {
       }
     : null;
 
+  const calcCountdown = useCallback((txTime: string) => {
+    const startMs = new Date(txTime).getTime();
+    const endMs = startMs + 15 * 60 * 1000;
+    const now = Date.now();
+    const remaining = Math.max(0, endMs - now);
+    const minutes = String(Math.floor(remaining / 60000)).padStart(2, "0");
+    const seconds = String(Math.floor((remaining % 60000) / 1000)).padStart(2, "0");
+    return { display: `${minutes}:${seconds}`, minutes, seconds, expired: remaining <= 0 };
+  }, []);
+
+  useEffect(() => {
+    if (!superCoinAuthorized || !transactionTime) return;
+
+    let active = true;
+    const tick = () => {
+      if (!active) return;
+      const next = calcCountdown(transactionTime);
+      setCountdown(next);
+      if (next.expired) {
+        setSuperCoinAuthorized(false);
+        return;
+      }
+      timerRef.current = window.setTimeout(tick, 1000);
+    };
+    tick();
+
+    return () => {
+      active = false;
+      window.clearTimeout(timerRef.current);
+    };
+  }, [superCoinAuthorized, transactionTime, calcCountdown]);
+
   // Dependency: rewardMode drives wallet/cashback/supercoin toggles
   useEffect(() => {
     if (rewardMode === 'superCoins') {
       setUseWalletBalance(false);
       setEarnCashback(false);
     } else {
+      if (superCoinHoldContextRef.current) {
+        cancelSuperCoinHoldIfNeeded();
+      }
       setEarnCashback(true);
+      setSuperCoinAuthorized(false);
+      superCoinHoldContextRef.current = null;
+      setSuperCoinHoldContext(null);
+      setSuperCoinHoldExpiryMs(null);
+      setSuperCoinOTPModalOpen(false);
       setSuperCoinState(prev => ({ ...prev, enabled: false }));
     }
   }, [rewardMode]);
@@ -702,6 +747,18 @@ export default function Cart() {
     }
   };
 
+  const getSuperCoinHoldForOrder = (orderNumber: string): SuperCoinHoldContext | null => {
+    try {
+      const raw = sessionStorage.getItem(SUPERCOIN_HOLD_MAP_KEY);
+      if (!raw) return null;
+      const current = JSON.parse(raw) as Record<string, SuperCoinHoldContext>;
+      return current[orderNumber] || null;
+    } catch (error) {
+      console.warn("Failed to read SuperCoin hold mapping", error);
+      return null;
+    }
+  };
+
   const clearSuperCoinHoldForOrder = (orderNumber: string) => {
     try {
       const raw = sessionStorage.getItem(SUPERCOIN_HOLD_MAP_KEY);
@@ -904,9 +961,9 @@ export default function Cart() {
       )
     : superCoinState.balance;
 
-  const superCoinDeduction = superCoinState.enabled && superCoinState.eligible
+  const superCoinDeduction = superCoinAuthorized && superCoinState.eligible
     ? Math.min(
-        superCoinState.balance,
+        superCoinHoldContext?.amount ?? superCoinState.balance,
         maxSuperCoinRedeemable
       )
     : 0;
@@ -934,7 +991,7 @@ export default function Cart() {
   const buildPaymentBreakdown = (
     walletEnabled: boolean,
     coupon = appliedCoupon,
-    superCoinEnabled = superCoinState.enabled
+    superCoinEnabled = superCoinAuthorized
   ) => {
     const currentWalletDeduction = walletEnabled
       ? Math.min(walletBalance, maxWalletUsage)
@@ -948,7 +1005,7 @@ export default function Cart() {
     const currentSuperCoinDeduction =
       superCoinEnabled && superCoinState.eligible
         ? Math.min(
-            superCoinState.balance,
+            superCoinHoldContext?.amount ?? superCoinState.balance,
             maxSuperCoinRedeemable
           )
         : 0;
@@ -969,55 +1026,33 @@ export default function Cart() {
     };
   };
 
-  const createSuperCoinHoldBeforePayment = async (
+  const persistSuperCoinHoldForPayment = (
     orderNumber: string,
     superCoinAmount: number
   ) => {
-    if (!superCoinState.enabled || !superCoinState.eligible || superCoinAmount <= 0) {
-      return null;
-    }
+    if (!superCoinAuthorized || superCoinAmount <= 0) return;
 
-    if (!superCoinIdentity) {
-      throw new Error("SuperCoin identity is not available for hold creation.");
-    }
+    const holdContext = superCoinHoldContextRef.current || superCoinHoldContext;
+    if (!holdContext) return;
 
-    if (!superCoinMerchantWalletId) {
-      throw new Error("SuperCoin merchant wallet id is not configured.");
-    }
-
-    const merchantTransactionId = orderNumber;
-    const response = await holdSuperCoin({
-      identity: superCoinIdentity,
-      merchantWalletId: superCoinMerchantWalletId,
-      merchantTransactionId,
-      merchantReferenceId: orderNumber,
-      amount: superCoinAmount,
-      displayName: user?.name || "Gift360 Checkout",
-      stampExpiry: Date.now() + 1800 * 1000,
-    });
-
-    if ((response as any)?.success === false) {
-      throw new Error(
-        (response as any)?.message ||
-          "Unable to reserve SuperCoin for this checkout."
-      );
-    }
-
-    const holdContext = {
-      merchantTransactionId,
-      merchantWalletId: superCoinMerchantWalletId,
-      amount: superCoinAmount,
-    };
-
-    superCoinHoldContextRef.current = holdContext;
-    setSuperCoinHoldContext(holdContext);
     saveSuperCoinHoldForOrder(orderNumber, holdContext);
-
-    return response;
   };
 
   const cancelSuperCoinHoldIfNeeded = async (orderNumber?: string) => {
-    const activeHoldContext = superCoinHoldContextRef.current || superCoinHoldContext;
+    superCoinHoldContextRef.current = null;
+    setSuperCoinHoldContext(null);
+    setSuperCoinHoldExpiryMs(null);
+    if (orderNumber) {
+      clearSuperCoinHoldForOrder(orderNumber);
+    }
+  };
+
+  const unholdSuperCoin = async (orderNumber?: string) => {
+    const activeHoldContext =
+      superCoinHoldContextRef.current ||
+      superCoinHoldContext ||
+      (orderNumber ? getSuperCoinHoldForOrder(orderNumber) : null) ||
+      (superCoinOrderNumber ? getSuperCoinHoldForOrder(superCoinOrderNumber) : null);
     if (!activeHoldContext || !superCoinIdentity) return;
 
     try {
@@ -1031,11 +1066,49 @@ export default function Cart() {
     } finally {
       superCoinHoldContextRef.current = null;
       setSuperCoinHoldContext(null);
-      if (orderNumber) {
-        clearSuperCoinHoldForOrder(orderNumber);
-      }
+      setSuperCoinHoldExpiryMs(null);
+      clearSuperCoinHoldForOrder(orderNumber || superCoinOrderNumber || "");
     }
   };
+
+  const requestSwitchToCashback = useCallback(() => {
+    if (superCoinAuthorized) {
+      setShowSuperCoinRemoveDialog(true);
+      return;
+    }
+
+    setRewardMode("cashbackWallet");
+  }, [superCoinAuthorized]);
+
+  const openSuperCoinFlow = useCallback(async () => {
+    if (!superCoinIdentity) return;
+
+    try {
+      const orderContext = await ensureOrder();
+      setSuperCoinOrderNumber(orderContext.orderNumber);
+      setSuperCoinOTPModalOpen(true);
+    } catch (error) {
+      console.error("Failed to create order before SuperCoin hold", error);
+      toast({
+        title: "Unable to start SuperCoins",
+        description: "Please try again after the order is created.",
+        variant: "destructive",
+      });
+    }
+  }, [ensureOrder, superCoinIdentity, toast]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!superCoinIdentity || paymentInFlightRef.current) return;
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+      if (paymentInFlightRef.current) return;
+      cancelSuperCoinHoldIfNeeded();
+    };
+  }, [superCoinIdentity]);
 
   // Step 1: Create Order in Database
   const handlePayNow = async (gateway: "ntt" | "easebuzz") => {
@@ -1069,7 +1142,7 @@ export default function Cart() {
         message: validateResult.message || validateResult.httpMessage || "OK",
       });
 
-      await createSuperCoinHoldBeforePayment(
+      await persistSuperCoinHoldForPayment(
         orderContext.orderNumber,
         paymentBreakdown.superCoinDeduction
       );
@@ -1280,11 +1353,12 @@ export default function Cart() {
             custEmail: "contact@gift360.io",
             custMobile: "9876543210",
             returnUrl: import.meta.env.VITE_PAYMENT_RETURN_BACKEND_URL,
-          };
+  };
 
           console.log("Opening payment gateway:", options);
 
           try {
+            paymentInFlightRef.current = true;
             new window.AtomPaynetz(options, import.meta.env.VITE_PAYMENT_ENV);
             clearCart();
           } catch (error) {
@@ -1402,6 +1476,7 @@ export default function Cart() {
 
         console.log("ðŸ”‘ Redirecting to payment URL:", paymentUrl);
 
+        paymentInFlightRef.current = true;
         window.location.href = paymentUrl;
         clearCart();
       },
@@ -1705,7 +1780,9 @@ export default function Cart() {
                         <div className="relative flex items-center rounded-full bg-muted p-1">
                           <button
                             type="button"
-                            onClick={() => setRewardMode('cashbackWallet')}
+                            onClick={() => {
+                              requestSwitchToCashback();
+                            }}
                             className={`relative z-10 flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
                               rewardMode === 'cashbackWallet'
                                 ? 'bg-emerald-100 dark:bg-emerald-900/40 shadow-sm text-foreground'
@@ -1735,7 +1812,7 @@ export default function Cart() {
                         {/* Group A: Cashback & Wallet */}
                         {rewardMode === 'cashbackWallet' && (
                         <div className="space-y-3">
-                          {/* Earn Cashback Card (always on) */}
+                          {/* Earn Cashback Card */}
                           <div className="p-3 sm:p-4 rounded-xl border bg-[rgba(52,211,153,0.06)] border-[rgba(52,211,153,0.25)]">
                             <div className="flex items-start justify-between gap-3">
                               <div className="flex-1 min-w-0">
@@ -1747,10 +1824,8 @@ export default function Cart() {
                                     </span>
                                   )}
                                 </p>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                  {cashbackAmount > 0
-                                    ? `Get ₹${cashbackAmount.toFixed(2)} added to your wallet after this purchase`
-                                    : "Skip cashback on this purchase"}
+                                <p className="text-xs cart-text-primary mt-0.5">
+                                  Earn ₹{cashbackAmount.toFixed(2)} in cashback after purchase
                                 </p>
                               </div>
                             </div>
@@ -1813,15 +1888,13 @@ export default function Cart() {
                         {/* Group B: SuperCoins */}
                         {rewardMode === 'superCoins' && (
                         <div className="space-y-3">
+                          {/* SuperCoin balance info via existing card (read-only) */}
                           <SuperCoinStatusCard
                             mobile={user?.mobile}
-                            enabled={true}
+                            enabled={superCoinAuthorized}
                             maxRedeemable={maxSuperCoinRedeemable}
                             estimatedEarn={estimatedEarn}
                             hideToggle
-                            onEnabledChange={(enabled) => {
-                              setSuperCoinState((prev) => ({ ...prev, enabled }));
-                            }}
                             onStateChange={({ eligible, balance, enabled }) =>
                               setSuperCoinState({
                                 eligible,
@@ -1830,6 +1903,52 @@ export default function Cart() {
                               })
                             }
                           />
+
+                          {!superCoinAuthorized ? (
+                            <Button
+                              className="w-full cart-gradient-fill h-11"
+                              onClick={() => {
+                                void openSuperCoinFlow();
+                              }}
+                            >
+                              Apply SuperCoins
+                            </Button>
+                          ) : (
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
+                                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                                  SuperCoins active
+                                  <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
+                                </span>
+                                <button
+                                  type="button"
+                                  className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 underline"
+                                  onClick={async () => {
+                                    await unholdSuperCoin(superCoinOrderNumber || undefined);
+                                    setRewardMode("cashbackWallet");
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                              {transactionTime && !countdown.expired && (
+                                <p className="px-3 text-xs sm:text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  Use your SuperCoins within {countdown.display}
+                                </p>
+                              )}
+                              {countdown.expired && (
+                                <p className="px-3 text-xs sm:text-sm font-medium text-red-500">
+                                  SuperCoin hold expired. Please apply again.
+                                </p>
+                              )}
+                              {superCoinDeduction > 0 && (
+                                <p className="text-xs cart-text-primary px-3">
+                                  Saving ₹{superCoinDeduction.toFixed(2)} on this order
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                         )}
                       </div>
@@ -1967,7 +2086,7 @@ export default function Cart() {
                       <div className="flex items-center justify-between text-emerald-500 dark:text-emerald-400">
                         <span className="text-sm sm:text-base flex items-center gap-1.5">
                           SuperCoins discount
-                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                          <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                         </span>
                         <span className="font-medium text-sm sm:text-base">
                           -₹{superCoinDeduction.toFixed(2)}
@@ -1991,10 +2110,24 @@ export default function Cart() {
                     <span className="text-base sm:text-lg font-bold cart-text-primary">
                       Total to Pay
                     </span>
-                    <span className="text-2xl sm:text-3xl font-extrabold text-[var(--cart-primary)]">
-                      ₹{uiTotalToPay.toFixed(2)}
-                    </span>
+                    <div className="text-right">
+                      <span className="text-2xl sm:text-3xl font-extrabold text-[var(--cart-primary)]">
+                        ₹{uiTotalToPay.toFixed(2)}
+                      </span>
+                      {estimatedEarn > 0 && rewardMode === 'superCoins' && (
+                        <p className="flex items-center justify-end gap-1 text-xs font-semibold cart-text-primary mt-0.5">
+                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                          Earn {estimatedEarn.toFixed(2)} SuperCoins
+                        </p>
+                      )}
+                    </div>
                   </div>
+
+                  {estimatedEarn > 0 && rewardMode === 'superCoins' && (
+                    <p className="text-center text-[10px] text-muted-foreground -mt-2">
+                      Fractional SuperCoins are added to your next purchase.
+                    </p>
+                  )}
 
                   {/* Payment Gateway Selection - SINGLE SABBPE BUTTON */}
                   <div className="space-y-3">
@@ -2133,6 +2266,33 @@ export default function Cart() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog
+        open={showSuperCoinRemoveDialog}
+        onOpenChange={(open) => !open && setShowSuperCoinRemoveDialog(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove your SuperCoins from this purchase?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Your reserved SuperCoins will not be used for this payment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setShowSuperCoinRemoveDialog(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                setShowSuperCoinRemoveDialog(false);
+                await unholdSuperCoin();
+                setRewardMode('cashbackWallet');
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Footer />
       <MobileBottomNav />
 
@@ -2146,6 +2306,38 @@ export default function Cart() {
         initialAmount={sheetAmount}
         initialQuantity={sheetQuantity}
       />
+
+      {superCoinIdentity && (
+        <SuperCoinOTPModal
+          open={superCoinOTPModalOpen}
+          onClose={() => setSuperCoinOTPModalOpen(false)}
+          onAuthorized={(context) => {
+            superCoinHoldContextRef.current = context;
+            setSuperCoinHoldContext(context);
+            setSuperCoinAuthorized(true);
+            setSuperCoinHoldExpiryMs(context.stampExpiry ?? Date.now() + 15 * 60 * 1000);
+            setTransactionTime(
+              context.transactionTime ??
+                new Date((context.stampExpiry ?? Date.now() + 15 * 60 * 1000) - 15 * 60 * 1000).toISOString()
+            );
+            if (superCoinOrderNumber) {
+              saveSuperCoinHoldForOrder(superCoinOrderNumber, context);
+            }
+            setSuperCoinOTPModalOpen(false);
+          }}
+          onSwitchToCashback={() => {
+            setSuperCoinOTPModalOpen(false);
+            setSuperCoinOrderNumber("");
+            requestSwitchToCashback();
+          }}
+          identity={superCoinIdentity}
+          merchantWalletId={superCoinMerchantWalletId}
+          orderNumber={superCoinOrderNumber || checkoutState.orderNumber || ""}
+          displayName={user?.name || "Gift360 Checkout"}
+          preloadedBalance={superCoinState.balance}
+          maxRedeemable={maxSuperCoinRedeemable}
+        />
+      )}
     </div>
   );
 }

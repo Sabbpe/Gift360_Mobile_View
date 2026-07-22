@@ -21,7 +21,26 @@ export interface SuperCoinBalanceResponse {
   [key: string]: unknown;
 }
 
-export interface SuperCoinTransactionResponse extends Record<string, unknown> {}
+export interface SuperCoinTransactionResponse {
+  transactionId?: string;
+  transactionState?: string;
+  message?: string;
+  statusCode?: string;
+  success?: boolean;
+  otp?: string;
+  [key: string]: unknown;
+}
+
+export interface SuperCoinInitHoldResponse extends SuperCoinTransactionResponse {
+  transactionId: string;
+  transactionState: string;
+  otp?: string;
+}
+
+export interface SuperCoinAuthorizeHoldResponse extends SuperCoinTransactionResponse {
+  transactionId: string;
+  transactionState: string;
+}
 
 export interface SuperCoinUserPayload {
   identity: SuperCoinIdentity;
@@ -89,10 +108,10 @@ export const fetchSuperCoinBalance = (identity: SuperCoinIdentity) =>
   postSuperCoin<SuperCoinBalanceResponse>("/balance", { identity });
 
 export const initSuperCoinHold = (payload: SuperCoinTransactionalPayload) =>
-  postSuperCoin<SuperCoinTransactionResponse>("/initHold", payload);
+  postSuperCoin<SuperCoinInitHoldResponse>("/initHold", payload);
 
 export const authorizeSuperCoinHold = (payload: Pick<SuperCoinTransactionalPayload, "identity" | "merchantWalletId" | "merchantTransactionId" | "otp">) =>
-  postSuperCoin<SuperCoinTransactionResponse>("/authorizeHold", payload);
+  postSuperCoin<SuperCoinAuthorizeHoldResponse>("/authorizeHold", payload);
 
 export const createSuperCoinHold = (payload: Pick<SuperCoinTransactionalPayload, "identity" | "amount" | "merchantWalletId" | "merchantTransactionId" | "merchantReferenceId" | "displayName" | "stampExpiry">) =>
   postSuperCoin<SuperCoinTransactionResponse>("/hold", payload);

@@ -15,7 +15,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { decrypt } from "@/utils/encryption";
 import {
-  cancelSuperCoinHold,
   normalizeMobileToE164,
 } from "@/api/supercoinApi";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
@@ -418,25 +417,8 @@ export default function PaymentResult() {
 
               const currentSuperCoinHold = getSuperCoinHoldForOrder(decryptedOrderNumber);
               if (currentSuperCoinHold) {
-                setSuperCoinLifecycleStatus("cancelling");
-                const mobileIdentity = normalizeMobileToE164(user?.mobile);
-                if (mobileIdentity) {
-                  cancelSuperCoinHold({
-                    identity: {
-                      identifier: mobileIdentity,
-                      type: "MOBILE",
-                    },
-                    merchantTransactionId: currentSuperCoinHold.merchantTransactionId,
-                    merchantWalletId: currentSuperCoinHold.merchantWalletId,
-                  })
-                    .then(() => {
-                      setSuperCoinLifecycleStatus("cancelled");
-                      clearSuperCoinHoldForOrder(decryptedOrderNumber);
-                    })
-                    .catch(() => {
-                      setSuperCoinLifecycleStatus("failed");
-                    });
-                }
+                setSuperCoinLifecycleStatus("cancelled");
+                clearSuperCoinHoldForOrder(decryptedOrderNumber);
               }
             }
           },

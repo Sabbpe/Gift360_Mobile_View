@@ -98,10 +98,11 @@ export default function SuperCoinStatusCard({
         ? "Unable to load your SuperCoin balance. You can still continue with your purchase."
         : "SuperCoin is unavailable at the moment. You can still continue with your purchase."
       : "";
-  const activeDeduction = localEnabled && isEligible ? Math.min(balance, maxRedeemable ?? balance) : 0;
+  const shouldDeduct = hideToggle ? isEligible : (localEnabled && isEligible);
+  const activeDeduction = shouldDeduct ? Math.min(balance, maxRedeemable ?? balance) : 0;
 
   const toggleDisabled = isBusy || (maxRedeemable !== undefined && maxRedeemable <= 0);
-  const availableBalance = localEnabled && activeDeduction > 0
+  const availableBalance = shouldDeduct && activeDeduction > 0
     ? Math.max(0, balance - activeDeduction)
     : balance;
 
@@ -139,7 +140,7 @@ export default function SuperCoinStatusCard({
             Save more with{" "}
             <span className="text-[#5B3FFF] font-bold">SuperCoins</span>
           </p>
-          <p className="text-[10px] text-muted-foreground/60 mt-0.5">Powered by Flipkart</p>
+          <p className="text-[10px] cart-text-primary opacity-70 mt-0.5">Powered by Flipkart</p>
         </div>
       </div>
 
@@ -177,21 +178,26 @@ export default function SuperCoinStatusCard({
         {/* Enrolled content */}
         {isEnrolled && (
           <>
-            {/* Top row: used info + toggle */}
+            {/* Top row: usage info */}
             <div className="flex items-center justify-between gap-3">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm cart-text-primary">
-                  Used{" "}
+              <div className="flex-1 min-w-0 space-y-1">
+                <p className="text-sm cart-text-primary flex items-center gap-1">
+                  Use{" "}
+                  <span className="font-bold">{activeDeduction > 0 ? activeDeduction.toFixed(2) : "0.00"}</span>
+                  {" "}
                   <img
                     src={superCoinIcon}
                     alt=""
-                    className="inline h-3.5 w-3.5 align-middle -mt-px"
-                  />{" "}
-                  <span className="font-bold">{activeDeduction > 0 ? Math.round(activeDeduction) : 0}</span>{" "}
-                  to save <span className="font-bold">₹{activeDeduction.toFixed(2)}</span>
+                    className="inline h-4 w-4 align-middle -mt-px"
+                  />
                 </p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  Available balance: {availableBalance.toFixed(2)}
+                {activeDeduction > 0 && (
+                  <p className="text-sm font-semibold cart-text-primary">
+                    Save ₹{activeDeduction.toFixed(2)} on this order
+                  </p>
+                )}
+                <p className="text-sm font-semibold cart-text-primary">
+                  Your SuperCoin balance: {availableBalance.toFixed(2)} coins
                 </p>
               </div>
 
@@ -229,13 +235,6 @@ export default function SuperCoinStatusCard({
             </div>
 
             <Separator className="bg-gray-200 dark:bg-gray-700/60" />
-
-            {/* Earn cashback line */}
-            {estimatedEarn !== undefined && estimatedEarn > 0 && (
-              <p className="text-xs text-muted-foreground">
-                Earn up to ₹{estimatedEarn.toFixed(2)} in cashback as SuperCoins on this booking
-              </p>
-            )}
 
             {/* Inline error inside card */}
             {errorMessage && (
