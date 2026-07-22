@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-
 export default defineConfig({
   appType: "spa",
   plugins: [react()],
@@ -21,6 +20,6 @@ export default defineConfig({
   preview: {
     host: "0.0.0.0",
     port: 6688,
-    allowedHosts: ["uat.gift360.io"],
+    allowedHosts: ["gift360.io", "www.gift360.io", "uat.gift360.io"],
   },
 });
