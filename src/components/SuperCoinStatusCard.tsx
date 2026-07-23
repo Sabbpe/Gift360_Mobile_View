@@ -98,8 +98,11 @@ export default function SuperCoinStatusCard({
         ? "Unable to load your SuperCoin balance. You can still continue with your purchase."
         : "SuperCoin is unavailable at the moment. You can still continue with your purchase."
       : "";
-  const shouldDeduct = hideToggle ? isEligible : (localEnabled && isEligible);
+  const shouldDeduct = localEnabled && isEligible;
   const activeDeduction = shouldDeduct ? Math.min(balance, maxRedeemable ?? balance) : 0;
+  const previewDeduction = !shouldDeduct && hideToggle && isEligible
+    ? Math.min(balance, maxRedeemable ?? balance)
+    : 0;
 
   const toggleDisabled = isBusy || (maxRedeemable !== undefined && maxRedeemable <= 0);
   const availableBalance = shouldDeduct && activeDeduction > 0
@@ -183,7 +186,13 @@ export default function SuperCoinStatusCard({
               <div className="flex-1 min-w-0 space-y-1">
                 <p className="text-sm cart-text-primary flex items-center gap-1">
                   Use{" "}
-                  <span className="font-bold">{activeDeduction > 0 ? activeDeduction.toFixed(2) : "0.00"}</span>
+                  <span className="font-bold">
+                    {activeDeduction > 0
+                      ? activeDeduction.toFixed(2)
+                      : previewDeduction > 0
+                        ? previewDeduction.toFixed(2)
+                        : "0.00"}
+                  </span>
                   {" "}
                   <img
                     src={superCoinIcon}
@@ -191,9 +200,9 @@ export default function SuperCoinStatusCard({
                     className="inline h-4 w-4 align-middle -mt-px"
                   />
                 </p>
-                {activeDeduction > 0 && (
+                {(activeDeduction > 0 || previewDeduction > 0) && (
                   <p className="text-sm font-semibold cart-text-primary">
-                    Save ₹{activeDeduction.toFixed(2)} on this order
+                    Save ₹{(activeDeduction > 0 ? activeDeduction : previewDeduction).toFixed(2)} on this order
                   </p>
                 )}
                 <p className="text-sm font-semibold cart-text-primary">

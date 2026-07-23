@@ -1966,6 +1966,7 @@ export default function Cart() {
                           {!superCoinAuthorized ? (
                             <Button
                               className="w-full cart-gradient-fill h-11"
+                              disabled={superCoinState.balance <= 0}
                               onClick={() => {
                                 void openSuperCoinFlow();
                               }}
