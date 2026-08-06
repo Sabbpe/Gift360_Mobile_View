@@ -14,8 +14,9 @@ import CategoryNav from "./CategoryNav";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { WalletOdometer } from "@/components/WalletOdometer";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import gift360FullLogo from "@/assets/gift360full.png";
 
-const logoImg = "/Main.Logo.png";
+const logoImg = gift360FullLogo;
 
 interface LocationData { city: string; state: string; pincode: string; area?: string; district?: string; }
 interface PostOffice { Name: string; District: string; State: string; Pincode: string; }

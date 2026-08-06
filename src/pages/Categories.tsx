@@ -29,7 +29,7 @@ export default function Categories() {
   return (
     <>
       <Header />
-      <main className="min-h-screen w-full bg-gradient-to-b from-purple-50 to-white pb-24" style={{ background: "linear-gradient(179.64deg, #9747FF -354.99%, #FFFFFF 99.68%)" }}>
+      <main className="min-h-screen w-full pb-24" style={{ background: "#F3F5F9" }}>
       <header
         className="flex items-center justify-between px-4 py-3"
         style={{ background: "#FFFFFF", borderBottom: "1px solid #F0F0F0" }}

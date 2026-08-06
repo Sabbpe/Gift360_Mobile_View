@@ -16,6 +16,7 @@ import { FloatingCoins } from "@/components/FloatingCoins";
 import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
+import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -125,6 +126,10 @@ useEffect(() => {
   console.log('🌐 Search params:', window.location.search);
   const urlParams = new URLSearchParams(currentLocation.split('?')[1] || '');
   const categoryFromUrl = urlParams.get('categories');
+  const tabFromUrl = urlParams.get('tab') as "about" | "how" | "terms" | null;
+  const brandIdFromUrl = urlParams.get('brandId');
+
+  const [sheetInitialTab, setSheetInitialTab] = useState<"about" | "how" | "terms" | null>(null);
 
   const [filters, setFilters] = useState<FilterState>({
     categories: categoryFromUrl ? [categoryFromUrl] : [],
@@ -146,6 +151,15 @@ useEffect(() => {
   const { data: searchResults, isLoading: searchLoading } = useBrandSearch(submittedSearchQuery);
 
   const safeBrands = Array.isArray(data) ? data : [];
+
+  // Auto-open PaymentDetailsSheet when URL has ?tab=how&brandId=xxx
+  useEffect(() => {
+    if (brandIdFromUrl && tabFromUrl && !isPaymentSheetOpen) {
+      setSheetBrandId(brandIdFromUrl);
+      setSheetInitialTab(tabFromUrl);
+      setIsPaymentSheetOpen(true);
+    }
+  }, [brandIdFromUrl, tabFromUrl, data]);
 
 // Filter brands based on search query for suggestions
 const filteredBrandSuggestions = useMemo(() => {
@@ -412,7 +426,10 @@ const sortedDisplayBrands = useMemo(() => {
           }
         }}
       >
-        <img src={imageUrl} alt={brandName} loading="lazy" onError={(e) => { const target = e.target as HTMLImageElement; if (!target.dataset.fallback) { target.dataset.fallback = "1"; target.src = `https://images.gift360.io/${brandId}.png`; } else { target.src = "/brand-placeholder.png"; } }} />
+        <div className="relative inline-block">
+          <img src={imageUrl} alt={brandName} loading="lazy" className="brand-logo" onError={(e) => { const target = e.target as HTMLImageElement; if (!target.dataset.fallback) { target.dataset.fallback = "1"; target.src = `https://images.gift360.io/${brandId}.png`; } else { target.src = "/brand-placeholder.png"; } }} />
+          <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10 pointer-events-none" />
+        </div>
         <span>{brandName}</span>
       </div>
     );
@@ -585,7 +602,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Aurora backdrop */}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(179.64deg, #9747FF -354.99%, #FFFFFF 99.68%)' }}>
+      <div className="absolute inset-0" style={{ background: '#F3F5F9' }}>
         <div className="absolute inset-0 hero-grain opacity-30 pointer-events-none" />
         <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-amber-500/8 blur-3xl" />
         <div className="absolute top-1/3 -right-24 w-96 h-96 rounded-full bg-yellow-400/8 blur-3xl" />
@@ -995,10 +1012,12 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
         brandId={sheetBrandId}
         open={isPaymentSheetOpen}
         initialAmount={sheetInitialAmount}
+        initialTab={sheetInitialTab}
         onClose={() => {
           setIsPaymentSheetOpen(false);
           setSheetBrandId(null);
           setSheetInitialAmount(undefined);
+          setSheetInitialTab(null);
         }}
       />
       </div>

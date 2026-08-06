@@ -77,7 +77,7 @@
 
 .cart-page {
   min-height: 100vh;
-  background: linear-gradient(179.64deg, #9747FF -354.99%, #FFFFFF 99.68%);
+  background: #F3F5F9;
 }
 
 .cart-title,
@@ -144,13 +144,13 @@
   scroll-snap-align: start;
   text-align: center;
   cursor: pointer;
-  background: rgba(255, 255, 255, 0.92);
   border-radius: 14px;
   padding: 8px;
   box-shadow: 0 8px 20px rgba(17, 24, 39, 0.08);
+  background: rgba(255, 255, 255, 0.92);
 }
 
-.brand-card img {
+.brand-card .brand-logo {
   width: 70px;
   height: 70px;
   border-radius: 16px;

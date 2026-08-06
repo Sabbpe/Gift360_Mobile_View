@@ -1,13 +1,36 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { AlertCircle, Smartphone, Gift, Sparkles, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, ShieldCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSendOtp } from "@/hooks/useSendOtp";
 import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { FloatingCoins } from "@/components/FloatingCoins";
+import gift360Logo from "@/assets/gift360full.png";
+import loginBg from "@/assets/LoginBackground.png";
+import amazon from "@/assets/amazon.png";
+import flipkart from "@/assets/flipkart.png";
+import myntra from "@/assets/myntra.png";
+import nike from "@/assets/nike.png";
+import puma from "@/assets/puma.png";
+import bata from "@/assets/bata.png";
+import levis from "@/assets/levis.png";
+import tatacliq from "@/assets/tatacliq.png";
+import ajio from "@/assets/ajio.png";
+import zomato from "@/assets/zomato.png";
+
+const brandLogos = [
+  { src: amazon, name: "Amazon" },
+  { src: flipkart, name: "Flipkart" },
+  { src: myntra, name: "Myntra" },
+  { src: nike, name: "Nike" },
+  { src: puma, name: "Puma" },
+  { src: bata, name: "Bata" },
+  { src: levis, name: "Levi's" },
+  { src: tatacliq, name: "TataCliQ" },
+  { src: ajio, name: "AJIO" },
+  { src: zomato, name: "Zomato" },
+];
 
 export default function Login() {
   const [, setLocation] = useLocation();
@@ -17,7 +40,8 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [mobileError, setMobileError] = useState("");
-  const [otp, setOtp] = useState("");
+  const [otp, setOtp] = useState(["", "", "", ""]);
+  const otpRefs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
   const [otpSent, setOtpSent] = useState(false);
   const [otpMsg, setOtpMsg] = useState("");
   const sendOtpMutation = useSendOtp();
@@ -33,11 +57,38 @@ export default function Login() {
   }, [isSessionExpired]);
 
   const validateMobile = (m: string) => /^[0-9]{10}$/.test(m);
-  const validateOtp = (o: string) => /^[0-9]{4,6}$/.test(o);
+  const validateOtp = (o: string[]) => o.every(d => d.length === 1);
+
+  const handleOtpInput = (index: number, value: string) => {
+    if (!/^[0-9]?$/.test(value)) return;
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    setError("");
+    if (value && index < 3) {
+      otpRefs[index + 1].current?.focus();
+    }
+  };
+
+  const handleOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleOtpPaste = (e: React.ClipboardEvent) => {
+    const pasted = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 4);
+    if (pasted.length > 0) {
+      const newOtp = pasted.split("").concat(Array(4).fill("")).slice(0, 4);
+      setOtp(newOtp);
+      const nextEmpty = newOtp.findIndex(d => !d);
+      otpRefs[nextEmpty === -1 ? 3 : nextEmpty].current?.focus();
+    }
+  };
 
   const handleSendOtp = (e: React.MouseEvent) => {
     e.preventDefault();
-    setError(""); setOtpMsg(""); setOtpSent(false); setOtp("");
+    setError(""); setOtpMsg(""); setOtpSent(false); setOtp(["", "", "", ""]);
     if (!mobile.trim()) { setMobileError("Mobile number is required"); return; }
     if (!validateMobile(mobile)) { setMobileError("Please enter a valid 10-digit mobile number"); return; }
     setMobileError("");
@@ -60,9 +111,10 @@ export default function Login() {
   const handleOtpLogin = (e: React.MouseEvent) => {
     e.preventDefault();
     setError("");
+    const otpStr = otp.join("");
     if (!validateMobile(mobile)) { setError("Please enter a valid mobile number"); return; }
-    if (!validateOtp(otp)) { setError("Please enter a valid 4-6 digit OTP"); return; }
-    loginWithOtpMutation.mutate({ mobileNumber: mobile.trim(), otp, email: email.trim() }, {
+    if (!validateOtp(otp)) { setError("Please enter a valid 4-digit OTP"); return; }
+    loginWithOtpMutation.mutate({ mobileNumber: mobile.trim(), otp: otpStr, email: email.trim() }, {
       onSuccess: (data) => {
         if (data.token && data.userInfo) {
           setUser({
@@ -82,174 +134,194 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-page auth-page--login">
-      {/* ── Purple backdrop (matches Home header) ── */}
-      <div className="absolute inset-0">
-        <FloatingCoins count={10} />
-        <div
-          className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, #523da9, transparent 70%)" }}
-        />
-        <div
-          className="absolute top-32 -right-16 w-80 h-80 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, #4c42b8, transparent 70%)", animationDelay: "3s" }}
-        />
-        <div
-          className="absolute bottom-20 left-1/4 w-56 h-56 rounded-full blur-3xl anim-aurora"
-          style={{ background: "radial-gradient(circle, #5365df, transparent 70%)", animationDelay: "6s" }}
-        />
-        <div className="absolute inset-0 hero-grain opacity-30 pointer-events-none" />
-      </div>
+    <div className="relative w-full h-screen overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      {/* Background image */}
+      <div
+        className="absolute inset-0 w-full"
+        style={{
+          backgroundImage: `url(${loginBg})`,
+          backgroundSize: "cover",
+          backgroundPosition: "top center",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
 
-      <div className="auth-page__content relative z-10 flex flex-col px-5 pt-10 pb-8">
-        {/* ── Branding ── */}
-        <div className="flex flex-col items-center anim-fade-up">
-          <div className="relative mb-4">
-            <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
-            <div className="relative w-20 h-20 rounded-3xl bg-[#5343B2] card-edge flex items-center justify-center g-float">
-              <Gift size={40} className="text-amber-300" />
-            </div>
-          </div>
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            <span className="text-black">
-              {isSessionExpired ? "Session Expired" : "Welcome Back"}
-            </span>
+      {/* Content */}
+      <div className="relative z-10 flex flex-col h-full px-5 pt-6 pb-4">
+        {/* Logo */}
+        <div className="flex justify-center mb-2">
+          <img src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
+        </div>
+
+        {/* Heading */}
+        <div className="text-center mb-1">
+          <h1 className="text-[17px] font-semibold text-black leading-tight">
+            India #1 Destination for <span className="text-[#7C3AED]">Gifting</span>
           </h1>
-          <p className="text-black text-sm mt-1.5 font-medium">
-            {isSessionExpired ? "Please login to continue" : "Sign in to Gift360"}
+          <p className="text-[10px] text-[#1E1E1E] mt-1 px-4">
+            Access 400+ brands Vouchers. Delivered instantly, and gift feeling
           </p>
         </div>
 
-        {/* ── Premium purple card ── */}
-        <div className="mt-8 anim-fade-up delay-200">
-          <div className="relative rounded-3xl bg-[#5343B2] card-edge p-6 overflow-hidden">
-            {/* hologram sheen */}
-            <div className="pointer-events-none absolute -top-12 -left-12 w-72 h-32 bg-gradient-to-r from-transparent via-white/10 to-transparent anim-hologram" />
+        {/* Spacer */}
+        <div className="flex-1" />
 
-            <div className="flex items-center gap-2 mb-5">
-              <Sparkles className="h-4 w-4 text-amber-300" />
-              <h2 className="text-lg font-bold text-white">Sign In</h2>
+        {/* White card */}
+        <div className="w-full max-w-[342px] mx-auto bg-white rounded-[16px] border border-[#C9C9C9] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] p-4 mb-2">
+          <h2 className="text-[16px] font-semibold text-black mb-0.5">Get Started</h2>
+          <p className="text-[9px] text-[#4E4E4E] mb-3">Enter your email & mobile number to continue</p>
+
+          {isSessionExpired && (
+            <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-amber-300/30 bg-amber-50 text-amber-700 text-[10px] font-medium">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>Your session has expired. Please login again.</span>
             </div>
+          )}
 
-            {isSessionExpired && (
-              <div className="flex items-center gap-2 p-3 mb-4 rounded-2xl border border-amber-300/30 bg-amber-300/10 text-amber-200 text-xs font-medium">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>Your session has expired. Please login again.</span>
-              </div>
-            )}
-
-            {error && (
-              <div className="flex items-center gap-2 p-3 mb-4 rounded-2xl border border-red-400/30 bg-red-500/10 text-red-200 text-xs font-medium">
-                <AlertCircle size={16} className="shrink-0" />
-                <span>{error}</span>
-              </div>
-            )}
-
-            <div className="space-y-4">
-              {/* Email */}
-              <div>
-                <label className="block text-xs font-semibold text-white/70 mb-1.5 uppercase tracking-wider">
-                  Email
-                </label>
-                <Input
-                  type="email"
-                  placeholder="Enter your registered email"
-                  value={email}
-                  onChange={(e) => { setEmail(e.target.value); setError(""); }}
-                  disabled={otpSent}
-                  className="h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/40 font-medium focus-visible:ring-amber-300/50 focus-visible:border-amber-300/50"
-                />
-              </div>
-
-              {/* Mobile */}
-              <div>
-                <label className="block text-xs font-semibold text-white/70 mb-1.5 uppercase tracking-wider">
-                  Mobile Number
-                </label>
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Smartphone className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-amber-300/80 z-10" />
-                    <span className="absolute left-10 top-1/2 -translate-y-1/2 text-white font-semibold text-sm pointer-events-none z-10">
-                      +91
-                    </span>
-                    <Input
-                      type="tel"
-                      placeholder="10-digit mobile"
-                      value={mobile}
-                      maxLength={10}
-                      onChange={(e) => {
-                        if (!/^[0-9]*$/.test(e.target.value)) return;
-                        setMobile(e.target.value); setMobileError(""); setError("");
-                      }}
-                      disabled={otpSent}
-                      className="pl-16 h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/40 font-medium focus-visible:ring-amber-300/50 focus-visible:border-amber-300/50"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={handleSendOtp}
-                    disabled={!validateMobile(mobile) || sendOtpMutation.isPending || otpSent}
-                    className={`h-12 px-4 rounded-2xl font-bold text-sm whitespace-nowrap transition-all active:scale-95 disabled:opacity-50 disabled:active:scale-100 ${
-                      otpSent
-                        ? "bg-emerald-500/20 border border-emerald-400/40 text-emerald-200"
-                        : "bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/30 hover:brightness-110"
-                    }`}
-                  >
-                    {sendOtpMutation.isPending ? "Sending..." : otpSent ? "✓ Sent" : "Send OTP"}
-                  </button>
-                </div>
-                {mobileError && <p className="text-red-300 text-xs mt-1.5 font-medium">{mobileError}</p>}
-                {otpMsg && otpSent && <p className="text-emerald-300 text-xs mt-1.5 font-medium">✓ {otpMsg}</p>}
-              </div>
-
-              {/* OTP */}
-              {otpSent && (
-                <div className="g-scale-in">
-                  <label className="block text-xs font-semibold text-white/70 mb-1.5 uppercase tracking-wider">
-                    Enter OTP
-                  </label>
-                  <div className="flex gap-2">
-                    <Input
-                      type="text"
-                      placeholder="• • • • • •"
-                      value={otp}
-                      maxLength={6}
-                      onChange={(e) => {
-                        if (!/^[0-9]*$/.test(e.target.value)) return;
-                        setOtp(e.target.value); setError("");
-                      }}
-                      className="h-12 rounded-2xl bg-white/5 border-white/15 text-white placeholder:text-white/30 font-bold text-lg tracking-[0.4em] text-center focus-visible:ring-amber-300/50 focus-visible:border-amber-300/50"
-                    />
-                    <button
-                      type="button"
-                      onClick={handleOtpLogin}
-                      disabled={!validateOtp(otp) || loginWithOtpMutation.isPending}
-                      className="h-12 px-4 rounded-2xl font-bold text-sm whitespace-nowrap bg-gold-gradient text-amber-950 shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all disabled:opacity-50 disabled:active:scale-100 inline-flex items-center gap-1"
-                    >
-                      {loginWithOtpMutation.isPending ? "Verifying..." : (<>Verify <ChevronRight className="h-4 w-4" /></>)}
-                    </button>
-                  </div>
-                </div>
-              )}
+          {error && (
+            <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-red-300 bg-red-50 text-red-600 text-[10px] font-medium">
+              <AlertCircle size={14} className="shrink-0" />
+              <span>{error}</span>
             </div>
+          )}
+
+          {/* Email input */}
+          <div className="mb-2">
+            <Input
+              type="email"
+              placeholder="Enter your email ID"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); setError(""); }}
+              disabled={otpSent}
+              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
+            />
+          </div>
+
+          {/* Mobile input */}
+          <div className="mb-3">
+            <div className="flex items-center rounded-[10px] border border-[#D9D9D9] bg-white overflow-hidden">
+              <div className="flex items-center gap-1 px-2.5 h-9 bg-[#F7F7FA] border-r border-[#EBEBEB] shrink-0">
+                <span className="text-[13px] leading-none">🇮🇳</span>
+                <span className="text-[11px] font-medium text-black">+91</span>
+                <svg className="w-2.5 h-2.5 text-[#A1A1A1]" viewBox="0 0 12 12" fill="none">
+                  <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <Input
+                type="tel"
+                placeholder="Enter mobile number"
+                value={mobile}
+                maxLength={10}
+                onChange={(e) => {
+                  if (!/^[0-9]*$/.test(e.target.value)) return;
+                  setMobile(e.target.value); setMobileError(""); setError("");
+                }}
+                disabled={otpSent}
+                className="h-9 border-0 bg-transparent text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-0 focus-visible:border-0"
+              />
+            </div>
+            {mobileError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{mobileError}</p>}
+          </div>
+
+          {/* Send OTP / OTP verify */}
+          {!otpSent ? (
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={!validateMobile(mobile) || sendOtpMutation.isPending}
+              className="w-full h-9 rounded-[10px] font-semibold text-[11px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+              style={{
+                background: "linear-gradient(180deg, #7B3DC3 0%, #5537BE 100%)",
+                boxShadow: "2px 4px 8px rgba(183, 138, 243, 0.25)",
+              }}
+            >
+              {sendOtpMutation.isPending ? "Sending..." : "Send OTP"}
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="2"/>
+                <path d="M12 7V17M12 7L8 11M12 7L16 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          ) : (
+            <div className="space-y-3">
+              {/* 4-digit OTP boxes */}
+              <div className="flex justify-center gap-3" onPaste={handleOtpPaste}>
+                {otp.map((digit, i) => (
+                  <input
+                    key={i}
+                    ref={otpRefs[i]}
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpInput(i, e.target.value)}
+                    onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                    className="w-[52px] h-[52px] rounded-[10px] border border-[#C9C9C9] bg-white text-center text-[20px] font-semibold text-black focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-colors"
+                  />
+                ))}
+              </div>
+              <button
+                type="button"
+                onClick={handleOtpLogin}
+                disabled={!validateOtp(otp) || loginWithOtpMutation.isPending}
+                className="w-full h-10 rounded-[10px] font-semibold text-[12px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+                style={{
+                  background: "linear-gradient(180deg, #7B3DC3 0%, #5537BE 100%)",
+                  boxShadow: "2px 4px 8px rgba(183, 138, 243, 0.25)",
+                }}
+              >
+                {loginWithOtpMutation.isPending ? "Verifying..." : "Verify"}
+                {!loginWithOtpMutation.isPending && (
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
+                    <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="2"/>
+                    <path d="M12 7V17M12 7L8 11M12 7L16 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                )}
+              </button>
+              <p className="text-center text-[10px] text-[#4E4E4E]">
+                Didn't Receive?{" "}
+                <button type="button" onClick={handleSendOtp} className="font-semibold text-[#7C3AED] underline">
+                  Resend OTP
+                </button>
+              </p>
+            </div>
+          )}
+
+          {otpMsg && otpSent && <p className="text-emerald-600 text-[9px] mt-1 font-medium text-center">✓ {otpMsg}</p>}
+
+          {/* Secure note */}
+          <div className="flex items-center justify-center gap-1.5 mt-2.5">
+            <ShieldCheck className="w-3 h-3 text-[#7C3AED]" />
+            <p className="text-[8px] font-medium text-[#4E4E4E]">we'll send a secure OTP to verify your number</p>
           </div>
         </div>
 
-        {/* ── Footer links ── */}
-        <div className="mt-auto pt-8 text-center anim-fade-up delay-300">
-          <p className="text-sm text-black font-medium">
-            Don't have an account?{" "}
-            <Link href="/register">
-              <button className="font-bold text-black hover:underline">Sign up</button>
-            </Link>
-          </p>
-          <p className="text-center text-[11px] text-black mt-5 font-medium px-6">
-            By continuing, you agree to our{" "}
-            <Link href="/terms"><button className="text-black hover:text-black underline-offset-2">Terms</button></Link>{" "}
-            and{" "}
-            <Link href="/privacy"><button className="text-black hover:text-black underline-offset-2">Privacy Policy</button></Link>
-          </p>
+        {/* TRUSTED BY 400+ BRANDS */}
+        <div className="w-full max-w-[342px] mx-auto mb-1.5">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 h-px bg-[#C9C9C9]" />
+            <span className="text-[10px] font-medium text-[#35009A] whitespace-nowrap">TRUSTED BY 400+ BRANDS</span>
+            <div className="flex-1 h-px bg-[#C9C9C9]" />
+          </div>
         </div>
+
+        {/* Brand logos marquee */}
+        <div className="w-full overflow-hidden mb-2">
+          <div className="flex w-max anim-marquee-ltr" style={{ animationDuration: "20s" }}>
+            {[...brandLogos, ...brandLogos].map((brand, i) => (
+              <div key={i} className="flex items-center justify-center mx-2.5 shrink-0">
+                <img src={brand.src} alt={brand.name} className="h-[22px] w-auto object-contain opacity-70" />
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Terms */}
+        <p className="text-center text-[7px] text-[#4E4E4E] px-4">
+          By continuing, you agree to our{" "}
+          <Link href="/terms"><button className="underline">Terms & Conditions</button></Link>{" "}
+          and{" "}
+          <Link href="/privacy"><button className="underline">Privacy Policy</button></Link>
+        </p>
       </div>
     </div>
   );

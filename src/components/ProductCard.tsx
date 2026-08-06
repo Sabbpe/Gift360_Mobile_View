@@ -3,6 +3,7 @@ import type { Brand } from '@/types/brand';
 import BuyButton from './BuyButton';
 import QuickBuyModal from '@/components/QuickBuyModal';
 import { getImageUrl, FALLBACK_IMAGE } from '@/utils/imageUrl';
+import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 
 const FALLBACK = FALLBACK_IMAGE;
 
@@ -50,6 +51,7 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
           className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
           style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
         >
+          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
           <div className="flex items-start gap-2" style={{ height: 32 }}>
             <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               {isLoading ? (
@@ -89,7 +91,8 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
 
   return (
     <>
-      <article className="bg-white rounded-[12px] shadow-md w-[120px] min-w-[120px] h-[130px] min-h-[130px] p-4 flex flex-col justify-between h-full flex-none">
+      <article className="bg-white rounded-[12px] shadow-md w-[120px] min-w-[120px] h-[130px] min-h-[130px] p-4 flex flex-col justify-between h-full flex-none relative">
+        <img src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
         <div className="flex items-center gap-2 mb-2">
           <div className="w-9 h-9 rounded-[8px] bg-gray-100 flex items-center justify-center overflow-hidden flex-none">
             {isLoading ? (

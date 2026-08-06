@@ -31,6 +31,7 @@ import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
 import giftLogo from "@/assets/Gift.png";
+import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -87,18 +88,27 @@ function BalanceCard() {
           <WalletCards className="absolute left-[-9px] bottom-[9px] h-[34px] w-[34px] rotate-[-17deg] text-[#5b5b72]" strokeWidth={1.2} />
           <WalletCards className="absolute right-[30px] top-[15px] h-[37px] w-[37px] rotate-[-14deg] text-[#5b5b72]" strokeWidth={1.2} />
         </div>
-        <p className="relative text-[15px] font-normal leading-none tracking-[-0.01em] text-white/95">Gift360 Balance</p>
-        <div className="relative mt-[15px] flex items-center gap-[14px]">
+        <p className="relative text-[13px] font-normal leading-none tracking-[-0.01em] text-white/95">Your CashBack points</p>
+        <div className="relative mt-[12px] flex items-center gap-[14px]">
           <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-white">
-            <span className="text-[30px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
+            <span className="text-[22px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
             {visible ? `₹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹ •••••••"}
           </p>
           <button onClick={() => setVisible((value) => !value)} className="mt-[4px] active:scale-95" aria-label="Toggle balance">
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
           </button>
         </div>
-        <img src={gWord} alt="Gift360" className="absolute bottom-[11px] right-[12px] h-[25px] w-[73px] object-contain" />
-        <img src={giftLogo} alt="" className="absolute bottom-[11px] right-[72px] h-[25px] w-auto object-contain" />
+        <div className="absolute bottom-[6px] right-[8px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
+          <style>{`
+            @keyframes gold-pulse-badge {
+              0%, 100% { filter: drop-shadow(0 0 2px rgba(255,200,0,0.3)); transform: scale(1); }
+              50% { filter: drop-shadow(0 0 8px rgba(255,200,0,0.8)) drop-shadow(0 0 16px rgba(255,180,0,0.4)); transform: scale(1.1); }
+            }
+          `}</style>
+          <img src={superCoinImg} alt="SuperCoin" className="h-[16px] w-[16px] object-contain" style={{ animation: "gold-pulse-badge 1.5s ease-in-out infinite" }} />
+          <span className="text-[8px] font-semibold bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] bg-clip-text text-transparent">SuperCoins now available on</span>
+          <img src={gWord} alt="Gift360" className="h-[12px] w-auto object-contain" />
+        </div>
       </div>
     </section>
   );
@@ -370,8 +380,9 @@ function TopBrandsGrid({
         key={`${brand.BrandId}-${index}`}
         onClick={() => void handleTopBrandBuy(brand.BrandId)}
         disabled={loadingBrandId === brand.BrandId}
-        className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80"
+        className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
       >
+        <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
         <div className="grid h-[40px] w-[40px] place-items-center">
           {loadingBrandId === brand.BrandId ? (
             <Loader2 className="h-5 w-5 animate-spin text-[#7C3AED]" />

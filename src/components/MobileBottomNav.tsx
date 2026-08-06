@@ -45,7 +45,7 @@ export default function MobileBottomNav() {
           animation: cart-plus-burst 0.8s ease-out forwards;
         }
       `}</style>
-    <nav className="md:hidden z-[100]" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 63, width: '100%', background: 'rgba(255,255,255,0.6)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', boxShadow: '0px -2px 10px rgba(0,0,0,0.1)' }}>
+    <nav className="md:hidden" style={{ position: 'fixed', bottom: 0, left: 0, right: 0, height: 63, width: '100%', background: '#ffffff', borderTop: '1px solid #e5e7eb', boxShadow: '0px -2px 10px rgba(0,0,0,0.1)', zIndex: 9999 }}>
       <div className="grid h-full grid-cols-4 px-[16px]">
         {navItems.map(({ label, Icon, href }) => {
           const active = href === '/' ? location === '/' : location.startsWith(href);

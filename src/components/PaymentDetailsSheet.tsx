@@ -26,6 +26,7 @@ type Props = {
   initialAmount?: number;
   initialQuantity?: number;
   initialBrandDetails?: BrandDetailsParsed | null;
+  initialTab?: "about" | "how" | "terms" | null;
 };
 
 export default function PaymentDetailsSheet({
@@ -36,6 +37,7 @@ export default function PaymentDetailsSheet({
   initialAmount,
   initialQuantity,
   initialBrandDetails,
+  initialTab = null,
 }: Props) {
   const cashbackPercent = 15;
   const { data: fetchedBrand } = useBrandDetails(brandId || "", {
@@ -70,6 +72,12 @@ export default function PaymentDetailsSheet({
     Number(brand?.maxPrice) ||
     brand?.DenominationList?.[brand.DenominationList.length - 1] ||
     min;
+
+  useEffect(() => {
+    if (initialTab) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
 
   useEffect(() => {
     if (!brand) return;

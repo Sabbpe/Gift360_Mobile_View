@@ -270,61 +270,60 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   return (
     <>
        <div
-         className="bg-white overflow-hidden"
+         className="bg-white overflow-hidden w-full"
          style={{
            borderRadius: 12,
            boxShadow: "0px 4px 16px -6px rgba(0, 0, 0, 0.12)",
          }}
        >
-        <div className="flex items-start p-4 gap-3" style={{ minHeight: 120 }}>
-          <div className="w-[60px] h-[88px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+        <div className="p-2 flex flex-col items-center text-center">
+          <div className="w-[64px] h-[64px] flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2">
             <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
               onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
           </div>
-          <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
-           <div>
-             <p className="font-semibold text-base leading-6 text-black truncate">{brandName}</p>
-             <p className="font-normal text-xs leading-[18px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
-           </div>
-           <button
-             onClick={() => setShowSheet(true)}
-             className="w-[100px] h-[30px] rounded-[20px] font-semibold text-base text-white flex items-center justify-center"
-             style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
-           >
-             Redeem
-           </button>
-            {dateStr && (
-              <p className="text-[8px] leading-3 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
-            )}
-          </div>
+          <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
+          <p className="font-normal text-[10px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
+          <button
+            onClick={() => setShowSheet(true)}
+            className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+            style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
+          >
+            Redeem
+          </button>
+          {dateStr && (
+            <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+          )}
         </div>
       </div>
       <button
         onClick={onToggle}
-        className="w-full text-center text-xs font-medium py-2 flex items-center justify-center gap-1"
+        className="w-full text-center text-[10px] font-medium py-1.5 flex items-center justify-center gap-1"
         style={{ color: "#7b5cff" }}
       >
-        {expanded ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-        {expanded ? "Hide Vouchers" : "View Vouchers"}
+        {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {expanded ? "Hide" : "View Vouchers"}
       </button>
 
       {expanded && (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-2 pb-3">
           {vouchers.length > 0 ? (
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="flex flex-wrap gap-2">
               {vouchers.map((v, i) => (
-                <ScratchCard key={v.key} cardNumber={v.cardNumber} cardPin={v.cardPin}
-                  expiryDate={v.expiryDate} amount={v.amount} index={i}
-                  brandName={v.brandName}
-                  orderItemId={v.orderItemId}
-                  orderNumber={order.order_number}
-                  clientId={clientId}
-                  initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"} />
+                <div key={v.key} className="w-[172px]">
+                  <ScratchCard cardNumber={v.cardNumber} cardPin={v.cardPin}
+                    expiryDate={v.expiryDate} amount={v.amount} index={i}
+                    brandName={v.brandName}
+                    orderItemId={v.orderItemId}
+                    orderNumber={order.order_number}
+                    clientId={clientId}
+                    initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
+                    compact />
+                </div>
               ))}
             </div>
           ) : (
-            <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-800 font-medium">
-              ⏳ Vouchers are being generated. Please refresh in a moment.
+            <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[9px] text-amber-800 font-medium">
+              ⏳ Generating...
             </div>
           )}
         </div>
@@ -362,31 +361,31 @@ function PendingCard({ order }: { order: any }) {
         borderRadius: 10,
       }}
     >
-      <div className="flex items-start p-4 gap-3" style={{ minHeight: 120 }}>
-        <div className="w-[60px] h-[88px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+      <div className="flex items-start p-3 gap-2.5" style={{ minHeight: 90 }}>
+        <div className="w-[50px] h-[70px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
           <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
             onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
         </div>
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
-            <p className="font-semibold text-base leading-6 text-black truncate">{brandName}</p>
-            <p className="font-normal text-xs leading-[18px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
-            <div className="flex items-center gap-1 mt-1">
-              <Badge variant="outline" className="text-[10px] py-0 flex items-center gap-1"
+            <p className="font-semibold text-sm leading-5 text-black truncate">{brandName}</p>
+            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
+            <div className="flex items-center gap-1 mt-0.5">
+              <Badge variant="outline" className="text-[9px] py-0 flex items-center gap-1"
                 style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
-                <Clock size={9} />PENDING
+                <Clock size={8} />PENDING
               </Badge>
             </div>
           </div>
           <button
             onClick={handleRetry}
-            className="w-[100px] h-[30px] rounded-[20px] font-semibold text-base text-white flex items-center justify-center gap-1.5"
+            className="w-[80px] h-[26px] rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
             style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
           >
-            <RotateCcw size={14} />Retry
+            <RotateCcw size={11} />Retry
           </button>
           {dateStr && (
-            <p className="text-[8px] leading-3 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+            <p className="text-[7px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
         </div>
       </div>
@@ -407,28 +406,28 @@ function RedeemedCard({ item }: { item: any }) {
         borderRadius: 10,
       }}
     >
-      <div className="flex items-start p-4 gap-3" style={{ minHeight: 120 }}>
-        <div className="w-[60px] h-[88px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
+      <div className="flex items-start p-3 gap-2.5" style={{ minHeight: 90 }}>
+        <div className="w-[50px] h-[70px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
           <img src={item.image || getImageUrl(item.meta)} alt={item.brandName} className="w-full h-full object-contain"
             onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
         </div>
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
-            <p className="font-semibold text-base leading-6 text-black truncate">{item.brandName}</p>
-            <p className="font-normal text-xs leading-[18px] text-black mt-0.5">₹{item.amount?.toLocaleString("en-IN")}</p>
-            <span className="inline-block mt-1 bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded-full">REDEEMED</span>
+            <p className="font-semibold text-sm leading-5 text-black truncate">{item.brandName}</p>
+            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{item.amount?.toLocaleString("en-IN")}</p>
+            <span className="inline-block mt-0.5 bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0 rounded-full">REDEEMED</span>
           </div>
           {vouchers.length > 0 && (
             <div className="space-y-0.5">
               {vouchers.map((v, i) => (
-                <p key={i} className="font-mono text-[10px] font-medium truncate" style={{ color: "#888888" }}>
+                <p key={i} className="font-mono text-[9px] font-medium truncate" style={{ color: "#888888" }}>
                   {v.cardNumber || "—"}
                 </p>
               ))}
             </div>
           )}
           {dateStr && (
-            <p className="text-[8px] leading-3 font-normal" style={{ color: "#5E5E5E" }}>Redeemed {dateStr}</p>
+            <p className="text-[7px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>Redeemed {dateStr}</p>
           )}
         </div>
       </div>
@@ -528,8 +527,8 @@ export default function Orders() {
 
   const tabs: { id: Tab; label: string; Icon: any; count?: number }[] = [
     { id: "vouchers", label: "Vouchers", Icon: Tag, count: paidOrders.length },
-    { id: "pending", label: "Pending", Icon: Clock, count: pendingOrders.length },
-    { id: "redeemed", label: "Redeemed", Icon: CheckCircle2, count: redeemed.length },
+    { id: "pending", label: "Pending", Icon: Clock },
+    { id: "redeemed", label: "Redeemed", Icon: CheckCircle2 },
   ];
 
   if (!isAuthenticated) {
@@ -555,30 +554,30 @@ export default function Orders() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "linear-gradient(179.64deg, #9747FF -354.99%, #FFFFFF 99.68%)" }}>
+    <div className="min-h-screen flex flex-col" style={{ background: "#F3F5F9" }}>
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative">
         <FloatingCoins count={6} />
         {/* Aurora header */}
-        <div className="relative py-8 px-4 sm:px-6 lg:px-10">
+        <div className="relative py-4 px-4 sm:px-6 lg:px-10">
           <div className="max-w-3xl mx-auto">
-            <button
-              onClick={() => setLocation("/")}
-              className="mb-4 inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm font-semibold text-[#1a1a1a] shadow-sm transition-all hover:bg-white/90"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back to Home
-            </button>
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p style={{ color: "#888888", fontSize: "12px", fontWeight: "500", letterSpacing: "0.1em", textTransform: "uppercase" }}>Your wallet</p>
-                <h1 style={{ fontSize: "32px", fontWeight: "800", color: "#1a1a1a" }}>My Vouchers</h1>
-              </div>
-              <button onClick={fetchOrders}
-                className="w-10 h-10 rounded-2xl flex items-center justify-center hover:bg-white/10 transition-colors"
-                style={{ background: "white", boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)" }}>
-                <RefreshCw size={16} className={`${loading ? "g-spin" : ""}`} style={{ color: "#7b5cff" }} />
+            <div className="flex items-center justify-between mb-3">
+              <button
+                onClick={() => setLocation("/")}
+                className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#1a1a1a] shadow-sm transition-all hover:bg-white/90"
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                Back to Home
               </button>
+              <button onClick={fetchOrders}
+                className="w-8 h-8 rounded-xl flex items-center justify-center hover:bg-white/10 transition-colors"
+                style={{ background: "white", boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.08)" }}>
+                <RefreshCw size={14} className={`${loading ? "g-spin" : ""}`} style={{ color: "#7b5cff" }} />
+              </button>
+            </div>
+            <div className="mb-3">
+              <p style={{ color: "#888888", fontSize: "10px", fontWeight: "500", letterSpacing: "0.1em", textTransform: "uppercase" }}>Your wallet</p>
+              <h1 style={{ fontSize: "20px", fontWeight: "800", color: "#1a1a1a" }}>My Vouchers</h1>
             </div>
             {/* 3 equal tabs - pill style */}
             <div className="flex rounded-full bg-white p-1 mx-4" style={{ border: "1px solid #F0F0F0" }}>
@@ -604,7 +603,7 @@ export default function Orders() {
         </div>
 
         {/* Content */}
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+        <div className="max-w-3xl mx-auto px-2 sm:px-6 py-6">
           {loading ? (
             <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 g-skeleton rounded-3xl" />)}</div>
           ) : error ? (
@@ -620,15 +619,17 @@ export default function Orders() {
                 subtitle="Your purchased vouchers will appear here after payment"
                 action={<Link href="/brands"><Button className="rounded-2xl h-12 px-8 font-bold shadow-g-primary">Browse Brands</Button></Link>} />
             ) : (
-              <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
                 {paidOrders.map(order => {
                   const id = order.order_id || order.order_number;
                   return (
-                    <VoucherCard key={id} order={order}
-                      expanded={expandedId === id}
-                      onToggle={() => setExpandedId(prev => prev === id ? null : id)}
-                      onRedeemed={handleRedeemed}
-                      clientId={user?.clientId ?? ""} />
+                    <div key={id} className={`flex flex-col ${expandedId === id ? "col-span-3" : ""}`}>
+                      <VoucherCard order={order}
+                        expanded={expandedId === id}
+                        onToggle={() => setExpandedId(prev => prev === id ? null : id)}
+                        onRedeemed={handleRedeemed}
+                        clientId={user?.clientId ?? ""} />
+                    </div>
                   );
                 })}
               </div>

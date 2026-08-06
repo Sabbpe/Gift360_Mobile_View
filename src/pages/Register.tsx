@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Mail, AlertCircle, CheckCircle, Smartphone, User, Gift, Sparkles, ChevronRight } from "lucide-react";
+import { Mail, AlertCircle, CheckCircle, Smartphone, User, Sparkles, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRegisterSendOtp } from "@/hooks/useRegisterSendOtp";
@@ -8,6 +8,7 @@ import { useRegisterVerifyOtp } from "@/hooks/useRegisterVerifyOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { decodeJwtPayload } from "@/api/authApi";
 import { FloatingCoins } from "@/components/FloatingCoins";
+import gift360Logo from "@/assets/gift360full.png";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -90,11 +91,8 @@ export default function Register() {
       <div className="auth-page__content relative z-10 flex flex-col px-5 pt-8 pb-8">
         {/* Branding */}
         <div className="flex flex-col items-center anim-fade-up">
-          <div className="relative mb-3">
-            <span className="absolute -inset-[3px] rounded-3xl bg-gold-gradient blur-[2px] opacity-80" />
-            <div className="relative w-16 h-16 rounded-3xl bg-[#5343B2] card-edge flex items-center justify-center g-float">
-              <Gift size={32} className="text-amber-300" />
-            </div>
+          <div className="relative mb-3 g-float">
+            <img src={gift360Logo} alt="Gift360" className="w-40 h-40 object-contain" />
           </div>
           <h1 className="text-2xl font-extrabold tracking-tight">
             <span className="text-black">Create Account</span>
