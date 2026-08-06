@@ -172,7 +172,7 @@ export default function Hero() {
                 style={{ maxHeight: 220, boxShadow: "0 8px 24px rgba(0,0,0,0.12)" }}>
                 {filteredSuggestions.map((b: any, i: number) => (
                   <button key={i} onClick={() => {
-                    const brandId = b.BrandId || b.brandId;
+                    const brandId = (b.BrandId || (b as any).brandId) || (b.BrandId || (b as any).brandId);
                     if (brandId) {
                       setSheetBrandId(brandId);
                       setSheetOpen(true);
@@ -201,8 +201,8 @@ export default function Hero() {
             {recommended.map((brand: Brand) => {
               const img = getBrandImg(brand);
               return (
-                <button key={brand.BrandId}
-                  onClick={() => setLocation(`/brands/${brand.BrandId}`)}
+                <button key={(brand.BrandId || (brand as any).brandId)}
+                  onClick={() => setLocation(`/brands/${(brand.BrandId || (brand as any).brandId)}`)}
                   className="text-left bg-card p-3 flex items-center gap-3 active:scale-[0.98] transition-transform"
                   style={{ width: 140, borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}>
                   <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center p-1.5">
@@ -250,7 +250,7 @@ export default function Hero() {
                 {[...topBrands, ...topBrands].map((b: Brand, i) => {
                   const img = getBrandImg(b);
                   return (
-                    <button key={`r1-${i}`} onClick={() => setLocation(`/brands/${b.BrandId || (b as any).brandId}`)}
+                    <button key={`r1-${i}`} onClick={() => setLocation(`/brands/${(b.BrandId || (b as any).brandId) || (b as any).brandId}`)}
                       className="brand-tile group relative shrink-0" style={{ animationDelay: `${(i % 8) * 0.25}s` }}>
                       <div className="absolute -inset-[2px] rounded-2xl brand-ring opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[1px]" />
                       <div className="relative w-[88px] bg-card rounded-2xl p-2.5 flex flex-col items-center gap-1.5" style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
@@ -272,7 +272,7 @@ export default function Hero() {
                 {[...[...topBrands].reverse(), ...[...topBrands].reverse()].map((b: Brand, i) => {
                   const img = getBrandImg(b);
                   return (
-                    <button key={`r2-${i}`} onClick={() => setLocation(`/brands/${b.BrandId}`)}
+                    <button key={`r2-${i}`} onClick={() => setLocation(`/brands/${(b.BrandId || (b as any).brandId)}`)}
                       className="brand-tile group relative shrink-0" style={{ animationDelay: `${(i % 8) * 0.3 + 0.5}s` }}>
                       <div className="absolute -inset-[2px] rounded-2xl brand-ring opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[1px]" />
                       <div className="relative w-[78px] bg-card rounded-2xl p-2 flex flex-col items-center gap-1" style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
@@ -299,7 +299,7 @@ export default function Hero() {
             {recentlyUsed.map((b: Brand, i: number) => {
               const img = getBrandImg(b);
               return (
-                <button key={i} onClick={() => setLocation(`/brands/${b.BrandId}`)}
+                <button key={i} onClick={() => setLocation(`/brands/${(b.BrandId || (b as any).brandId)}`)}
                   className="w-12 h-12 rounded-full bg-card flex items-center justify-center p-1.5 shrink-0 active:scale-95 transition-transform"
                   style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
                   {img ? <img src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
@@ -321,3 +321,4 @@ export default function Hero() {
     </div>
   );
 }
+
