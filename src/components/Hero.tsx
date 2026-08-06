@@ -250,7 +250,7 @@ export default function Hero() {
                 {[...topBrands, ...topBrands].map((b: Brand, i) => {
                   const img = getBrandImg(b);
                   return (
-                    <button key={`r1-${i}`} onClick={() => setLocation(`/brands/${b.BrandId}`)}
+                    <button key={`r1-${i}`} onClick={() => setLocation(`/brands/${b.BrandId || (b as any).brandId}`)}
                       className="brand-tile group relative shrink-0" style={{ animationDelay: `${(i % 8) * 0.25}s` }}>
                       <div className="absolute -inset-[2px] rounded-2xl brand-ring opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[1px]" />
                       <div className="relative w-[88px] bg-card rounded-2xl p-2.5 flex flex-col items-center gap-1.5" style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
