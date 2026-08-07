@@ -537,13 +537,13 @@ export default function PaymentResult() {
             {!loading && (
               <div className="p-5 rounded-xl border bg-muted/20 space-y-4">
                 {paymentData.status === "success" && (
-                  <div className="p-3 rounded-lg border bg-green-50 dark:bg-green-900/20 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                  <div className="p-3 rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
                       <CheckCircle2 className="h-4 w-4" />
                       <span>Payment Successful</span>
                     </div>
                     {reservationId && (
-                      <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                      <div className="flex items-center gap-2 text-sm text-[#7C3AED]">
                         <CheckCircle2 className="h-4 w-4" />
                         <span>
                           {couponLifecycleStatus === "confirming"
@@ -554,7 +554,7 @@ export default function PaymentResult() {
                         </span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-green-700 dark:text-green-400">
+                    <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
                       <CheckCircle2 className="h-4 w-4" />
                       <span>Order Confirmed</span>
                     </div>
@@ -592,26 +592,26 @@ export default function PaymentResult() {
                 )}
 
                 {paymentData.status === "success" && (
-                  <div className="p-3 rounded-lg border bg-purple-50 dark:bg-purple-900/20 space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-purple-700 dark:text-purple-300 font-medium">
+                  <div className="p-3 rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
                       <img src={superCoinIcon} alt="" className="h-4 w-4" />
                       <span>SuperCoin Reward</span>
                     </div>
                     {orderDetailsLoading ? (
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                      <p className="text-sm text-[#7C3AED]">
                         Fetching earned coins...
                       </p>
                     ) : orderDetails?.coinsEarned !== null &&
                       orderDetails?.coinsEarned !== undefined ? (
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                      <p className="text-sm text-[#7C3AED]">
                         You earned {orderDetails.coinsEarned} SuperCoins for this order.
                       </p>
                     ) : orderDetailsError ? (
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                      <p className="text-sm text-[#7C3AED]">
                         {orderDetailsError}
                       </p>
                     ) : (
-                      <p className="text-sm text-purple-700 dark:text-purple-300">
+                      <p className="text-sm text-[#7C3AED]">
                         SuperCoins earned will appear here once the order is processed.
                       </p>
                     )}
@@ -619,8 +619,8 @@ export default function PaymentResult() {
                 )}
 
                 <div className="text-sm">
-                  <div className="p-3 rounded-lg bg-background border">
-                    <p className="text-muted-foreground mb-1">Status</p>
+                  <div className="p-3 rounded-lg bg-[rgba(151,71,255,0.04)] border border-[rgba(151,71,255,0.2)]">
+                    <p className="text-[#7C3AED] mb-1">Status</p>
                     <p className="font-semibold">{statusLabel}</p>
                   </div>
                 </div>

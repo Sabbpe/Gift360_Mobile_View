@@ -192,9 +192,9 @@ export default function Register() {
 
         {/* Footer */}
         <div className="mt-auto pt-6 text-center anim-fade-up delay-300">
-          <p className="text-sm text-black font-medium">
+          <p className="text-sm text-[#1E1E1E] font-semibold">
             Already have an account?{" "}
-            <Link href="/login"><button className="font-bold text-black hover:underline">Sign in</button></Link>
+            <Link href="/login"><button className="font-bold text-[#7C3AED] underline">Sign in</button></Link>
           </p>
           <p className="text-center text-[11px] text-black mt-4 font-medium px-6">
             By creating an account, you agree to our{" "}

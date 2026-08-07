@@ -41,6 +41,7 @@ import { brandApi } from "@/lib/valuedesignApi";
 type BrandItem = {
   name: string;
   image?: string;
+  brandId?: string;
 };
 
 function getRecommendedBrandImage(brand: Brand): string | null {
@@ -454,7 +455,7 @@ function TopBrandsGrid({
   );
 }
 
-function RecentlyUsed() {
+function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
   const [items, setItems] = useState<BrandItem[]>([]);
   const { user, isAuthenticated } = useAuthContext();
 
@@ -473,10 +474,11 @@ function RecentlyUsed() {
           const item = order.items?.[0];
           const meta = item?.meta || item || {};
           const name = meta.brand_name || meta.brandName || meta.name;
+          const brandId = meta.brandId || meta.brand_id || item.brandId || item.brand_id;
           if (name && !seen.has(name)) {
             seen.add(name);
             const image = getImageUrl(meta) || undefined;
-            unique.push({ name, image });
+            unique.push({ name, image, brandId });
             if (unique.length >= 6) break;
           }
         }
@@ -492,11 +494,28 @@ function RecentlyUsed() {
   return (
     <section className="px-[21px] pt-[27px]">
       <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Recently Used</h2>
-      <div className="mt-[12px] flex items-center justify-between">
+      <div className="no-scrollbar mt-[12px] flex snap-x gap-3 overflow-x-auto scroll-smooth">
         {items.map((item) => (
-          <div key={item.name} className="grid h-[44px] w-[44px] place-items-center overflow-hidden rounded-full bg-white shadow-[0_2px_6px_rgba(26,30,49,0.22)]">
-            <img src={item.image || "/brand-placeholder.png"} alt={item.name} className="h-[35px] w-[35px] rounded-full object-contain" />
-          </div>
+          <article key={item.name} className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
+            style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}>
+            <div className="flex items-start gap-2" style={{ height: 32 }}>
+              <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <img src={item.image || "/brand-placeholder.png"} alt={item.name} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+              </div>
+              <div className="min-w-0" style={{ flex: 1 }}>
+                <span className="text-[12px] font-semibold text-[#111827] truncate block">{item.name}</span>
+              </div>
+            </div>
+            <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => item.brandId && onBuy?.(item.brandId)}
+                style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}
+              >
+                Buy Again
+              </button>
+            </div>
+          </article>
         ))}
       </div>
     </section>
@@ -607,7 +626,7 @@ function MobileHomeScreen() {
       <TopBrandsGrid
         onOpenBrand={openTopBrandModal}
       />
-      <RecentlyUsed />
+      <RecentlyUsed onBuy={openStandardPaymentSheet} />
       <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
       <BrandVoucherModal
         open={topBrandModalOpen}

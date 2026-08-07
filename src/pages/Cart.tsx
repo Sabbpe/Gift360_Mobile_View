@@ -1689,7 +1689,7 @@ export default function Cart() {
   // Show the hard empty-cart state only for the cart tab.
   if (activeTab === "cart" && (!cart || !cart.items || cart.items.length === 0)) {
     return (
-      <div className="cart-color-system cart-page min-h-screen flex flex-col">
+    <div className="cart-color-system cart-page min-h-screen flex flex-col">
         <Header />
         <main className="relative flex-1 flex items-center justify-center pb-20 md:pb-0 px-4">
           <div className="empty-cart text-center">
@@ -1844,7 +1844,7 @@ export default function Cart() {
                             }}
                             className={`relative z-10 flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
                               rewardMode === 'cashbackWallet'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/40 shadow-sm text-foreground'
+                                ? 'bg-[#34D399] shadow-sm text-white font-semibold'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
@@ -1856,7 +1856,7 @@ export default function Cart() {
                             onClick={() => setRewardMode('superCoins')}
                             className={`relative z-10 flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
                               rewardMode === 'superCoins'
-                                ? 'bg-emerald-100 dark:bg-emerald-900/40 shadow-sm text-foreground'
+                                ? 'bg-[#34D399] shadow-sm text-white font-semibold'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
@@ -1975,14 +1975,14 @@ export default function Cart() {
                             </Button>
                           ) : (
                             <div className="space-y-2">
-                              <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
-                                <span className="text-sm font-medium text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
+                              <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
+                                <span className="text-sm font-medium text-[#7C3AED] flex items-center gap-1.5">
                                   SuperCoins active
                                   <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                                 </span>
                                 <button
                                   type="button"
-                                  className="text-xs font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 underline"
+                                  className="text-xs font-medium text-[#7C3AED] hover:text-[#6D28D9] underline"
                                   onClick={async () => {
                                     await unholdSuperCoin(superCoinOrderNumber || undefined);
                                     setRewardMode("cashbackWallet");
@@ -1992,7 +1992,7 @@ export default function Cart() {
                                 </button>
                               </div>
                               {transactionTime && !countdown.expired && (
-                                <p className="px-3 text-xs sm:text-sm font-medium text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
+                                <p className="px-3 text-xs sm:text-sm font-medium text-[#7C3AED] flex items-center gap-1.5">
                                   <Clock className="h-3.5 w-3.5" />
                                   Use your SuperCoins within {countdown.display}
                                 </p>
@@ -2003,7 +2003,7 @@ export default function Cart() {
                                 </p>
                               )}
                               {superCoinDeduction > 0 && (
-                                <p className="text-xs cart-text-primary px-3">
+                                <p className="text-xs text-[#7C3AED] font-medium px-3">
                                   Saving ₹{superCoinDeduction.toFixed(2)} on this order
                                 </p>
                               )}

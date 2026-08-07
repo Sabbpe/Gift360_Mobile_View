@@ -298,12 +298,26 @@ export default function Hero() {
           <div className="flex gap-3 overflow-x-auto no-scrollbar -mx-6 px-6 pb-1">
             {recentlyUsed.map((b: Brand, i: number) => {
               const img = getBrandImg(b);
+              const brandId = b.BrandId || (b as any).brandId;
               return (
-                <button key={i} onClick={() => setLocation(`/brands/${(b.BrandId || (b as any).brandId)}`)}
-                  className="w-12 h-12 rounded-full bg-card flex items-center justify-center p-1.5 shrink-0 active:scale-95 transition-transform"
-                  style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
-                  {img ? <img src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
-                    : <div className="w-full h-full bg-accent rounded-full" />}
+                <button key={i} onClick={() => { setSheetBrandId(brandId); setSheetOpen(true); }}
+                  className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white active:scale-95 transition-transform text-left"
+                  style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8 }}>
+                  <div className="flex items-start gap-2" style={{ height: 32 }}>
+                    <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                      {img ? <img src={img} alt={b.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+                        : <div style={{ width: 34, height: 28 }} />}
+                    </div>
+                    <div className="min-w-0" style={{ flex: 1 }}>
+                      <span className="text-[12px] font-semibold text-[#111827] truncate block">{b.BrandName}</span>
+                    </div>
+                  </div>
+                  <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
+                    <span style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}>
+                      Buy Again
+                    </span>
+                  </div>
                 </button>
               );
             })}

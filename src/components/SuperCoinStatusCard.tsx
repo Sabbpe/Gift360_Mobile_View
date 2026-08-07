@@ -153,7 +153,7 @@ export default function SuperCoinStatusCard({
           rounded-xl border p-4 space-y-3 transition-all duration-200 ease-in-out
           ${localEnabled && isEnrolled
             ? "bg-[rgba(151,71,255,0.08)] border-l-[3px] border-l-[var(--cart-primary)] border-t border-r border-b border-t-[rgba(151,71,255,0.3)] border-r-[rgba(151,71,255,0.3)] border-b-[rgba(151,71,255,0.3)]"
-            : "border-gray-200 dark:border-gray-700/60 bg-white/80 dark:bg-gray-900/40"
+            : "border-[rgba(151,71,255,0.2)] bg-[rgba(151,71,255,0.04)]"
           }
         `}
       >
@@ -243,7 +243,7 @@ export default function SuperCoinStatusCard({
               )}
             </div>
 
-            <Separator className="bg-gray-200 dark:bg-gray-700/60" />
+            <Separator className="bg-[rgba(151,71,255,0.2)]" />
 
             {/* Inline error inside card */}
             {errorMessage && (
@@ -268,9 +268,9 @@ export default function SuperCoinStatusCard({
 
       {/* Success banner below card */}
       {localEnabled && isEligible && activeDeduction > 0 && (
-        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40">
-          <Check className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" strokeWidth={2.5} />
-          <p className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
+          <Check className="h-4 w-4 text-[#7C3AED] shrink-0" strokeWidth={2.5} />
+          <p className="text-xs font-medium text-[#7C3AED]">
             Yay! You saved ₹{activeDeduction.toFixed(2)} on this booking!
           </p>
         </div>

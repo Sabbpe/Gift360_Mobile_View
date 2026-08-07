@@ -295,6 +295,16 @@ export default function Login() {
           </div>
         </div>
 
+        {/* Sign up link */}
+        <div className="w-full max-w-[342px] mx-auto text-center mt-2 mb-1">
+          <p className="text-[11px] font-semibold text-[#1E1E1E]">
+            Don't have an account?{" "}
+            <Link href="/register">
+              <button className="font-bold text-[#7C3AED] underline text-[12px]">Sign up</button>
+            </Link>
+          </p>
+        </div>
+
         {/* TRUSTED BY 400+ BRANDS */}
         <div className="w-full max-w-[342px] mx-auto mb-1.5">
           <div className="flex items-center gap-2">
