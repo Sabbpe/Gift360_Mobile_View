@@ -48,6 +48,7 @@ import {
 import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 
 const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
@@ -981,6 +982,12 @@ export default function Cart() {
   const subtotal = cart?.totalAmount ?? 0;
   const processingFee = 0;
 
+  // SuperCoin exclusion: check if all items are from excluded brands
+  const allItemsSuperCoinExcluded = cartItems.length > 0 && cartItems.every(item => isSuperCoinExcluded(item.brandName));
+  const superCoinEligibleTotal = cartItems
+    .filter(item => !isSuperCoinExcluded(item.brandName))
+    .reduce((sum, item) => sum + item.lineTotal, 0);
+
   const maxWalletUsage = subtotal * 0.5;
 
   const walletDeduction = useWalletBalance
@@ -999,16 +1006,15 @@ export default function Cart() {
   );
 
   const maxSuperCoinRedeemable = discountsLoaded
-    ? cartItems.reduce(
-        (sum, item) => {
-          const discount = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
-          return sum + (item.lineTotal * discount) / 100;
-        },
+    ? Math.max(
+        ...cartItems
+          .filter(item => !isSuperCoinExcluded(item.brandName))
+          .map(item => item.discount ?? brandDiscountMap[item.brandId] ?? 0),
         0
       )
     : superCoinState.balance;
 
-  const superCoinDeduction = superCoinAuthorized && superCoinState.eligible
+  const superCoinDeduction = !allItemsSuperCoinExcluded && superCoinAuthorized && superCoinState.eligible
     ? Math.min(
         superCoinHoldContext?.amount ?? superCoinState.balance,
         maxSuperCoinRedeemable
@@ -1050,7 +1056,7 @@ export default function Cart() {
       subtotal + processingFee - currentCouponDiscount
     );
     const currentSuperCoinDeduction =
-      superCoinEnabled && superCoinState.eligible
+      !allItemsSuperCoinExcluded && superCoinEnabled && superCoinState.eligible
         ? Math.min(
             superCoinHoldContext?.amount ?? superCoinState.balance,
             maxSuperCoinRedeemable
@@ -1843,7 +1849,7 @@ export default function Cart() {
                               requestSwitchToCashback();
                             }}
                             className={`relative z-10 flex items-center gap-2 px-4 py-2 text-xs sm:text-sm font-medium rounded-full transition-all duration-200 ${
-                              rewardMode === 'cashbackWallet'
+                              rewardMode === 'cashbackWallet' || allItemsSuperCoinExcluded
                                 ? 'bg-[#34D399] shadow-sm text-white font-semibold'
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
@@ -1851,6 +1857,7 @@ export default function Cart() {
                             <Sparkles className="h-4 w-4" />
                             Cashback &amp; Wallet
                           </button>
+                          {!allItemsSuperCoinExcluded && (
                           <button
                             type="button"
                             onClick={() => setRewardMode('superCoins')}
@@ -1863,6 +1870,7 @@ export default function Cart() {
                             <img src={superCoinIcon} alt="" className="h-4 w-4" />
                             SuperCoins
                           </button>
+                          )}
                         </div>
                       </div>
 
@@ -1945,7 +1953,7 @@ export default function Cart() {
                         )}
 
                         {/* Group B: SuperCoins */}
-                        {rewardMode === 'superCoins' && (
+                        {rewardMode === 'superCoins' && !allItemsSuperCoinExcluded && (
                         <div className="space-y-3">
                           {/* SuperCoin balance info via existing card (read-only) */}
                           <SuperCoinStatusCard

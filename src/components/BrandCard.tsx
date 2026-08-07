@@ -5,6 +5,7 @@ import type { Brand } from "@/types/brand";
 import PaymentDetailsSheet from '@/components/PaymentDetailsSheet';
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
+import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 
 const FALLBACK = FALLBACK_IMAGE;
 
@@ -69,7 +70,9 @@ export default function BrandCard({
   if (variant === 'tile') {
     const tileInner = (
       <div className="w-[72px] h-[72px] bg-white rounded-lg flex items-center justify-center mx-auto relative" style={{ boxShadow: '0 6px 18px rgba(2,6,23,0.08)' }}>
-        <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
+        {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
+          <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
+        )}
         {isLoading ? (
           <div className="w-12 h-12 g-skeleton" />
         ) : imgSrc === FALLBACK ? (
@@ -116,7 +119,9 @@ export default function BrandCard({
           className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
           style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
         >
-          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+          {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
+            <img src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+          )}
           <Link href={`/brands/${brand.BrandId}`} className="block">
             <div className="flex items-start gap-2" style={{ height: 32 }}>
               <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

@@ -17,6 +17,7 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
+import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -428,7 +429,9 @@ const sortedDisplayBrands = useMemo(() => {
       >
         <div className="relative inline-block">
           <img src={imageUrl} alt={brandName} loading="lazy" className="brand-logo" onError={(e) => { const target = e.target as HTMLImageElement; if (!target.dataset.fallback) { target.dataset.fallback = "1"; target.src = `https://images.gift360.io/${brandId}.png`; } else { target.src = "/brand-placeholder.png"; } }} />
-          <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10 pointer-events-none" />
+          {!isSuperCoinExcludedById(brandId) && !isSuperCoinExcluded(brandName) && (
+            <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10 pointer-events-none" />
+          )}
         </div>
         <span>{brandName}</span>
       </div>

@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Link } from "wouter";
 import type { Voucher } from "@/data/vouchers";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
+import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 
 interface VoucherCardProps {
   voucher: Voucher;
@@ -21,7 +22,9 @@ export default function VoucherCard({ voucher, showBulkContext = false }: Vouche
         <div className="w-full text-left">
           {/* Image Container */}
           <div className="relative aspect-square overflow-hidden bg-muted">
-            <img src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[22px] h-[22px] object-contain drop-shadow-sm z-10" />
+            {!isSuperCoinExcluded(voucher.brand) && (
+              <img src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[22px] h-[22px] object-contain drop-shadow-sm z-10" />
+            )}
             <img
               src={voucher.image}
               alt={voucher.title}

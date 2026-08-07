@@ -1,8 +1,12 @@
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
+import { extractSuperCoinBalance } from "@/api/supercoinApi";
 import { ArrowLeft, LogOut } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
+import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import { useEffect } from "react";
 
 function Avatar({ username }: { username: string }) {
   const initial = username.trim().charAt(0).toUpperCase() || "U";
@@ -51,7 +55,7 @@ function ProfileForm({
   isLoggingOut,
   onLogout,
 }: {
-  profile: { username: string; email: string; phone: string; balance: number };
+  profile: { username: string; email: string; phone: string; balance: number; superCoinBalance: number; isSuperCoinUser: boolean };
   isLoggingOut: boolean;
   onLogout: () => void;
 }) {
@@ -74,6 +78,19 @@ function ProfileForm({
         {fields.map((field) => (
           <InputField key={field.label} label={field.label} value={field.value} />
         ))}
+
+        {/* SuperCoin Balance */}
+        {profile.isSuperCoinUser && (
+          <label className="block">
+            <span className="block text-[14px] font-normal leading-none text-white">SuperCoin Balance</span>
+            <div className="mt-[8px] h-[44px] w-full rounded-[7px] border-0 bg-white px-[13px] flex items-center gap-2">
+              <img src={superCoinIcon} alt="" className="h-[18px] w-[18px]" />
+              <span className="text-[14px] font-semibold text-[#7C3AED]">
+                {profile.superCoinBalance.toLocaleString("en-IN")} coins
+              </span>
+            </div>
+          </label>
+        )}
       </div>
 
       <LogoutButton isLoading={isLoggingOut} onLogout={onLogout} />
@@ -86,12 +103,37 @@ export default function ProfilePage() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { data: walletData } = useFetchWallet(user?.clientId);
+  const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(user?.mobile);
+
+  // Auto-fetch SuperCoin search + balance
+  useEffect(() => {
+    if (!identity) return;
+    if (!searchUserMutation.data && !searchUserMutation.isPending && !searchUserMutation.isError) {
+      searchUserMutation.mutate();
+    }
+  }, [identity]);
+
+  useEffect(() => {
+    if (!identity) return;
+    const userExists = searchUserMutation.data?.userExists === true ||
+      String(searchUserMutation.data?.state || "").toUpperCase() === "ACTIVATED";
+    if (userExists && !balanceMutation.data && !balanceMutation.isPending && !balanceMutation.isError) {
+      balanceMutation.mutate();
+    }
+  }, [identity, searchUserMutation.data]);
+
+  // Auto-fetch SuperCoin balance
+  const superCoinBalance = extractSuperCoinBalance(balanceMutation.data);
+  const isSuperCoinUser = searchUserMutation.data?.userExists === true ||
+    String(searchUserMutation.data?.state || "").toUpperCase() === "ACTIVATED";
 
   const profile = {
     username: user?.name || "User",
     email: user?.email || "",
     phone: user?.mobile || "",
     balance: walletData?.totalBalance ?? 0,
+    superCoinBalance,
+    isSuperCoinUser,
   };
 
   const handleLogout = () => {
