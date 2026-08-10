@@ -32,6 +32,7 @@ export const SUPERCOIN_EXCLUDED_BRANDS = [
   "Samsonite",
   "tripXOXO",
   "American Tourister",
+  "Amazon",
 ];
 
 export const SUPERCOIN_EXCLUDED_BRAND_IDS = [
