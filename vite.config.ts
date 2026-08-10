@@ -14,12 +14,11 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: 7788
-    
+    port: parseInt(process.env.VITE_PORT || "7788")
   },
   preview: {
     host: "0.0.0.0",
-    port: 7788,
+    port: parseInt(process.env.VITE_PORT || "7788"),
     allowedHosts: ["gift360.io", "www.gift360.io", "uat.gift360.io"],
   },
 });
