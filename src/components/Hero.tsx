@@ -54,7 +54,8 @@ export default function Hero() {
   const { data: brands = [] } = useBrands();
   const { data: brandNames = [] } = useBrandNames();
   const walletBalance = walletData?.totalBalance ?? 0;
-  const firstName = user?.name?.split(" ")[0] || "there";
+  const displayName = localStorage.getItem("displayName") || user?.name || "there";
+  const firstName = displayName.split(" ")[0] || "there";
 
   const recommended = useMemo(() =>
     [...(brands as Brand[])]

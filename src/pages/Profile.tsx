@@ -2,11 +2,13 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, Check, Pencil } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+
+const DISPLAY_NAME_KEY = "displayName";
 
 function Avatar({ username }: { username: string }) {
   const initial = username.trim().charAt(0).toUpperCase() || "U";
@@ -15,6 +17,52 @@ function Avatar({ username }: { username: string }) {
     <div className="grid h-[86px] w-[86px] place-items-center rounded-full bg-[#df9ca9] text-[34px] font-bold leading-none text-white">
       {initial}
     </div>
+  );
+}
+
+function EditableField({ label, value, onSave }: { label: string; value: string; onSave: (val: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+
+  const handleSave = () => {
+    onSave(draft);
+    setEditing(false);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") handleSave();
+  };
+
+  return (
+    <label className="block">
+      <span className="block text-[14px] font-normal leading-none text-white">{label}</span>
+      <div className="mt-[8px] flex gap-2">
+        <input
+          readOnly={!editing}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={editing ? handleKeyDown : undefined}
+          className={`h-[44px] flex-1 rounded-[7px] border-0 bg-white px-[13px] text-[14px] font-medium text-[#333333] outline-none ${editing ? "ring-2 ring-white/50" : ""}`}
+        />
+        {editing ? (
+          <button
+            type="button"
+            onClick={handleSave}
+            className="h-[44px] w-[44px] rounded-[7px] bg-white flex items-center justify-center active:scale-95"
+          >
+            <Check className="h-5 w-5 text-[#7C3AED]" strokeWidth={2.5} />
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="h-[44px] w-[44px] rounded-[7px] bg-white/20 flex items-center justify-center active:scale-95"
+          >
+            <Pencil className="h-4 w-4 text-white" />
+          </button>
+        )}
+      </div>
+    </label>
   );
 }
 
@@ -54,30 +102,26 @@ function ProfileForm({
   profile,
   isLoggingOut,
   onLogout,
+  onUsernameSave,
 }: {
   profile: { username: string; email: string; phone: string; balance: number; superCoinBalance: number; isSuperCoinUser: boolean };
   isLoggingOut: boolean;
   onLogout: () => void;
+  onUsernameSave: (name: string) => void;
 }) {
-  const fields = [
-    { label: "Username", value: profile.username },
-    { label: "Email", value: profile.email },
-    { label: "Phone Number", value: profile.phone },
-    {
-      label: "Balance",
-      value: profile.balance.toLocaleString("en-IN", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }),
-    },
-  ];
-
   return (
     <section className="-mt-[1px] min-h-[calc(100vh-238px)] rounded-t-[34px] bg-[linear-gradient(180deg,#7357f1_0%,#5040a0_72%,#3b327d_100%)] px-[20px] pb-[18px] pt-[32px] shadow-[0_-10px_24px_rgba(69,55,154,0.16)]">
       <div className="space-y-[20px]">
-        {fields.map((field) => (
-          <InputField key={field.label} label={field.label} value={field.value} />
-        ))}
+        <EditableField label="Username" value={profile.username} onSave={onUsernameSave} />
+        <InputField label="Email" value={profile.email} />
+        <InputField label="Phone Number" value={profile.phone} />
+        <InputField
+          label="Balance"
+          value={profile.balance.toLocaleString("en-IN", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}
+        />
 
         {/* SuperCoin Balance */}
         {profile.isSuperCoinUser && (
@@ -105,6 +149,8 @@ export default function ProfilePage() {
   const { data: walletData } = useFetchWallet(user?.clientId);
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(user?.mobile);
 
+  const [displayName, setDisplayName] = useState(() => localStorage.getItem(DISPLAY_NAME_KEY) || user?.name || "User");
+
   // Auto-fetch SuperCoin search + balance
   useEffect(() => {
     if (!identity) return;
@@ -122,13 +168,20 @@ export default function ProfilePage() {
     }
   }, [identity, searchUserMutation.data]);
 
-  // Auto-fetch SuperCoin balance
   const superCoinBalance = extractSuperCoinBalance(balanceMutation.data);
   const isSuperCoinUser = searchUserMutation.data?.userExists === true ||
     String(searchUserMutation.data?.state || "").toUpperCase() === "ACTIVATED";
 
+  const handleUsernameSave = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    localStorage.setItem(DISPLAY_NAME_KEY, trimmed);
+    setDisplayName(trimmed);
+    toast({ title: "Name updated", duration: 2000 });
+  };
+
   const profile = {
-    username: user?.name || "User",
+    username: displayName,
     email: user?.email || "",
     phone: user?.mobile || "",
     balance: walletData?.totalBalance ?? 0,
@@ -185,6 +238,7 @@ export default function ProfilePage() {
         profile={profile}
         isLoggingOut={false}
         onLogout={handleLogout}
+        onUsernameSave={handleUsernameSave}
       />
     </main>
   );

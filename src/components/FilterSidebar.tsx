@@ -474,12 +474,15 @@ const filteredBrandSuggestions = useMemo(() => {
               >
                 <div className="space-y-2">
                   {availableDiscountRanges.map((discountRange, index) => (
+                    (() => {
+                      const discountKey = discountRange.value?.trim() || discountRange.label;
+                      return (
                     <div key={`discount-${index}`} className="flex items-center space-x-2">
                       <input
                         type="checkbox"
                         id={`discount-${index}`}
-                        checked={filters.discountRanges.includes(discountRange.label)}
-                        onChange={() => handleDiscountToggle(discountRange.label)}
+                        checked={filters.discountRanges.includes(discountKey)}
+                        onChange={() => handleDiscountToggle(discountKey)}
                         className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                       />
                       <Label
@@ -489,6 +492,8 @@ const filteredBrandSuggestions = useMemo(() => {
                         {discountRange.label}  {/* ✅ ADD .label */}
                       </Label>
                     </div>
+                      );
+                    })()
                   ))}
 
                 </div>
@@ -709,12 +714,15 @@ const filteredBrandSuggestions = useMemo(() => {
           >
             <div className="space-y-2">
               {availableDiscountRanges.map((discountRange, index) => (
+                (() => {
+                  const discountKey = discountRange.value?.trim() || discountRange.label;
+                  return (
                 <div key={`discount-${index}`} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     id={`discount-${index}`}
-                    checked={filters.discountRanges.includes(discountRange.label)}
-                    onChange={() => handleDiscountToggle(discountRange.label)}
+                    checked={filters.discountRanges.includes(discountKey)}
+                    onChange={() => handleDiscountToggle(discountKey)}
                     className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                   />
                   <Label
@@ -724,6 +732,8 @@ const filteredBrandSuggestions = useMemo(() => {
                     {discountRange.label}  {/* ✅ ADD .label */}
                   </Label>
                 </div>
+                  );
+                })()
               ))}
 
 

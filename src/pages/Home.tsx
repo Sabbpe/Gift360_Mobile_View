@@ -52,7 +52,8 @@ function getRecommendedBrandImage(brand: Brand): string | null {
 function HomeHeader() {
   const [, setLocation] = useLocation();
   const { user } = useAuthContext();
-  const firstName = user?.name?.split(" ")[0];
+  const displayName = localStorage.getItem("displayName") || user?.name || "User";
+  const firstName = displayName.split(" ")[0];
 
   return (
     <header className="relative h-[142px] overflow-hidden rounded-b-[34px] bg-[linear-gradient(135deg,#523da9_0%,#4c42b8_48%,#5365df_100%)] px-[21px] pt-[40px] text-white">

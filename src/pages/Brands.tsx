@@ -195,6 +195,10 @@ const filteredBrandSuggestions = useMemo(() => {
   const availableBrands = filterMeta?.brands ?? [];
   const availablePriceRanges = filterMeta?.priceRanges ?? [];
   const availableSortOptions = filterMeta?.sortOptions ?? ["Popularity"];
+  const availableDiscountRanges = [
+    { label: "0 - 20%", value: "0-20" },
+    { label: "20%+", value: "20+" },
+  ];
 
 
   // Helper to convert display name to backend value
@@ -267,9 +271,151 @@ const filteredBrandSuggestions = useMemo(() => {
     return safeBrands;
   }, [submittedSearchQuery, searchResults, activeFiltersCount, filteredData, safeBrands]);
 
+  const inferDiscountBounds = (
+    rawValue: string,
+    index = 0,
+    total = 0
+  ): { min: number | null; max: number | null } => {
+    const normalized = rawValue.trim().toLowerCase();
+    const numericParts = normalized.match(/(\d+(?:\.\d+)?)/g)?.map(Number) || [];
+
+    const explicitLow = /\b(low|budget|starter|basic)\b/.test(normalized);
+    const explicitMid = /\b(medium|mid|moderate)\b/.test(normalized);
+    const explicitHigh = /\b(high|premium|top)\b/.test(normalized);
+
+    if (numericParts.length >= 2 && /-|to|through|upto/.test(normalized)) {
+      return { min: Math.min(numericParts[0], numericParts[1]), max: Math.max(numericParts[0], numericParts[1]) };
+    }
+
+    if (numericParts.length === 1) {
+      const value = numericParts[0];
+
+      if (/\b(up to|under|below|less than|max|maximum)\b/.test(normalized)) {
+        return { min: null, max: value };
+      }
+
+      if (/\b(above|over|more than|greater than|min|minimum|at least)\b/.test(normalized) || /\+$/.test(normalized) || /\bplus\b/.test(normalized)) {
+        return { min: value, max: null };
+      }
+
+      if (/\b0[-\s]?20\b/.test(normalized) || /0\s*-\s*20/.test(normalized)) {
+        return { min: 0, max: 20 };
+      }
+
+      if (/\b20\+\b/.test(normalized) || /20\s*\+/.test(normalized)) {
+        return { min: 20, max: null };
+      }
+
+      if (explicitLow) return { min: 0, max: 20 };
+      if (explicitMid) return { min: 21, max: 40 };
+      if (explicitHigh) return { min: 41, max: null };
+
+      return { min: value, max: value };
+    }
+
+    if (numericParts.length === 0) {
+      if (explicitLow) return { min: 0, max: 20 };
+      if (explicitMid) return { min: 21, max: 40 };
+      if (explicitHigh) return { min: 41, max: null };
+
+      if (total <= 1) return { min: 0, max: null };
+      if (total === 2) return index === 0 ? { min: 0, max: 20 } : { min: 20, max: null };
+      if (total === 3) {
+        return index === 0
+          ? { min: 0, max: 20 }
+          : index === 1
+            ? { min: 21, max: 40 }
+            : { min: 41, max: null };
+      }
+
+      return index === 0
+        ? { min: 0, max: 20 }
+        : index === 1
+          ? { min: 21, max: 40 }
+          : index === 2
+            ? { min: 41, max: 60 }
+            : { min: 61, max: null };
+    }
+
+    if (/\b(up to|under|below|less than|max|maximum)\b/.test(normalized)) {
+      return { min: null, max: numericParts[0] };
+    }
+
+    if (/\b(above|over|more than|greater than|min|minimum|at least)\b/.test(normalized) || /\+$/.test(normalized) || /\bplus\b/.test(normalized)) {
+      return { min: numericParts[0], max: null };
+    }
+
+    if (numericParts[1] !== undefined) {
+      return { min: Math.min(numericParts[0], numericParts[1]), max: Math.max(numericParts[0], numericParts[1]) };
+    }
+
+    return { min: numericParts[0], max: numericParts[0] };
+  };
+
+  const discountRangeDefinitions = useMemo(() => {
+    const total = availableDiscountRanges.length;
+
+    return availableDiscountRanges.map((range, index) => {
+      const key = (range.value || range.label).trim();
+      return {
+        key,
+        label: range.label,
+        ...inferDiscountBounds(range.value || range.label, index, total),
+      };
+    });
+  }, [availableDiscountRanges]);
+
+  const discountRangeLabelByKey = useMemo(() => {
+    return new Map(discountRangeDefinitions.map((range) => [range.key, range.label]));
+  }, [discountRangeDefinitions]);
+
+  const discountRangeByKey = useMemo(() => {
+    return new Map(discountRangeDefinitions.map((range) => [range.key, range]));
+  }, [discountRangeDefinitions]);
+
+  const parseNumericDiscount = (value: unknown): number => {
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : NaN;
+    }
+
+    if (typeof value === "string") {
+      const normalized = value.replace(/,/g, "");
+      const match = normalized.match(/(\d+(?:\.\d+)?)/);
+      return match ? Number(match[1]) : NaN;
+    }
+
+    const coerced = Number(value);
+    return Number.isFinite(coerced) ? coerced : NaN;
+  };
+
+  const matchesDiscountRange = (brand: any, rangeKey: string) => {
+    const discountValue = parseNumericDiscount(
+      brand.discount ?? brand.Discount ?? brand.cashback ?? 0
+    );
+    if (!Number.isFinite(discountValue)) return false;
+
+    const range =
+      discountRangeByKey.get(rangeKey) ||
+      inferDiscountBounds(rangeKey);
+
+    const min = range.min ?? Number.NEGATIVE_INFINITY;
+    const max = range.max ?? Number.POSITIVE_INFINITY;
+    return discountValue >= min && discountValue <= max;
+  };
+
+  const brandsAfterDiscountFilter = useMemo(() => {
+    if (!filters.discountRanges.length) {
+      return displayBrands;
+    }
+
+    return (displayBrands as any[]).filter((brand) =>
+      filters.discountRanges.some((rangeKey) => matchesDiscountRange(brand, rangeKey))
+    );
+  }, [displayBrands, filters.discountRanges, discountRangeByKey]);
+
 // Frontend sorting logic
 const sortedDisplayBrands = useMemo(() => {
-  const brands = [...displayBrands as any[]];
+  const brands = [...brandsAfterDiscountFilter as any[]];
   
   // Helper function for alphabetical sorting with numbers at the end
   const sortAlphabetically = (a: any, b: any) => {
@@ -326,16 +472,7 @@ const sortedDisplayBrands = useMemo(() => {
       // ✅ DEFAULT: Always sort alphabetically A-Z with numbers at end
       return brands.sort(sortAlphabetically);
   }
-}, [displayBrands, filters.sortOrder]);
-
-  const sortedBrands = useMemo(() => {
-    const brands = [...(sortedDisplayBrands as any[])];
-    return brands.sort((a, b) => {
-      const nameA = (a.brandName || a.BrandName || "").trim();
-      const nameB = (b.brandName || b.BrandName || "").trim();
-      return nameA.localeCompare(nameB, undefined, { sensitivity: "base" });
-    });
-  }, [sortedDisplayBrands]);
+}, [brandsAfterDiscountFilter, filters.sortOrder]);
 
   const normalizeValue = (value?: string) =>
     (value || "")
@@ -403,14 +540,14 @@ const sortedDisplayBrands = useMemo(() => {
     const row2: any[] = [];
     const row3: any[] = [];
 
-    sortedBrands.forEach((brand: any, index: number) => {
+    sortedDisplayBrands.forEach((brand: any, index: number) => {
       if (index % 3 === 0) row1.push(brand);
       else if (index % 3 === 1) row2.push(brand);
       else row3.push(brand);
     });
 
     return [row1, row2, row3];
-  }, [sortedBrands]);
+  }, [sortedDisplayBrands]);
 
   const renderBrandCard = (brand: any, index: number) => {
     const brandId = resolveCanonicalBrandId(brand);
@@ -745,7 +882,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
               }}
               className="inline-flex items-center gap-1 px-3 py-1 bg-purple-50 text-purple-700 rounded-full text-xs font-medium hover:bg-purple-100 transition-colors"
             >
-              <span>{discount}</span>
+              <span>{discountRangeLabelByKey.get(discount) || discount}</span>
               <X className="h-3 w-3" />
             </button>
           ))}
@@ -892,10 +1029,10 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
             {/* BRANDS GRID */}
             <div className="flex-1 min-w-0">
               {/* Results Count */}
-              {sortedBrands.length > 0 && (
+              {sortedDisplayBrands.length > 0 && (
                 <div className="mb-6">
                   <p className="text-sm font-medium text-[#374151]">
-                    Showing <span className="font-semibold text-[#111827]">{sortedBrands.length}</span> brands
+                    Showing <span className="font-semibold text-[#111827]">{sortedDisplayBrands.length}</span> brands
                     {submittedSearchQuery.trim() && (
                       <span className="ml-2 text-[hsl(var(--primary))]">
                         (searching for "{submittedSearchQuery}")
@@ -951,7 +1088,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
               </section>
 
               {/* No Results */}
-              {sortedBrands.length === 0 && (
+              {sortedDisplayBrands.length === 0 && (
                 <div className="text-center py-16 lg:py-20 rounded-3xl bg-blackcard card-edge">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4">
                     <Search className="h-8 w-8 text-amber-300" />
