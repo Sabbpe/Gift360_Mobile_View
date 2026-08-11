@@ -84,6 +84,7 @@ export type DeliveryChannel = 'EMAIL' | 'WHATSAPP' | 'BOTH';
 export interface GiftRequest {
   clientId:         string;
   orderItemId:      string;
+  itemId?:          string;
   // ── Phase 1: email + card personalisation ──────────────────────────────────
   recipientEmail?:  string;
   senderName?:      string;

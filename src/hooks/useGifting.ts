@@ -7,6 +7,7 @@ import type { GiftActionResponse, VoucherState, DeliveryChannel } from "@/types/
 
 interface UseGiftingOptions {
   orderItemId:    string;
+  itemId?:        string;
   clientId:       string;
   orderNumber:    string;
   brandName?:     string;
@@ -31,6 +32,7 @@ interface UseGiftingReturn {
 
 export function useGifting({
   orderItemId,
+  itemId,
   clientId,
   orderNumber,
   brandName,
@@ -94,6 +96,7 @@ export function useGifting({
       const result: GiftActionResponse = await giftVoucher({
         clientId,
         orderItemId,
+        itemId,
         recipientEmail,
         recipientMobile,
         deliveryChannel,

@@ -18,6 +18,7 @@ interface ScratchCardProps {
   index: number;
 
   orderItemId: string;
+  itemId?: string;
   clientId: string;
   orderNumber: string;
   initialState: VoucherState;
@@ -37,6 +38,7 @@ export function ScratchCard({
   brandName,
   index,
   orderItemId,
+  itemId,
   clientId,
   orderNumber,
   initialState,
@@ -56,6 +58,7 @@ export function ScratchCard({
 
   const { isScratchLoading, isGiftLoading, confirmScratch, confirmGift } = useGifting({
     orderItemId,
+    itemId,
     clientId,
     orderNumber,
     brandName,

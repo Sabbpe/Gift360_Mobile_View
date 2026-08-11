@@ -54,14 +54,22 @@ const getImageUrl = (meta: any): string => {
 interface VoucherView {
   key: string; cardNumber: string; cardPin: string; expiryDate: string; amount: string;
   orderItemId: string; isScratched: boolean; isGift: boolean; brandName: string;
+  itemId?: string;
 }
 
 const extractVouchers = (order: any): VoucherView[] => {
   const results: VoucherView[] = [];
   for (const item of (order?.items || [])) {
     (item?.coupons || []).forEach((c: any, ci: number) => {
+      // card_items comes from giftcard_coupon_items via the order-detail
+      // stored procedure — one entry per physical card, matched to the
+      // vd_raw_response items array by position (card_index === vi).
+      // Falls back to undefined itemId on older orders synced before this
+      // existed; gift() still works via legacy orderItemId-only path then.
+      const cardItems: any[] = Array.isArray(c?.card_items) ? c.card_items : [];
       (c?.vd_raw_response?.brand_details || []).forEach((b: any) => {
         (b?.items || []).forEach((v: any, vi: number) => {
+          const matchingCardItem = cardItems.find((ci2: any) => ci2?.card_index === vi);
           results.push({
             key: `${item.order_item_id}-${ci}-${vi}`,
             orderItemId: item.order_item_id || "",
@@ -71,7 +79,10 @@ const extractVouchers = (order: any): VoucherView[] => {
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
             isScratched: Boolean(item.is_scratched),
-            isGift: Boolean(item.is_gift),
+            isGift: matchingCardItem
+              ? Boolean(matchingCardItem.is_gift)
+              : Boolean(item.is_gift),
+            itemId: matchingCardItem?.item_id,
           });
         });
       });
@@ -314,6 +325,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     expiryDate={v.expiryDate} amount={v.amount} index={i}
                     brandName={v.brandName}
                     orderItemId={v.orderItemId}
+                    itemId={v.itemId}
                     orderNumber={order.order_number}
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
