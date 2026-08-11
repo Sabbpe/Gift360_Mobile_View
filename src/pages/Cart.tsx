@@ -1006,12 +1006,13 @@ export default function Cart() {
   );
 
   const maxSuperCoinRedeemable = discountsLoaded
-    ? Math.max(
-        ...cartItems
-          .filter(item => !isSuperCoinExcluded(item.brandName))
-          .map(item => item.discount ?? brandDiscountMap[item.brandId] ?? 0),
-        0
-      )
+    ? cartItems
+        .filter(item => !isSuperCoinExcluded(item.brandName))
+        .reduce((sum, item) => {
+          const itemDiscountPercent = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
+          const itemTotal = item.quantity * item.unitValue;
+          return sum + itemTotal * (itemDiscountPercent / 100) * 0.8;
+        }, 0)
     : superCoinState.balance;
 
   const superCoinDeduction = !allItemsSuperCoinExcluded && superCoinAuthorized && superCoinState.eligible
