@@ -154,7 +154,7 @@ export function ScratchCard({
           <div className="flex gap-2 shrink-0">
             <div className="flex-1 min-w-0 bg-[#1A3052] rounded-lg px-2 py-1.5">
               <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">Card Number</p>
-              <p className="text-white font-bold text-[10px] tracking-tight truncate">{cardNumber}</p>
+              <p className="text-white font-bold text-[9px] tracking-tighter leading-tight break-all">{cardNumber}</p>
             </div>
             <div className="flex-1 min-w-0 bg-[#1A3052] rounded-lg px-2 py-1.5">
               <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">PIN</p>
