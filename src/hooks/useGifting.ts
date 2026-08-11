@@ -47,7 +47,7 @@ export function useGifting({
   const confirmScratch = async () => {
     setIsScratchLoading(true);
     try {
-      const result: GiftActionResponse = await scratchVoucher({ clientId, orderItemId });
+      const result: GiftActionResponse = await scratchVoucher({ clientId, orderItemId, itemId });
       onStateChange(orderItemId, "SCRATCHED");
       toast({
         title:       "Voucher revealed! 🎉",

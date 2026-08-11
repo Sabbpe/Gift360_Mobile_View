@@ -77,6 +77,7 @@ export function getVoucherState(item: Pick<OrderItem, 'is_scratched' | 'is_gift'
 export interface ScratchRequest {
   clientId:     string;
   orderItemId:  string;
+  itemId?:      string;
 }
 
 export type DeliveryChannel = 'EMAIL' | 'WHATSAPP' | 'BOTH';
