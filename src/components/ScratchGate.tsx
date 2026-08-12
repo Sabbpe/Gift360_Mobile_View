@@ -340,38 +340,7 @@ function GiftFormStep({
         <p className="text-xs text-black/60 text-right">{personalMessage.length}/500</p>
       </div>
 
-      {/* Media upload */}
-      <div className="space-y-2">
-        <Label className="text-sm font-medium text-black">
-          Add a photo or video <span className="text-black/60 font-normal">(optional · max 20 MB)</span>
-        </Label>
-        {mediaPreview ? (
-          <div className="relative rounded-xl overflow-hidden border border-slate-200 bg-white">
-            {mediaType === "image"
-              ? <img src={mediaPreview} alt="preview" className="w-full max-h-40 object-cover" />
-              : <video src={mediaPreview} className="w-full max-h-40 object-cover" controls muted />}
-            <button onClick={onClearMedia} disabled={isLoading}
-              className="absolute top-2 right-2 p-1.5 bg-white/90 rounded-full hover:bg-white transition-colors shadow-sm"
-              aria-label="Remove media">
-              <Trash2 className="h-3.5 w-3.5 text-black/60" />
-            </button>
-          </div>
-        ) : (
-          <button onClick={() => fileInputRef.current?.click()} disabled={isLoading}
-            className="w-full flex items-center justify-center gap-2 p-3 rounded-xl border-2 border-dashed border-slate-200 hover:border-[#9747FF]/40 hover:bg-[rgba(151,71,255,0.05)] text-black hover:text-[#9747FF] transition-all text-sm font-medium disabled:opacity-50">
-            {isUploadingMedia
-              ? <><Loader2 className="h-4 w-4 animate-spin" /> Uploading…</>
-              : <><Camera className="h-4 w-4" /><Video className="h-4 w-4" /> Upload photo or video</>}
-          </button>
-        )}
-        <input ref={fileInputRef} type="file" accept="image/*,video/*"
-          onChange={onFileSelect} className="hidden" aria-label="Upload gift media" />
-        {mediaError && (
-          <div className="flex items-center gap-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 p-2 rounded-lg">
-            <AlertCircle className="h-3.5 w-3.5 flex-shrink-0 text-amber-500" />{mediaError}
-          </div>
-        )}
-      </div>
+      {/* Media upload — temporarily hidden, feature coming soon */}
 
       {/* Privacy notice */}
       <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-xs text-black">
