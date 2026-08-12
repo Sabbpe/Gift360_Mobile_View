@@ -1963,6 +1963,8 @@ export default function Cart() {
                             maxRedeemable={maxSuperCoinRedeemable}
                             estimatedEarn={estimatedEarn}
                             hideToggle
+                            coinsOnHold={superCoinAuthorized && superCoinHoldContext ? (superCoinHoldContext.amount ?? 0) : 0}
+                            onCancelHold={superCoinAuthorized && superCoinHoldContext ? () => void cancelSuperCoinHoldIfNeeded() : undefined}
                             onStateChange={({ eligible, balance, enabled }) =>
                               setSuperCoinState({
                                 eligible,

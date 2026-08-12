@@ -15,6 +15,8 @@ type SuperCoinStatusCardProps = {
   maxRedeemable?: number;
   estimatedEarn?: number;
   hideToggle?: boolean;
+  coinsOnHold?: number;
+  onCancelHold?: () => void;
 };
 
 export default function SuperCoinStatusCard({
@@ -25,6 +27,8 @@ export default function SuperCoinStatusCard({
   maxRedeemable,
   estimatedEarn,
   hideToggle = false,
+  coinsOnHold = 0,
+  onCancelHold,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
   const autoSearchKeyRef = useRef<string | null>(null);
@@ -266,6 +270,26 @@ export default function SuperCoinStatusCard({
         )}
       </div>
 
+      {/* Reserved hold banner */}
+      {coinsOnHold > 0 && (
+        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+          <div className="flex items-center gap-2">
+            <span className="text-amber-500 text-sm">🔒</span>
+            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+              {coinsOnHold.toFixed(2)} coin(s) reserved for this checkout
+            </p>
+          </div>
+          {onCancelHold && (
+            <button
+              type="button"
+              onClick={onCancelHold}
+              className="text-xs font-semibold text-red-500 hover:text-red-700 underline shrink-0"
+            >
+              Release
+            </button>
+          )}
+        </div>
+      )}
       {/* Success banner below card */}
       {localEnabled && isEligible && activeDeduction > 0 && (
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
