@@ -204,9 +204,16 @@ export default function SuperCoinOTPModal({
       }
 
       setStep("otp_sent");
-    } catch (e) {
+    } catch (e: any) {
+      const errorCode = e?.response?.data?.errorCode || "";
       const message =
-        e && typeof e === "object" && "message" in e
+        errorCode === "SC0109"
+          ? "You've reached today's SuperCoin OTP limit. Please try again after midnight."
+          : errorCode === "SC0411"
+          ? "Previous SuperCoin hold expired. Please try again."
+          : e?.response?.data?.message
+          ? e.response.data.message
+          : e && typeof e === "object" && "message" in e
           ? String((e as { message: unknown }).message)
           : "Failed to initiate SuperCoin hold. Please try again.";
       setError(message);
