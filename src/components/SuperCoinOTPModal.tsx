@@ -205,14 +205,14 @@ export default function SuperCoinOTPModal({
 
       setStep("otp_sent");
     } catch (e: any) {
-      const errorCode = e?.response?.data?.errorCode || "";
+      const flipkartMessage = e?.response?.data?.message || "";
       const message =
-        errorCode === "SC0109"
+        flipkartMessage.toLowerCase().includes("daily otp")
           ? "You've reached today's SuperCoin OTP limit. Please try again after midnight."
-          : errorCode === "SC0411"
+          : flipkartMessage.toLowerCase().includes("already invalidated")
           ? "Previous SuperCoin hold expired. Please try again."
-          : e?.response?.data?.message
-          ? e.response.data.message
+          : flipkartMessage
+          ? flipkartMessage
           : e && typeof e === "object" && "message" in e
           ? String((e as { message: unknown }).message)
           : "Failed to initiate SuperCoin hold. Please try again.";
