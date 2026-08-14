@@ -9,6 +9,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 
 const FALLBACK = FALLBACK_IMAGE;
 const SELECTED_TOP_BRAND_DETAILS_KEY = "selected_top_brand_details";
+const MAX_QUANTITY_PER_ITEM = 3;
 
 type TabKey = "about" | "howToUse" | "terms";
 
@@ -196,16 +197,22 @@ export default function BrandPaymentPage() {
             </button>
             <input
               value={quantity}
-              onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+              onChange={(e) => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, Math.max(1, Number(e.target.value) || 1)))}
               className="h-10 flex-1 rounded-lg border border-[#D1D5DB] text-center text-sm font-semibold"
             />
             <button
-              onClick={() => setQuantity((value) => value + 1)}
-              className="grid h-10 w-10 place-items-center rounded-lg border border-[#D1D5DB]"
+              onClick={() => setQuantity((value) => Math.min(MAX_QUANTITY_PER_ITEM, value + 1))}
+              disabled={quantity >= MAX_QUANTITY_PER_ITEM}
+              className="grid h-10 w-10 place-items-center rounded-lg border border-[#D1D5DB] disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus className="h-4 w-4" />
             </button>
           </div>
+          {quantity >= MAX_QUANTITY_PER_ITEM && (
+            <p className="mt-1 text-xs text-[#6B7280]">
+              Maximum {MAX_QUANTITY_PER_ITEM} of the same gift card per order.
+            </p>
+          )}
           <p className="mt-3 text-base font-bold text-[#111827]">Total: ₹{total.toLocaleString()}</p>
         </section>
 

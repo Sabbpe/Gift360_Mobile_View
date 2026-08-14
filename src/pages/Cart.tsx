@@ -54,6 +54,7 @@ const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
 const SUPERCOIN_ACTIVE_HOLD_KEY = "superCoinActiveHold";
+const MAX_QUANTITY_PER_ITEM = 3;
 
 type SuperCoinCountdownState = {
   display: string;
@@ -1792,8 +1793,8 @@ export default function Cart() {
 
                           <button
                             className="h-8 w-8 rounded-lg border border-[var(--cart-secondary)] bg-[rgba(162,155,254,0.12)] cart-text-primary flex items-center justify-center hover:bg-[rgba(162,155,254,0.2)] disabled:opacity-40 transition-all"
-                            onClick={() => handleQuantityUpdate(item.itemId, item.quantity + 1)}
-                            disabled={updatingItemId === item.itemId}
+                            onClick={() => handleQuantityUpdate(item.itemId, Math.min(MAX_QUANTITY_PER_ITEM, item.quantity + 1))}
+                            disabled={updatingItemId === item.itemId || item.quantity >= MAX_QUANTITY_PER_ITEM}
                             aria-label="Increase quantity"
                           >
                             <Plus className="h-3 w-3" />

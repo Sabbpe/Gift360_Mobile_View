@@ -18,6 +18,8 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getImageUrl } from "@/utils/imageUrl";
 
+const MAX_QUANTITY_PER_ITEM = 3;
+
 type Props = {
   brandId?: string | null;
   open: boolean;
@@ -850,7 +852,7 @@ export default function PaymentDetailsSheet({
                   <input
                     value={quantity}
                     onChange={(e) =>
-                      setQuantity(Math.max(1, Number(e.target.value) || 1))
+                      setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, Math.max(1, Number(e.target.value) || 1)))
                     }
                     className="mx-[8px] h-[30px] w-[221px] rounded-[5px] border border-[#9747FF] bg-white text-center text-[12px] font-bold leading-[18px] text-[#4E4E4E] outline-none"
                     inputMode="numeric"
@@ -858,13 +860,19 @@ export default function PaymentDetailsSheet({
                   />
 
                   <button
-                    onClick={() => setQuantity(quantity + 1)}
-                    className="grid h-[30px] w-[40px] place-items-center rounded-[5px] border border-[#9747FF] bg-white"
+                    onClick={() => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, quantity + 1))}
+                    disabled={quantity >= MAX_QUANTITY_PER_ITEM}
+                    className="grid h-[30px] w-[40px] place-items-center rounded-[5px] border border-[#9747FF] bg-white disabled:opacity-40 disabled:cursor-not-allowed"
                     aria-label="Increase quantity"
                   >
                     <Plus className="h-6 w-6 text-[#4E4E4E]" strokeWidth={2.2} />
                   </button>
                 </div>
+                {quantity >= MAX_QUANTITY_PER_ITEM && (
+                  <p className="mt-1 text-[11px] text-[#6B7280]">
+                    Maximum {MAX_QUANTITY_PER_ITEM} of the same gift card per order.
+                  </p>
+                )}
 
                 <div
                   className="mt-[8px] text-center text-[15px] leading-[22px] text-black"
