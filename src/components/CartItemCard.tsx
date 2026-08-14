@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const FALLBACK = FALLBACK_IMAGE;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 interface CartItemCardProps {
   itemId: string;
@@ -101,12 +102,18 @@ export default function CartItemCard({
           </button>
           <span className="w-8 text-center font-medium">{quantity}</span>
           <button
-            onClick={() => onQuantityChange(itemId, quantity + 1)}
-            className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
+            onClick={() => onQuantityChange(itemId, Math.min(MAX_QUANTITY_PER_ITEM, quantity + 1))}
+            disabled={quantity >= MAX_QUANTITY_PER_ITEM}
+            className="p-1 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Plus className="w-4 h-4 text-gray-600" />
           </button>
         </div>
+        {quantity >= MAX_QUANTITY_PER_ITEM && (
+          <p className="mt-1 text-xs text-gray-500">
+            Maximum {MAX_QUANTITY_PER_ITEM} per order
+          </p>
+        )}
       </div>
 
       {/* Right: Total Price + Remove */}

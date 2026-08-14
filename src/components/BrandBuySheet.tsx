@@ -12,6 +12,8 @@ function getImage(b: BrandDetailsParsed | null) {
   return getImageUrl(b) || FALLBACK_IMAGE;
 }
 
+const MAX_QUANTITY_PER_ITEM = 3;
+
 export default function BrandBuySheet({
   brandId,
   open,
@@ -172,13 +174,23 @@ export default function BrandBuySheet({
                 type="number"
                 value={quantity}
                 min={1}
-                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                max={MAX_QUANTITY_PER_ITEM}
+                onChange={(e) => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, Math.max(1, Number(e.target.value) || 1)))}
                 className="w-16 text-center border-none outline-none"
               />
-              <button onClick={() => setQuantity(quantity + 1)} className="p-2">
+              <button
+                onClick={() => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, quantity + 1))}
+                disabled={quantity >= MAX_QUANTITY_PER_ITEM}
+                className="p-2 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
+            {quantity >= MAX_QUANTITY_PER_ITEM && (
+              <p className="mt-1 text-xs text-[#6B7280]">
+                Maximum {MAX_QUANTITY_PER_ITEM} of the same gift card per order.
+              </p>
+            )}
           </div>
 
           {/* Total */}

@@ -12,6 +12,7 @@ import { encrypt } from "@/utils/encryption";
 import { useEasebuzzScript } from "@/hooks/useEasebuzzScript";
 import { useEasebuzzInitiatePayment } from "@/hooks/useEasebuzzInitiatePayment";
 
+const MAX_QUANTITY_PER_ITEM = 3;
 
 interface QuickBuyModalProps {
   brand: Brand;
@@ -535,17 +536,24 @@ const isProcessing =
                 <input
                   type="number"
                   min="1"
+                  max={MAX_QUANTITY_PER_ITEM}
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, Number(e.target.value) || 1))}
+                  onChange={(e) => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, Math.max(1, Number(e.target.value) || 1)))}
                   className="w-20 h-12 rounded-lg border border-border text-center font-semibold text-base bg-background"
                 />
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
-                  className="w-12 h-12 rounded-lg border border-border bg-background hover:bg-accent transition-colors flex items-center justify-center"
+                  onClick={() => setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, quantity + 1))}
+                  disabled={quantity >= MAX_QUANTITY_PER_ITEM}
+                  className="w-12 h-12 rounded-lg border border-border bg-background hover:bg-accent transition-colors flex items-center justify-center disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <Plus className="h-4 w-4" />
                 </button>
               </div>
+              {quantity >= MAX_QUANTITY_PER_ITEM && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Maximum {MAX_QUANTITY_PER_ITEM} of the same gift card per order.
+                </p>
+              )}
             </div>
 
             {/* Total Amount */}
