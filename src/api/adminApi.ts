@@ -77,6 +77,61 @@ export const fetchErrorBreakdown = async (range: DateRange = {}) => {
   return res.data;
 };
 
+export const fetchGeography = async (range: DateRange = {}) => {
+  const res = await adminApiClient.get("/geography", { params: range });
+  return res.data;
+};
+
+export const fetchAbandonedCarts = async (
+  range: DateRange & { page?: number; size?: number } = {}
+) => {
+  const res = await adminApiClient.get("/abandoned", { params: range });
+  return res.data;
+};
+
+export const fetchCartsSummary = async () => {
+  const res = await adminApiClient.get("/carts/summary");
+  return res.data;
+};
+
+export const fetchCartsByCustomer = async (
+  params: { minStaleHours?: number; page?: number; size?: number } = {}
+) => {
+  const res = await adminApiClient.get("/carts/customers", { params });
+  return res.data;
+};
+
+export const fetchCartsByBrand = async () => {
+  const res = await adminApiClient.get("/carts/brands");
+  return res.data;
+};
+
+/** Converts an array of flat objects to CSV and triggers a browser download. */
+export const downloadCsv = (rows: any[], filename: string) => {
+  if (!rows || rows.length === 0) return;
+  const headers = Object.keys(rows[0]);
+  const escape = (val: any) => {
+    if (val === null || val === undefined) return "";
+    const str = String(val);
+    return str.includes(",") || str.includes('"') || str.includes("\n")
+      ? `"${str.replace(/"/g, '""')}"`
+      : str;
+  };
+  const csv = [
+    headers.join(","),
+    ...rows.map((row) => headers.map((h) => escape(row[h])).join(",")),
+  ].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+};
+
 /** Verifies a candidate key actually works before saving it. */
 export const verifyAdminKey = async (key: string): Promise<boolean> => {
   try {

@@ -16,6 +16,7 @@ import {
   Table,
   TableHeader,
   TableBody,
+  TableFooter,
   TableHead,
   TableRow,
   TableCell,
@@ -45,8 +46,15 @@ import {
   fetchCustomerStats,
   fetchSuperCoinTrend,
   fetchErrorBreakdown,
+  fetchGeography,
+  fetchAbandonedCarts,
+  fetchCartsSummary,
+  fetchCartsByCustomer,
+  fetchCartsByBrand,
+  downloadCsv,
   ADMIN_KEY_STORAGE,
 } from "@/api/adminApi";
+import { Download } from "lucide-react";
 
 const COLORS = ["#7C3AED", "#3B82F6", "#10B981", "#F59E0B", "#EF4444"];
 
@@ -109,6 +117,29 @@ function DateRangeBar({
   );
 }
 
+function sumField(rows: any[], field: string): number {
+  return rows.reduce((acc, r) => acc + (Number(r[field]) || 0), 0);
+}
+
+function fmtINR(n: number): string {
+  return `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+}
+
+function DownloadButton({ rows, filename }: { rows: any[]; filename: string }) {
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="gap-1.5"
+      disabled={!rows || rows.length === 0}
+      onClick={() => downloadCsv(rows, filename)}
+    >
+      <Download className="h-3.5 w-3.5" />
+      Download CSV
+    </Button>
+  );
+}
+
 export default function AdminDashboard() {
   const [authed, setAuthed] = useState(
     () => !!sessionStorage.getItem(ADMIN_KEY_STORAGE)
@@ -123,6 +154,13 @@ export default function AdminDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [superCoins, setSuperCoins] = useState<any[]>([]);
   const [errors, setErrors] = useState<any[]>([]);
+  const [geography, setGeography] = useState<any[]>([]);
+  const [abandonedSummary, setAbandonedSummary] = useState<any[]>([]);
+  const [abandonedDetails, setAbandonedDetails] = useState<any[]>([]);
+  const [cartsSummary, setCartsSummary] = useState<any>(null);
+  const [cartsByCustomer, setCartsByCustomer] = useState<any[]>([]);
+  const [cartsByBrand, setCartsByBrand] = useState<any[]>([]);
+  const [cartStaleFilter, setCartStaleFilter] = useState(0);
 
   const [orderPage, setOrderPage] = useState(0);
   const [voucherStatusFilter, setVoucherStatusFilter] = useState<
@@ -157,12 +195,32 @@ export default function AdminDashboard() {
 
       const errData = await fetchErrorBreakdown({ from, to });
       setErrors(errData.data ?? []);
+
+      const geoData = await fetchGeography({ from, to });
+      setGeography(geoData.data ?? []);
+
+      const abandonedData = await fetchAbandonedCarts({ from, to, page: 0, size: 100 });
+      setAbandonedSummary(abandonedData.summary ?? []);
+      setAbandonedDetails(abandonedData.data ?? []);
+
+      const cSummary = await fetchCartsSummary();
+      setCartsSummary(cSummary);
+
+      const cByCustomer = await fetchCartsByCustomer({
+        minStaleHours: cartStaleFilter,
+        page: 0,
+        size: 100,
+      });
+      setCartsByCustomer(cByCustomer.data ?? []);
+
+      const cByBrand = await fetchCartsByBrand();
+      setCartsByBrand(cByBrand.data ?? []);
     } catch (err) {
       console.error("Admin dashboard load failed:", err);
     } finally {
       setLoading(false);
     }
-  }, [from, to, orderPage, voucherStatusFilter, brandFilter]);
+  }, [from, to, orderPage, voucherStatusFilter, brandFilter, cartStaleFilter]);
 
   useEffect(() => {
     if (authed) loadAll();
@@ -206,6 +264,9 @@ export default function AdminDashboard() {
             <TabsTrigger value="customers">Customer-wise</TabsTrigger>
             <TabsTrigger value="supercoins">SuperCoins</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
+            <TabsTrigger value="geography">Geography</TabsTrigger>
+            <TabsTrigger value="abandoned">Abandoned Carts</TabsTrigger>
+            <TabsTrigger value="currentcarts">Current Carts</TabsTrigger>
           </TabsList>
 
           {/* ================= OVERVIEW ================= */}
@@ -335,6 +396,7 @@ export default function AdminDashboard() {
                 className="max-w-xs"
               />
               <Button onClick={loadAll}>Filter</Button>
+              <DownloadButton rows={orders} filename="gift360-orders.csv" />
             </div>
 
             <Card>
@@ -426,6 +488,24 @@ export default function AdminDashboard() {
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-medium">
+                        Total ({orders.length} rows shown)
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(orders, "line_total"))}
+                      </TableCell>
+                      <TableCell colSpan={4} />
+                      <TableCell className="font-medium">
+                        {sumField(orders, "coins_earned").toFixed(2)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(orders, "coins_redeemed")}
+                      </TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -447,6 +527,9 @@ export default function AdminDashboard() {
 
           {/* ================= BRANDS ================= */}
           <TabsContent value="brands">
+            <div className="flex justify-end mb-3">
+              <DownloadButton rows={brands} filename="gift360-brands.csv" />
+            </div>
             <Card>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
@@ -489,6 +572,32 @@ export default function AdminDashboard() {
                       );
                     })}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell className="font-medium">
+                        Total ({brands.length} brands)
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(brands, "total_items")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(brands, "total_revenue"))}
+                      </TableCell>
+                      <TableCell className="font-medium text-green-600">
+                        {sumField(brands, "vouchers_generated")}
+                      </TableCell>
+                      <TableCell className="font-medium text-red-600">
+                        {sumField(brands, "vouchers_failed")}
+                      </TableCell>
+                      <TableCell />
+                      <TableCell className="font-medium">
+                        {sumField(brands, "total_scratched")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(brands, "total_gifted")}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -496,6 +605,9 @@ export default function AdminDashboard() {
 
           {/* ================= CUSTOMERS ================= */}
           <TabsContent value="customers">
+            <div className="flex justify-end mb-3">
+              <DownloadButton rows={customers} filename="gift360-customers.csv" />
+            </div>
             <Card>
               <CardContent className="p-0 overflow-x-auto">
                 <Table>
@@ -536,6 +648,30 @@ export default function AdminDashboard() {
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell className="font-medium">
+                        Total ({customers.length} customers)
+                      </TableCell>
+                      <TableCell />
+                      <TableCell className="font-medium">
+                        {sumField(customers, "total_orders")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(customers, "total_spent"))}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(customers, "vouchers_received")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(customers, "supercoins_earned").toFixed(2)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(customers, "supercoins_redeemed")}
+                      </TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -677,6 +813,349 @@ export default function AdminDashboard() {
                       </TableRow>
                     ))}
                   </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-medium">
+                        Total
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(errors, "failure_count")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(errors, "amount_stuck"))}
+                      </TableCell>
+                      <TableCell />
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ================= GEOGRAPHY ================= */}
+          <TabsContent value="geography">
+            <div className="flex justify-end mb-3">
+              <DownloadButton rows={geography} filename="gift360-geography.csv" />
+            </div>
+
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-sm">
+                  Top Cities by Revenue
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={280}>
+                  <BarChart data={geography.slice(0, 12)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="city"
+                      tick={{ fontSize: 10 }}
+                      interval={0}
+                      angle={-30}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="total_revenue" fill="#3B82F6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>City</TableHead>
+                      <TableHead>State</TableHead>
+                      <TableHead>Unique Customers</TableHead>
+                      <TableHead>Total Orders</TableHead>
+                      <TableHead>Revenue</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {geography.map((g, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{g.city}</TableCell>
+                        <TableCell>{g.state}</TableCell>
+                        <TableCell>{g.unique_customers}</TableCell>
+                        <TableCell>{g.total_orders}</TableCell>
+                        <TableCell>
+                          ₹{Number(g.total_revenue).toLocaleString("en-IN")}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={2} className="font-medium">
+                        Total ({geography.length} locations)
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(geography, "unique_customers")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(geography, "total_orders")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(geography, "total_revenue"))}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </CardContent>
+            </Card>
+            <p className="text-xs text-[#6B7280] mt-2">
+              City/state comes from the checkout address entered at payment
+              time — not every order has one on file, those show as
+              "Unknown".
+            </p>
+          </TabsContent>
+
+          {/* ================= ABANDONED CARTS ================= */}
+          <TabsContent value="abandoned">
+            <div className="flex justify-end mb-3">
+              <DownloadButton
+                rows={abandonedDetails}
+                filename="gift360-abandoned-carts.csv"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {abandonedSummary.map((s, i) => (
+                <StatCard
+                  key={i}
+                  label={`${s.status} orders`}
+                  value={s.order_count}
+                />
+              ))}
+            </div>
+
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Order #</TableHead>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Brand</TableHead>
+                      <TableHead>Amount</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Created</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {abandonedDetails.map((a, i) => (
+                      <TableRow key={i}>
+                        <TableCell className="font-mono text-xs">
+                          {a.order_number}
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">{a.client_name}</div>
+                          <div className="text-xs text-[#6B7280]">
+                            {a.client_email}
+                          </div>
+                        </TableCell>
+                        <TableCell>{a.brand_name ?? "—"}</TableCell>
+                        <TableCell>
+                          ₹{Number(a.total_amount).toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell className="text-amber-600 font-medium">
+                          {a.order_status}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {a.created_at
+                            ? new Date(a.created_at).toLocaleString("en-IN")
+                            : "—"}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell colSpan={3} className="font-medium">
+                        Total ({abandonedDetails.length} orders)
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(abandonedDetails, "total_amount"))}
+                      </TableCell>
+                      <TableCell colSpan={2} />
+                    </TableRow>
+                  </TableFooter>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ================= CURRENT CARTS ================= */}
+          <TabsContent value="currentcarts">
+            {cartsSummary && (
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                <StatCard
+                  label="Customers with items in cart"
+                  value={cartsSummary.customers_with_items_in_cart}
+                />
+                <StatCard
+                  label="Total cart value"
+                  value={Number(cartsSummary.total_cart_value).toLocaleString("en-IN")}
+                  prefix="₹"
+                />
+                <StatCard label="Total line items" value={cartsSummary.total_line_items} />
+                <StatCard label="Total units" value={cartsSummary.total_units} />
+                <StatCard
+                  label="Stale 1hr+ (nudge-ready)"
+                  value={cartsSummary.stale_1h_plus}
+                />
+                <StatCard
+                  label="Stale 24hr+ (priority nudge)"
+                  value={cartsSummary.stale_24h_plus}
+                />
+                <StatCard
+                  label="Stale 72hr+ (likely lost)"
+                  value={cartsSummary.stale_72h_plus}
+                />
+              </div>
+            )}
+
+            <p className="text-xs text-[#6B7280] mb-4 max-w-2xl">
+              "Current Carts" is live cart contents (giftcard_cart_items) —
+              added the moment someone taps Add to Cart, independent of
+              whether they ever start checkout. This is earlier in the funnel
+              than "Abandoned Carts" (which requires checkout to have been
+              initiated). Staleness buckets are a starting point for
+              deciding who's ready for a nudge: too soon after adding and a
+              push feels intrusive; the 24hr+ group is generally the
+              highest-value target for "you left something" campaigns.
+            </p>
+
+            <Card className="mb-4">
+              <CardHeader>
+                <CardTitle className="text-sm">
+                  Demand by Brand — What's Sitting in Carts Right Now
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart data={cartsByBrand.slice(0, 10)}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis
+                      dataKey="brand_name"
+                      tick={{ fontSize: 10 }}
+                      interval={0}
+                      angle={-30}
+                      textAnchor="end"
+                      height={70}
+                    />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="potential_value" fill="#F59E0B" name="Potential value (₹)" />
+                  </BarChart>
+                </ResponsiveContainer>
+                <p className="text-xs text-[#6B7280] mt-2">
+                  High interest but not converting is a signal — a brand
+                  showing up here heavily but not in the Brand-wise tab's top
+                  revenue list may be a good candidate for a targeted
+                  discount push.
+                </p>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-[#6B7280]">Show carts stale:</span>
+                <select
+                  className="border rounded-md px-3 py-1.5 text-sm"
+                  value={cartStaleFilter}
+                  onChange={(e) => setCartStaleFilter(Number(e.target.value))}
+                >
+                  <option value={0}>Any age</option>
+                  <option value={1}>1hr+</option>
+                  <option value={24}>24hr+ (nudge-ready)</option>
+                  <option value={72}>72hr+ (likely lost)</option>
+                </select>
+                <Button size="sm" onClick={loadAll}>Apply</Button>
+              </div>
+              <DownloadButton
+                rows={cartsByCustomer}
+                filename="gift360-current-carts-by-customer.csv"
+              />
+            </div>
+
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Customer</TableHead>
+                      <TableHead>Mobile</TableHead>
+                      <TableHead>Items</TableHead>
+                      <TableHead>Units</TableHead>
+                      <TableHead>Cart Value</TableHead>
+                      <TableHead>Brands</TableHead>
+                      <TableHead>Last Updated</TableHead>
+                      <TableHead>Hours Since Update</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {cartsByCustomer.map((c, i) => (
+                      <TableRow key={i}>
+                        <TableCell>
+                          <div className="text-sm">{c.client_name}</div>
+                          <div className="text-xs text-[#6B7280]">
+                            {c.client_email}
+                          </div>
+                        </TableCell>
+                        <TableCell>{c.client_mobile}</TableCell>
+                        <TableCell>{c.item_count}</TableCell>
+                        <TableCell>{c.total_units}</TableCell>
+                        <TableCell>
+                          ₹{Number(c.cart_value).toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell className="text-xs max-w-[220px] truncate">
+                          {c.brands_in_cart}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {c.last_updated_at
+                            ? new Date(c.last_updated_at).toLocaleString("en-IN")
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <span
+                            className={
+                              Number(c.hours_since_update) >= 72
+                                ? "text-red-600 font-medium"
+                                : Number(c.hours_since_update) >= 24
+                                ? "text-amber-600 font-medium"
+                                : "text-[#6B7280]"
+                            }
+                          >
+                            {c.hours_since_update}h
+                          </span>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell className="font-medium">
+                        Total ({cartsByCustomer.length} customers)
+                      </TableCell>
+                      <TableCell />
+                      <TableCell className="font-medium">
+                        {sumField(cartsByCustomer, "item_count")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {sumField(cartsByCustomer, "total_units")}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(cartsByCustomer, "cart_value"))}
+                      </TableCell>
+                      <TableCell colSpan={3} />
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
