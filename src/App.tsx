@@ -39,6 +39,7 @@ import FAQPage from "./pages/FAQPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import { NotificationProvider } from "./contexts/NotificationContext";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 const ONBOARDING_KEY = "g360_onboarding_v3";
 
@@ -103,6 +104,7 @@ function AppRoutes() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
