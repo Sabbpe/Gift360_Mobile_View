@@ -278,7 +278,11 @@ export default function ProfilePage() {
             </p>
 
             <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
-              If your voucher wasn't generated but the amount was debited, please email us with your transaction details. We'll assist you.
+              <span className="font-semibold text-[#7C3AED]">Note:</span> If a transaction happened but the voucher amount was not generated, please share your details at{" "}
+              <a href="mailto:gift360@gift360.io" className="font-semibold text-[#7C3AED] underline underline-offset-2">
+                gift360@gift360.io
+              </a>{" "}
+              for quick action on the issue.
             </p>
 
             <button
