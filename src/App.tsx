@@ -39,7 +39,7 @@ import FAQPage from "./pages/FAQPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import { NotificationProvider } from "./contexts/NotificationContext";
-import AdminDashboard from "./pages/admin/AdminDashboard";
+import { trackPageView } from "./lib/analytics";
 
 const ONBOARDING_KEY = "g360_onboarding_v3";
 
@@ -48,6 +48,12 @@ function AppRoutes() {
   const [onboardingComplete, setOnboardingComplete] = useState(
     () => localStorage.getItem(ONBOARDING_KEY) === "true"
   );
+
+  // Google Analytics — SPA route changes don't trigger a real page load,
+  // so gtag never sees them unless we fire page_view manually here.
+  useEffect(() => {
+    trackPageView(location);
+  }, [location]);
 
   // Listen for localStorage changes and location changes
   useEffect(() => {
@@ -104,7 +110,6 @@ function AppRoutes() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
-      <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
