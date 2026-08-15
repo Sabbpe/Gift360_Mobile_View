@@ -38,6 +38,7 @@ import SingleBlogPage from "./pages/SingleBlogPage";
 import FAQPage from "./pages/FAQPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { trackPageView } from "./lib/analytics";
 
@@ -110,6 +111,7 @@ function AppRoutes() {
       <Route path="/faq" component={FAQPage} />
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
+      <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>
   );
