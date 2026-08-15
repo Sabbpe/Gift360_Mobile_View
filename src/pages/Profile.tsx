@@ -278,7 +278,7 @@ export default function ProfilePage() {
             </p>
 
             <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
-              <span className="font-semibold text-[#7C3AED]">Note:</span> If a transaction happened but the voucher amount was not generated, please share your details at{" "}
+              <span className="font-semibold text-[#7C3AED]">Note:</span> If a transaction was successful but the voucher was not generated, please share the details at{" "}
               <a href="mailto:gift360@gift360.io" className="font-semibold text-[#7C3AED] underline underline-offset-2">
                 gift360@gift360.io
               </a>{" "}
