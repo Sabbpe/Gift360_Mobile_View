@@ -2,7 +2,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { ArrowLeft, LogOut, Check, Pencil } from "lucide-react";
+import { ArrowLeft, LogOut, Check, Pencil, Mail, X } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
@@ -79,35 +79,18 @@ function InputField({ label, value }: { label: string; value: string }) {
   );
 }
 
-function LogoutButton({
-  isLoading,
-  onLogout,
-}: {
-  isLoading: boolean;
-  onLogout: () => void;
-}) {
-  return (
-    <button
-      onClick={onLogout}
-      disabled={isLoading}
-      className="mx-auto mt-[30px] flex h-[44px] w-[174px] items-center justify-center gap-[5px] rounded-[9px] bg-[linear-gradient(90deg,#f06da6_0%,#755ff0_100%)] text-[14px] font-semibold text-white active:scale-95 disabled:opacity-70"
-    >
-      <LogOut className="h-[15px] w-[15px]" strokeWidth={2.2} />
-      {isLoading ? "Logging out..." : "Log Out"}
-    </button>
-  );
-}
-
 function ProfileForm({
   profile,
   isLoggingOut,
   onLogout,
   onUsernameSave,
+  onContactUs,
 }: {
   profile: { username: string; email: string; phone: string; balance: number; superCoinBalance: number; isSuperCoinUser: boolean };
   isLoggingOut: boolean;
   onLogout: () => void;
   onUsernameSave: (name: string) => void;
+  onContactUs: () => void;
 }) {
   return (
     <section className="-mt-[1px] min-h-[calc(100vh-238px)] rounded-t-[34px] bg-[linear-gradient(180deg,#7357f1_0%,#5040a0_72%,#3b327d_100%)] px-[20px] pb-[18px] pt-[32px] shadow-[0_-10px_24px_rgba(69,55,154,0.16)]">
@@ -123,7 +106,6 @@ function ProfileForm({
           })}
         />
 
-        {/* SuperCoin Balance */}
         {profile.isSuperCoinUser && (
           <label className="block">
             <span className="block text-[14px] font-normal leading-none text-white">SuperCoin Balance</span>
@@ -137,7 +119,29 @@ function ProfileForm({
         )}
       </div>
 
-      <LogoutButton isLoading={isLoggingOut} onLogout={onLogout} />
+      {/* Support Section */}
+      <div className="mt-[28px] rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[14px]">
+        <p className="text-[14px] font-semibold text-white">Need help?</p>
+        <p className="mt-[4px] text-[12px] leading-[1.4] text-white/70">
+          Having a voucher or payment issue? We're here to help.
+        </p>
+        <button
+          onClick={onContactUs}
+          className="mt-[12px] flex h-[40px] w-full items-center justify-center gap-[6px] rounded-[9px] bg-white text-[13px] font-semibold text-[#7C3AED] active:scale-95"
+        >
+          <Mail className="h-[14px] w-[14px] text-[#7C3AED]" strokeWidth={2.2} />
+          Contact Us
+        </button>
+      </div>
+
+      <button
+        onClick={onLogout}
+        disabled={isLoggingOut}
+        className="mx-auto mt-[20px] flex h-[44px] w-[174px] items-center justify-center gap-[5px] rounded-[9px] bg-[linear-gradient(90deg,#f06da6_0%,#755ff0_100%)] text-[14px] font-semibold text-white active:scale-95 disabled:opacity-70"
+      >
+        <LogOut className="h-[15px] w-[15px]" strokeWidth={2.2} />
+        {isLoggingOut ? "Logging out..." : "Log Out"}
+      </button>
     </section>
   );
 }
@@ -150,6 +154,7 @@ export default function ProfilePage() {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(user?.mobile);
 
   const [displayName, setDisplayName] = useState(() => localStorage.getItem(DISPLAY_NAME_KEY) || user?.name || "User");
+  const [showContactModal, setShowContactModal] = useState(false);
 
   // Auto-fetch SuperCoin search + balance
   useEffect(() => {
@@ -239,7 +244,52 @@ export default function ProfilePage() {
         isLoggingOut={false}
         onLogout={handleLogout}
         onUsernameSave={handleUsernameSave}
+        onContactUs={() => setShowContactModal(true)}
       />
+
+      {showContactModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowContactModal(false)}
+        >
+          <div
+            className="relative w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="absolute top-4 right-4 flex h-10 w-10 items-center justify-center rounded-full hover:bg-gray-100"
+              aria-label="Close"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+
+            <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-purple-600 to-indigo-600">
+              <Mail className="h-7 w-7 text-white" />
+            </div>
+
+            <h3 className="text-[18px] font-bold text-gray-900">Contact Us</h3>
+
+            <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
+              For any queries, reach out to{" "}
+              <a href="mailto:gift360@gift360.io" className="font-semibold text-[#7C3AED] underline underline-offset-2">
+                gift360@gift360.io
+              </a>.
+            </p>
+
+            <p className="mt-3 text-[14px] leading-relaxed text-gray-600">
+              If your voucher wasn't generated but the amount was debited, please email us with your transaction details. We'll assist you.
+            </p>
+
+            <button
+              onClick={() => setShowContactModal(false)}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-[15px] font-semibold text-white shadow-md active:scale-95"
+            >
+              Got it
+            </button>
+          </div>
+        </div>
+      )}
     </main>
   );
 }
