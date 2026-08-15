@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { Link, useLocation } from "wouter";
-import { AlertCircle, ShieldCheck } from "lucide-react";
+import { AlertCircle, ShieldCheck, ArrowUpRight, Sparkles } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useRegisterSendOtp } from "@/hooks/useRegisterSendOtp";
@@ -8,7 +8,8 @@ import { useRegisterVerifyOtp } from "@/hooks/useRegisterVerifyOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { decodeJwtPayload } from "@/api/authApi";
 import gift360Logo from "@/assets/gift360full.png";
-import loginBg from "@/assets/LoginBackground.png";
+import bgImage from "@/assets/independence-bg.jpg";
+import giftBox from "@/assets/gift-box.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";
@@ -33,6 +34,13 @@ const brandLogos = [
   { src: zomato, name: "Zomato" },
 ];
 
+const SAFFRON = "oklch(0.72 0.17 55)";
+const INDIA_GREEN = "oklch(0.55 0.14 148)";
+const NAVY = "oklch(0.32 0.09 265)";
+const GRADIENT_TRICOLOR = `linear-gradient(90deg, ${SAFFRON}, oklch(0.99 0 0), ${INDIA_GREEN})`;
+const GRADIENT_CTA = "linear-gradient(180deg, oklch(0.74 0.18 50), oklch(0.62 0.19 38))";
+const SHADOW_CARD = "0 18px 40px -18px oklch(0.32 0.09 265 / 0.28)";
+
 export default function Register() {
   const [, setLocation] = useLocation();
   const [fullName, setFullName] = useState("");
@@ -50,6 +58,12 @@ export default function Register() {
   const registerVerifyOtpMutation = useRegisterVerifyOtp();
   const { setUser } = useAuthContext();
   const { toast } = useToast();
+
+  const CAMPAIGN_END = new Date("2026-08-17T23:59:59+05:30");
+  const daysLeft = Math.max(
+    1,
+    Math.ceil((CAMPAIGN_END.getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  );
 
   const validateEmail = (e: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e);
   const validateMobile = (m: string) => /^[0-9]{10}$/.test(m);
@@ -142,51 +156,94 @@ export default function Register() {
   };
 
   return (
-    <div className="relative w-full h-screen overflow-hidden" style={{ fontFamily: "'Poppins', sans-serif" }}>
-      {/* Background image */}
-      <div
-        className="absolute inset-0 w-full"
-        style={{
-          backgroundImage: `url(${loginBg})`,
-          backgroundSize: "cover",
-          backgroundPosition: "top center",
-          backgroundRepeat: "no-repeat",
-        }}
+    <main className="relative min-h-screen w-full overflow-hidden font-sans" style={{ fontFamily: "'Poppins', sans-serif" }}>
+      <img
+        src={bgImage}
+        alt=""
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover object-top"
       />
 
-      {/* Content */}
-      <div className="relative z-10 flex flex-col h-full px-5 pt-6 pb-4">
-        {/* Logo */}
-        <div className="flex justify-center mb-2">
-          <img src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
+      <div className="relative z-10 mx-auto flex min-h-screen w-full max-w-md flex-col px-5 pb-6 pt-5">
+        <header className="flex items-center justify-between">
+          <img src={gift360Logo} alt="Gift360" className="w-[110px] h-auto object-contain" />
+          <div className="flex items-center gap-1.5 rounded-full border px-3 py-1 backdrop-blur bg-background/70" style={{ borderColor: `oklch(0.72 0.17 55 / 0.3)` }}>
+            <span className="text-sm font-extrabold" style={{ color: SAFFRON }}>80</span>
+            <span className="text-[9px] font-semibold leading-tight" style={{ color: NAVY }}>
+              INDEPENDENCE
+              <br />
+              DAY OF INDIA
+            </span>
+          </div>
+        </header>
+
+        <section className="mt-6 text-center">
+          <h1 className="text-[34px] font-extrabold uppercase leading-[0.95] tracking-tight drop-shadow-sm" style={{ color: SAFFRON }}>
+            India
+            <span className="mt-0.5 block text-[26px]" style={{ color: INDIA_GREEN }}>Has Started Gifting</span>
+          </h1>
+          <p className="mt-2 text-[12px] font-medium" style={{ color: NAVY }}>
+            Create your account and unlock 400+ brand vouchers instantly.
+          </p>
+        </section>
+
+        <div className="relative my-3 flex flex-1 items-center justify-center">
+          <img
+            src={giftBox}
+            alt="Independence Day gift box"
+            className="h-36 w-36 object-contain drop-shadow-xl"
+          />
         </div>
 
-        {/* Heading */}
-        <div className="text-center mb-1">
-          <h1 className="text-[17px] font-semibold text-black leading-tight">
-            India #1 Destination for <span className="text-[#7C3AED]">Gifting</span>
-          </h1>
-          <p className="text-[10px] text-[#1E1E1E] mt-1 px-4">
-            Access 400+ brands Vouchers. Delivered instantly, and gift feeling
+        <div className="mb-2 flex items-center justify-center">
+          <span className="rounded-full border px-3 py-1 text-[12px] font-extrabold uppercase tracking-wide shadow-sm backdrop-blur bg-background/85" style={{ borderColor: `oklch(0.72 0.17 55 / 0.3)`, color: NAVY }}>
+            The last {daysLeft} {daysLeft === 1 ? "day" : "days"} 🚀
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { value: "10K+", label: "Registrations", color: SAFFRON },
+            { value: "20K+", label: "Vouchers Bought", color: INDIA_GREEN },
+            { value: "4.5K+", label: "Vouchers Gifted", color: NAVY },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="rounded-xl border border-border/70 bg-background/80 px-2 py-2 text-center shadow-sm backdrop-blur"
+            >
+              <p className="text-lg font-extrabold leading-none" style={{ color: s.color }}>{s.value}</p>
+              <p className="mt-1 text-[9px] font-medium text-muted-foreground">{s.label}</p>
+            </div>
+          ))}
+        </div>
+        <div
+          className="mt-2 overflow-hidden rounded-full p-[1.5px]"
+          style={{ background: GRADIENT_TRICOLOR }}
+        >
+          <p className="rounded-full bg-background/90 py-1.5 text-center text-[12px] font-extrabold uppercase tracking-wide backdrop-blur" style={{ color: INDIA_GREEN }}>
+            Up to <span style={{ color: SAFFRON }}>20% cashback</span> earned
           </p>
         </div>
 
-        {/* Spacer */}
-        <div className="flex-1" />
-
-        {/* White card */}
-        <div className="w-full max-w-[342px] mx-auto bg-white rounded-[16px] border border-[#C9C9C9] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] p-4 mb-2">
-          <h2 className="text-[16px] font-semibold text-black mb-0.5">Get Started</h2>
-          <p className="text-[9px] text-[#4E4E4E] mb-3">Create your account to start gifting</p>
+        <section className="mt-3 rounded-2xl border border-border bg-background/95 p-4 backdrop-blur" style={{ boxShadow: SHADOW_CARD }}>
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold" style={{ color: NAVY }}>Create Account</h2>
+              <p className="text-[10px] text-muted-foreground">
+                Create your account to start gifting
+              </p>
+            </div>
+            <span className="flex items-center gap-1 rounded-full px-2 py-1 text-[9px] font-semibold" style={{ background: `oklch(0.72 0.17 55 / 0.12)`, color: SAFFRON }}>
+              <Sparkles className="h-3 w-3" /> Till 17 Aug
+            </span>
+          </div>
 
           {error && (
-            <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-red-300 bg-red-50 text-red-600 text-[10px] font-medium">
-              <AlertCircle size={14} className="shrink-0" />
+            <div className="mb-3 flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/10 p-2 text-[10px] font-medium text-destructive">
+              <AlertCircle className="h-3.5 w-3.5 shrink-0" />
               <span>{error}</span>
             </div>
           )}
 
-          {/* Full Name input */}
           <div className="mb-2">
             <Input
               type="text"
@@ -194,12 +251,11 @@ export default function Register() {
               value={fullName}
               onChange={(e) => { setFullName(e.target.value); setNameError(""); setError(""); }}
               disabled={otpSent}
-              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
+              className="h-10 rounded-xl border border-input bg-background text-[12px] placeholder:text-muted-foreground disabled:opacity-60"
             />
             {nameError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{nameError}</p>}
           </div>
 
-          {/* Email input */}
           <div className="mb-2">
             <Input
               type="email"
@@ -207,20 +263,16 @@ export default function Register() {
               value={email}
               onChange={(e) => { setEmail(e.target.value); setEmailError(""); setError(""); }}
               disabled={otpSent}
-              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
+              className="h-10 rounded-xl border border-input bg-background text-[12px] placeholder:text-muted-foreground disabled:opacity-60"
             />
             {emailError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{emailError}</p>}
           </div>
 
-          {/* Mobile input */}
           <div className="mb-3">
-            <div className="flex items-center rounded-[10px] border border-[#D9D9D9] bg-white overflow-hidden">
-              <div className="flex items-center gap-1 px-2.5 h-9 bg-[#F7F7FA] border-r border-[#EBEBEB] shrink-0">
+            <div className="flex items-center overflow-hidden rounded-xl border border-input bg-background">
+              <div className="flex h-10 shrink-0 items-center gap-1 border-r border-border bg-muted px-2.5">
                 <span className="text-[13px] leading-none">🇮🇳</span>
-                <span className="text-[11px] font-medium text-black">+91</span>
-                <svg className="w-2.5 h-2.5 text-[#A1A1A1]" viewBox="0 0 12 12" fill="none">
-                  <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
+                <span className="text-[11px] font-semibold text-foreground">+91</span>
               </div>
               <Input
                 type="tel"
@@ -232,33 +284,25 @@ export default function Register() {
                   setMobile(e.target.value); setMobileError(""); setError("");
                 }}
                 disabled={otpSent}
-                className="h-9 border-0 bg-transparent text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-0 focus-visible:border-0"
+                className="h-10 border-0 bg-transparent text-[12px] placeholder:text-muted-foreground disabled:opacity-60"
               />
             </div>
             {mobileError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{mobileError}</p>}
           </div>
 
-          {/* Send OTP / OTP verify */}
           {!otpSent ? (
             <button
               type="button"
               onClick={handleSendOtp}
               disabled={!validateMobile(mobile) || !validateEmail(email) || !fullName.trim() || registerSendOtpMutation.isPending}
-              className="w-full h-9 rounded-[10px] font-semibold text-[11px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
-              style={{
-                background: "linear-gradient(180deg, #7B3DC3 0%, #5537BE 100%)",
-                boxShadow: "2px 4px 8px rgba(183, 138, 243, 0.25)",
-              }}
+              style={{ background: GRADIENT_CTA }}
+              className="mt-1 flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[12px] font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-50"
             >
               {registerSendOtpMutation.isPending ? "Sending..." : "Send OTP"}
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none">
-                <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="2"/>
-                <path d="M12 7V17M12 7L8 11M12 7L16 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+              <ArrowUpRight className="h-4 w-4" />
             </button>
           ) : (
-            <div className="space-y-3">
-              {/* 4-digit OTP boxes */}
+            <div className="mt-3 space-y-3">
               <div className="flex justify-center gap-3" onPaste={handleOtpPaste}>
                 {otp.map((digit, i) => (
                   <input
@@ -270,7 +314,7 @@ export default function Register() {
                     value={digit}
                     onChange={(e) => handleOtpInput(i, e.target.value)}
                     onKeyDown={(e) => handleOtpKeyDown(i, e)}
-                    className="w-[52px] h-[52px] rounded-[10px] border border-[#C9C9C9] bg-white text-center text-[20px] font-semibold text-black focus:outline-none focus:border-[#7C3AED] focus:ring-1 focus:ring-[#7C3AED] transition-colors"
+                    className="h-12 w-12 rounded-xl border border-input bg-background text-center text-xl font-bold text-foreground outline-none transition-colors"
                   />
                 ))}
               </div>
@@ -278,23 +322,15 @@ export default function Register() {
                 type="button"
                 onClick={handleVerifyOtp}
                 disabled={!validateOtp(otp) || registerVerifyOtpMutation.isPending}
-                className="w-full h-10 rounded-[10px] font-semibold text-[12px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
-                style={{
-                  background: "linear-gradient(180deg, #7B3DC3 0%, #5537BE 100%)",
-                  boxShadow: "2px 4px 8px rgba(183, 138, 243, 0.25)",
-                }}
+                style={{ background: GRADIENT_CTA }}
+                className="flex h-10 w-full items-center justify-center gap-2 rounded-xl text-[12px] font-semibold text-primary-foreground transition active:scale-[0.98] disabled:opacity-50"
               >
-                {registerVerifyOtpMutation.isPending ? "Verifying..." : "Verify"}
-                {!registerVerifyOtpMutation.isPending && (
-                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none">
-                    <circle cx="12" cy="12" r="11" stroke="white" strokeWidth="2"/>
-                    <path d="M12 7V17M12 7L8 11M12 7L16 11" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
-                )}
+                {registerVerifyOtpMutation.isPending ? "Verifying..." : "Verify & Create Account"}
+                {!registerVerifyOtpMutation.isPending && <ArrowUpRight className="h-4 w-4" />}
               </button>
-              <p className="text-center text-[10px] text-[#4E4E4E]">
-                Didn't Receive?{" "}
-                <button type="button" onClick={handleSendOtp} className="font-semibold text-[#7C3AED] underline">
+              <p className="text-center text-[10px] text-muted-foreground">
+                Didn't receive?{" "}
+                <button type="button" onClick={handleSendOtp} className="font-semibold underline" style={{ color: SAFFRON }}>
                   Resend OTP
                 </button>
               </p>
@@ -303,51 +339,61 @@ export default function Register() {
 
           {otpMsg && otpSent && <p className="text-emerald-600 text-[9px] mt-1 font-medium text-center">✓ {otpMsg}</p>}
 
-          {/* Secure note */}
-          <div className="flex items-center justify-center gap-1.5 mt-2.5">
-            <ShieldCheck className="w-3 h-3 text-[#7C3AED]" />
-            <p className="text-[8px] font-medium text-[#4E4E4E]">we'll send a secure OTP to verify your number</p>
+          <div className="mt-2.5 flex items-center justify-center gap-1.5">
+            <ShieldCheck className="h-3 w-3" style={{ color: INDIA_GREEN }} />
+            <p className="text-[9px] font-medium text-muted-foreground">
+              We'll send a secure OTP to verify your number
+            </p>
+          </div>
+        </section>
+
+        <p className="mt-3 text-center text-[11px] font-semibold" style={{ color: NAVY }}>
+          Already have an account?{" "}
+          <Link href="/login">
+            <button className="font-bold underline" style={{ color: SAFFRON }}>Sign in</button>
+          </Link>
+        </p>
+
+        <div
+          className="mt-3 overflow-hidden rounded-full p-[2px]"
+          style={{ background: GRADIENT_TRICOLOR }}
+        >
+          <div className="rounded-full px-4 py-2 text-center" style={{ background: NAVY }}>
+            <p className="text-[13px] font-extrabold uppercase tracking-wide text-primary-foreground">
+              Offer live till 17 August
+            </p>
+            <p className="text-[9px] font-medium text-primary-foreground/75">
+              Celebrate Freedom. Share the Joy. Gift More.
+            </p>
           </div>
         </div>
 
-        {/* Sign in link */}
-        <div className="w-full max-w-[342px] mx-auto text-center mt-2 mb-1">
-          <p className="text-[11px] font-semibold text-[#1E1E1E]">
-            Already have an account?{" "}
-            <Link href="/login">
-              <button className="font-bold text-[#7C3AED] underline text-[12px]">Sign in</button>
-            </Link>
-          </p>
-        </div>
-
-        {/* TRUSTED BY 400+ BRANDS */}
-        <div className="w-full max-w-[342px] mx-auto mb-1.5">
+        <div className="mt-3">
           <div className="flex items-center gap-2">
-            <div className="flex-1 h-px bg-[#C9C9C9]" />
-            <span className="text-[10px] font-medium text-[#35009A] whitespace-nowrap">TRUSTED BY 400+ BRANDS</span>
-            <div className="flex-1 h-px bg-[#C9C9C9]" />
+            <span className="h-px flex-1 bg-border" />
+            <span className="whitespace-nowrap text-[9px] font-semibold tracking-wide" style={{ color: NAVY }}>
+              TRUSTED BY 400+ BRANDS
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+          <div className="mt-2 w-full overflow-hidden">
+            <div className="flex w-max anim-marquee-ltr" style={{ animationDuration: "20s" }}>
+              {[...brandLogos, ...brandLogos].map((brand, i) => (
+                <div key={i} className="flex items-center justify-center mx-2.5 shrink-0">
+                  <img src={brand.src} alt={brand.name} className="h-[22px] w-auto object-contain opacity-70" />
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
-        {/* Brand logos marquee */}
-        <div className="w-full overflow-hidden mb-2">
-          <div className="flex w-max anim-marquee-ltr" style={{ animationDuration: "20s" }}>
-            {[...brandLogos, ...brandLogos].map((brand, i) => (
-              <div key={i} className="flex items-center justify-center mx-2.5 shrink-0">
-                <img src={brand.src} alt={brand.name} className="h-[22px] w-auto object-contain opacity-70" />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Terms */}
-        <p className="text-center text-[7px] text-[#4E4E4E] px-4">
+        <p className="mt-3 text-center text-[9px] font-medium text-muted-foreground px-4">
           By continuing, you agree to our{" "}
-          <Link href="/terms"><button className="underline">Terms & Conditions</button></Link>{" "}
+          <Link href="/terms"><button className="underline">Terms &amp; Conditions</button></Link>{" "}
           and{" "}
           <Link href="/privacy"><button className="underline">Privacy Policy</button></Link>
         </p>
       </div>
-    </div>
+    </main>
   );
 }
