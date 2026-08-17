@@ -25,6 +25,11 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
+import { cartBrandNames } from "@/data/recentlyBought";
+import FeedbackForm, { hasSubmittedFeedback } from "@/components/FeedbackForm";
+import FeedbackTrigger from "@/components/FeedbackTrigger";
+import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/hooks/useBrands";
 import { useBrandNames } from "@/hooks/useBrandNames";
@@ -145,7 +150,7 @@ function PromoCard() {
 
   return (
     <section className="px-[21px] pt-[18px]">
-      <InstantGiftingBanner onExplore={() => setLocation("/brands")} />
+      <InstantGiftingBanner onExplore={() => setLocation("/brands")} onPartnerClick={() => setLocation("/distributor")} />
     </section>
   );
 }
@@ -562,9 +567,38 @@ function MobileHomeScreen() {
   const [topBrandName, setTopBrandName] = useState("");
   const [topBrandVouchers, setTopBrandVouchers] = useState<TopBrandVoucher[]>([]);
   const [topBrandModalOpen, setTopBrandModalOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackTriggerOpen, setFeedbackTriggerOpen] = useState(false);
   const [topBrandLoading, setTopBrandLoading] = useState(false);
   const [topBrandError, setTopBrandError] = useState<string | null>(null);
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
+
+  const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    fetchTopBrands().then(setTopBrandsFromApi).catch(() => {});
+  }, []);
+
+  const recentlyBoughtBrands: MatchedBrand[] = useMemo(() => {
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+
+    return cartBrandNames
+      .map((entry) => {
+        const cartNorm = normalize(entry.displayName);
+        const matched = topBrandsFromApi.find((b) => {
+          const brandNorm = normalize(b.BrandName);
+          return (
+            brandNorm === cartNorm ||
+            brandNorm.includes(cartNorm) ||
+            cartNorm.includes(brandNorm)
+          );
+        });
+        if (!matched) return null;
+        return { ...matched, cartMeta: entry };
+      })
+      .filter((b): b is MatchedBrand => b !== null)
+      .slice(0, 10);
+  }, [topBrandsFromApi]);
 
   const openStandardPaymentSheet = (brandId: string) => {
     setSheetBrandId(brandId);
@@ -611,6 +645,13 @@ function MobileHomeScreen() {
     setBuySheetOpen(true);
   };
 
+  // Show feedback trigger once after login (3s delay, only if not submitted yet)
+  useEffect(() => {
+    if (hasSubmittedFeedback()) return;
+    const timer = setTimeout(() => setFeedbackTriggerOpen(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <>
       <Header />
@@ -627,6 +668,7 @@ function MobileHomeScreen() {
           openStandardPaymentSheet(id);
         }}
       />
+      <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       <TopBrandsGrid
         onOpenBrand={openTopBrandModal}
       />
@@ -658,6 +700,16 @@ function MobileHomeScreen() {
           setSheetInitialAmount(undefined);
         }}
       />
+      <FeedbackFloatingButton onClick={() => setFeedbackOpen(true)} />
+      <FeedbackTrigger
+        open={feedbackTriggerOpen}
+        onClose={() => setFeedbackTriggerOpen(false)}
+        onSubmit={() => {
+          setFeedbackTriggerOpen(false);
+          setFeedbackOpen(true);
+        }}
+      />
+      <FeedbackForm open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <BottomNav />
       </main>
     </>

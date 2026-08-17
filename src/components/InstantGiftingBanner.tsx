@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useLocation } from "wouter";
 import { ArrowRight, ShoppingCart, Gift, Store, Coins, RefreshCw, BadgeDollarSign } from "lucide-react";
 import flipkartSuperCoinImg from "@/assets/FlipKartSuperCoin-removebg-preview.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
@@ -7,6 +6,7 @@ import partnerImg from "@/assets/coorp.png";
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
+  onPartnerClick?: () => void;
 };
 
 const stepFlowData = [
@@ -41,7 +41,7 @@ function StepFlowSlide({ onExplore }: { onExplore?: () => void }) {
         </div>
           <button
             type="button"
-            onClick={() => setLocation("/distributor")}
+            onClick={onExplore}
             className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[9px] font-semibold text-white shadow-md active:scale-[0.97] transition-all bg-[#7C3AED]"
           >
           Start gifting
@@ -150,8 +150,7 @@ function SuperCoinSlide({ onExplore }: { onExplore?: () => void }) {
   );
 }
 
-function PartnerSlide({ onExplore }: { onExplore?: () => void }) {
-  const [, setLocation] = useLocation();
+function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   return (
     <div className="w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex-1 min-w-0 space-y-1.5">
@@ -167,7 +166,7 @@ function PartnerSlide({ onExplore }: { onExplore?: () => void }) {
         <div className="flex items-center gap-3 pt-1">
           <button
             type="button"
-            onClick={onExplore}
+            onClick={onPartnerClick}
             className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[9px] font-semibold text-white shadow-md active:scale-[0.97] transition-all bg-[#7C3AED]"
           >
             Partner With Us
@@ -200,7 +199,7 @@ function PartnerSlide({ onExplore }: { onExplore?: () => void }) {
   );
 }
 
-export default function InstantGiftingBanner({ onExplore }: InstantGiftingBannerProps) {
+export default function InstantGiftingBanner({ onExplore, onPartnerClick }: InstantGiftingBannerProps) {
   const reduced = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -283,7 +282,7 @@ export default function InstantGiftingBanner({ onExplore }: InstantGiftingBanner
             <StepFlowSlide onExplore={onExplore} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
-            <PartnerSlide onExplore={onExplore} />
+            <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
         </div>
 
