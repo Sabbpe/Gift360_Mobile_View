@@ -359,6 +359,7 @@ function PendingCard({ order }: { order: any }) {
   const amount = Number(order?.pricing?.final_payable ?? order?.total_amount ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
   const { toast } = useToast();
+  const isTampered = order.status?.toUpperCase() === "TAMPERED";
 
   const handleRetry = () => {
     toast({ title: "Retry Payment", description: "Please go to cart to retry payment for this order.", duration: 3000 });
@@ -368,7 +369,7 @@ function PendingCard({ order }: { order: any }) {
     <div
       className="bg-white overflow-hidden"
       style={{
-        border: "0.5px solid #A1A1A1",
+        border: isTampered ? "1px solid #ef4444" : "0.5px solid #A1A1A1",
         boxShadow: "4px 4px 4px rgba(0, 0, 0, 0.25)",
         borderRadius: 10,
       }}
@@ -384,18 +385,28 @@ function PendingCard({ order }: { order: any }) {
             <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
             <div className="flex items-center gap-1 mt-0.5">
               <Badge variant="outline" className="text-[9px] py-0 flex items-center gap-1"
-                style={{ background: "#fef3c7", color: "#92400e", border: "1px solid #fcd34d" }}>
-                <Clock size={8} />PENDING
+                style={{
+                  background: isTampered ? "#fef2f2" : "#fef3c7",
+                  color: isTampered ? "#991b1b" : "#92400e",
+                  border: isTampered ? "1px solid #fca5a5" : "1px solid #fcd34d",
+                }}>
+                <AlertTriangle size={8} />{isTampered ? "TAMPERED" : "PENDING"}
               </Badge>
             </div>
           </div>
-          <button
-            onClick={handleRetry}
-            className="w-[80px] h-[26px] rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
-            style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
-          >
-            <RotateCcw size={11} />Retry
-          </button>
+          {isTampered ? (
+            <p className="text-[9px] font-medium text-red-600 mt-1 leading-4">
+              Please write to <span className="font-bold">gift360@gift360.io</span> regarding this order.
+            </p>
+          ) : (
+            <button
+              onClick={handleRetry}
+              className="w-[80px] h-[26px] rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
+              style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
+            >
+              <RotateCcw size={11} />Retry
+            </button>
+          )}
           {dateStr && (
             <p className="text-[7px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
@@ -534,7 +545,7 @@ export default function Orders() {
     !redeemedIds.has(o.order_number)
   );
   const pendingOrders = orders.filter(o =>
-    ["PENDING", "FAILED", "CANCELLED"].includes(o.status?.toUpperCase())
+    ["PENDING", "FAILED", "CANCELLED", "TAMPERED"].includes(o.status?.toUpperCase())
   );
 
   const tabs: { id: Tab; label: string; Icon: any; count?: number }[] = [

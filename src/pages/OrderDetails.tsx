@@ -17,6 +17,7 @@ import {
   Clock,
   CheckCircle,
   XCircle,
+  AlertTriangle,
   Calendar,
   CreditCard,
   Gift,
@@ -106,6 +107,8 @@ export default function OrderDetails() {
       case "FAILED":
       case "CANCELLED":
         return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30";
+      case "TAMPERED":
+        return "bg-red-500/10 text-red-700 dark:text-red-400 border-red-500/30";
       default:
         return "bg-gray-500/10 text-gray-700 dark:text-gray-400 border-gray-500/30";
     }
@@ -122,6 +125,8 @@ export default function OrderDetails() {
       case "FAILED":
       case "CANCELLED":
         return <XCircle className="h-4 w-4" />;
+      case "TAMPERED":
+        return <AlertTriangle className="h-4 w-4" />;
       default:
         return <Package className="h-4 w-4" />;
     }
@@ -269,6 +274,13 @@ export default function OrderDetails() {
                   <button className="h-12 px-6 rounded-2xl bg-gold-gradient text-amber-950 font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all">
                     Complete Payment
                   </button>
+                )}
+                {order.status.toUpperCase() === "TAMPERED" && (
+                  <div className="p-4 bg-red-50 dark:bg-red-900/20 rounded-xl border border-red-200 dark:border-red-800">
+                    <p className="text-sm text-red-700 dark:text-red-300 font-medium">
+                      Please write to <span className="font-bold">gift360@gift360.io</span> regarding this order.
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
