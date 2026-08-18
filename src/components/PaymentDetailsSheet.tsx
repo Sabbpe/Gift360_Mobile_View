@@ -8,10 +8,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import { useGeneratePaymentToken } from "@/hooks/useGeneratePaymentToken";
-import { useEasebuzzInitiatePayment } from "@/hooks/useEasebuzzInitiatePayment";
-import { useEasebuzzScript } from "@/hooks/useEasebuzzScript";
-import { encrypt } from "@/utils/encryption";
+import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import payOnSabbpe from "@/assets/payonsabbpe.png";
 import AddToCartSuccessModal from "@/components/AddToCartSuccessModal";
 import type { BrandDetailsParsed } from "@/types/brandDetails";
@@ -62,9 +59,7 @@ export default function PaymentDetailsSheet({
 
   const createOrderMutation = useCreateOrder();
   const validateOrderMutation = useValidateOrder();
-  const generateTokenMutation = useGeneratePaymentToken();
-  const easebuzzPaymentMutation = useEasebuzzInitiatePayment();
-  const easebuzzScriptStatus = useEasebuzzScript();
+  const backendPaymentMutation = useBackendPaymentInitiation();
   const brand = initialBrandDetails || fetchedBrand;
 
   const isFixedType = brand?.BrandType?.toLowerCase() === "fixed";
@@ -221,32 +216,45 @@ export default function PaymentDetailsSheet({
               return;
             }
 
-            generateTokenMutation.mutate(orderResponse.orderNumber, {
-              onSuccess: (tokenResponse) => {
-                console.log("Payment token generated:", tokenResponse);
+            backendPaymentMutation.mutate(orderResponse.orderNumber, {
+              onSuccess: (response) => {
+                console.log("Backend payment initiation response:", response);
 
-                const token = tokenResponse.sabbpe_token;
-                if (!token) {
+                const isSuccess =
+                  response.status === 1 || response.status === true;
+                const paymentUrl =
+                  response.payment_url ||
+                  response.paymentUrl ||
+                  response.data;
+
+                if (!isSuccess || !paymentUrl) {
                   toast({
-                    title: "Token generation failed",
-                    description: "No token received",
+                    title: "Payment initiation failed",
+                    description:
+                      response.message || "Unable to initiate payment",
                     variant: "destructive",
                   });
                   setIsProcessing(false);
                   return;
                 }
 
-                initiateEasebuzzPaymentFlow(
-                  lineTotal,
-                  orderResponse.orderNumber,
-                  token
-                );
+                try {
+                  if (!user?.clientId) {
+                    localStorage.removeItem("guestCart");
+                  } else {
+                    clearCart();
+                  }
+                } catch (e) {
+                  console.warn("Failed to clear cart before redirect", e);
+                }
+
+                window.location.href = paymentUrl;
               },
               onError: (error: any) => {
-                console.error("Token generation error:", error);
+                console.error("Payment initiation error:", error);
                 toast({
-                  title: "Token generation failed",
-                  description: error.message || "Failed to generate token",
+                  title: "Payment error",
+                  description: error.message || "Failed to initiate payment",
                   variant: "destructive",
                 });
                 setIsProcessing(false);
@@ -269,120 +277,6 @@ export default function PaymentDetailsSheet({
       toast({
         title: "Checkout Failed",
         description: error.message || "Failed to process payment",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-    }
-  };
-
-  const initiateEasebuzzPaymentFlow = async (
-    lineTotal: number,
-    orderNumber: string,
-    token: string
-  ) => {
-    console.log("Initiating Easebuzz payment");
-
-    if (easebuzzScriptStatus !== "ready") {
-      toast({
-        title: "Payment system loading",
-        description: "Please wait and try again",
-        variant: "destructive",
-      });
-      setIsProcessing(false);
-      return;
-    }
-
-    try {
-      const encryptedOrderRef = await encrypt(`${orderNumber}|${user.clientId}`);
-      const sabbpeFrontendUrl =
-        import.meta.env.VITE_SABBPE_FRONTEND_URL || window.location.hostname;
-
-      const paymentRequest = {
-        sabbpe_token: token,
-        amount: lineTotal,
-        productinfo:
-          import.meta.env.VITE_SABBPE_PRODUCT_INFO || "Gift Voucher Purchase",
-        frontend_url: sabbpeFrontendUrl,
-        encrypted_order_ref: encryptedOrderRef,
-        client_id: user.clientId,
-        customer: {
-          firstname:
-            import.meta.env.VITE_PAYMENT_CUSTFIRSTNAME ||
-            user.name ||
-            "Customer",
-          email:
-            import.meta.env.VITE_PAYMENT_CUSTEMAIL ||
-            user.email ||
-            "contact@sabbpe.com",
-          phone:
-            import.meta.env.VITE_PAYMENT_CUSTMOBILE ||
-            user.mobile ||
-            "9876543210",
-        },
-      };
-
-      console.log("Easebuzz payment request:", paymentRequest);
-
-      easebuzzPaymentMutation.mutate(paymentRequest, {
-        onSuccess: (response) => {
-          console.log("Easebuzz response:", response);
-
-          const isSuccess = response.status === 1 || response.status === true;
-          if (!isSuccess) {
-            toast({
-              title: "Payment initiation failed",
-              description: response.message || "Unable to initiate payment",
-              variant: "destructive",
-            });
-            setIsProcessing(false);
-            return;
-          }
-
-          const paymentUrl =
-            (response && (response as any).payment_url) ||
-            (response && (response as any).paymentUrl) ||
-            (response && (response as any).data) ||
-            (response && (response as any).redirect_url) ||
-            null;
-
-          if (!paymentUrl) {
-            console.error("No payment URL in response:", response);
-            toast({
-              title: "Payment error",
-              description: "Invalid payment response. Please try again.",
-              variant: "destructive",
-            });
-            setIsProcessing(false);
-            return;
-          }
-
-          try {
-            if (!user?.clientId) {
-              localStorage.removeItem("guestCart");
-            } else {
-              clearCart();
-            }
-          } catch (e) {
-            console.warn("Failed to clear cart before redirect", e);
-          }
-
-          window.location.href = paymentUrl;
-        },
-        onError: (error: any) => {
-          console.error("Easebuzz error:", error);
-          toast({
-            title: "Payment error",
-            description: error.message || "Failed to initiate payment",
-            variant: "destructive",
-          });
-          setIsProcessing(false);
-        },
-      });
-    } catch (error) {
-      console.error("Encryption/payment error:", error);
-      toast({
-        title: "Payment error",
-        description: "Failed to prepare payment",
         variant: "destructive",
       });
       setIsProcessing(false);

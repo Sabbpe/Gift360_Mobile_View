@@ -13,7 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check, Clock } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
-import { useGeneratePaymentToken } from "@/hooks/useGeneratePaymentToken";
+import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -186,9 +186,9 @@ export default function Cart() {
     generateOrderRequest,
   } = useCart(user?.clientId);
   const createOrderMutation = useCreateOrder();
-  const generateTokenMutation = useGeneratePaymentToken();
   const paymentMutation = useInitiatePayment();
   const validateOrderMutation = useValidateOrder();
+  const backendPaymentMutation = useBackendPaymentInitiation();
 
   const easebuzzPaymentMutation = useEasebuzzInitiatePayment();
 
@@ -1269,8 +1269,7 @@ export default function Cart() {
           );
           // Proceed to payment without storing snapshot
           // Post-payment pages fetch fresh data from backend
-          const uiTotalToPay = Number(paymentBreakdown.finalPayable.toFixed(2));
-          generatePaymentToken(uiTotalToPay, orderNumber, gateway, paymentBreakdown);
+          startBackendPayment(orderNumber);
         },
         onError: (error) => {
           void cancelSuperCoinHoldIfNeeded(orderNumber);
@@ -1287,59 +1286,42 @@ export default function Cart() {
     );
   };
 
-  const generatePaymentToken = (
-    amount: number,
-    orderNumber: string,
-    gateway: "ntt" | "easebuzz",
-    paymentBreakdown: ReturnType<typeof buildPaymentBreakdown>
-  ) => {
-    console.log("Generating payment token for order:", orderNumber);
-    console.log("Payment breakdown", paymentBreakdown);
-    console.log("Gateway amount passed:", amount);
-    console.log("UI total to pay used for payment:", uiTotalToPay);
+  const startBackendPayment = (orderNumber: string) => {
+    backendPaymentMutation.mutate(orderNumber, {
+      onSuccess: (response) => {
+        console.log("Backend payment initiation response:", response);
 
-    const amountToCharge = amount;
+        const isSuccess = response.status === 1 || response.status === true;
+        const paymentUrl =
+          response.payment_url || response.paymentUrl || response.data;
 
-    generateTokenMutation.mutate(orderNumber, {
-      onSuccess: (tokenResponse) => {
-        console.log("Payment token generated successfully:", tokenResponse);
-
-        // Extract the actual token string
-        const token = tokenResponse.sabbpe_token;
-        
-        if (!token) {
+        if (!isSuccess || !paymentUrl) {
           void cancelSuperCoinHoldIfNeeded(orderNumber);
           setPaymentSheetOpen(false);
-          console.error("No token in response:", tokenResponse);
+          console.error("No payment URL in response:", response);
           toast({
-            title: "Token generation failed",
-            description: "No token received from server",
+            title: "Payment initiation failed",
+            description:
+              response.message ||
+              "Unable to initiate payment. Please try again.",
             variant: "destructive",
           });
           return;
         }
 
-        toast({
-          title: "Token Generated",
-          description: `Redirecting to ${
-            gateway === "easebuzz" ? "Easebuzz" : "NTT Data"
-          }...`,
-        });
+        console.log("Redirecting to payment URL:", paymentUrl);
 
-        // Route to appropriate gateway
-        if (gateway === "easebuzz") {
-          initiateEasebuzzPayment(amountToCharge, orderNumber, token, paymentBreakdown);
-        } else {
-          initiatePayment(amountToCharge, orderNumber, token);
-        }
+        paymentInFlightRef.current = true;
+        window.location.href = paymentUrl;
+        clearCart();
       },
       onError: (error) => {
         void cancelSuperCoinHoldIfNeeded(orderNumber);
         setPaymentSheetOpen(false);
-        console.error("Token generation error:", error);
+        console.error("Payment initiation error:", error);
         toast({
-          title: "Token generation failed",
-          description: "Failed to generate payment token. Please try again.",
+          title: "Payment failed",
+          description: "Failed to initiate payment. Please try again.",
           variant: "destructive",
         });
       },
@@ -1564,7 +1546,7 @@ export default function Cart() {
     createOrderMutation.isPending ||
     validateCouponMutation.isPending ||
     validateOrderMutation.isPending ||
-    generateTokenMutation.isPending ||
+    backendPaymentMutation.isPending ||
     paymentMutation.isPending ||
     easebuzzPaymentMutation.isPending;
 
@@ -2220,7 +2202,7 @@ export default function Cart() {
                         "Loading..."
                       ) : easebuzzScriptStatus === "error" ? (
                         "Error"
-                      ) : easebuzzPaymentMutation.isPending ? (
+                      ) : backendPaymentMutation.isPending ? (
                         "Processing..."
                       ) : (
                         "Pay with SabbPe"
@@ -2231,15 +2213,15 @@ export default function Cart() {
                     {(createOrderMutation.isPending ||
                       validateCouponMutation.isPending ||
                       validateOrderMutation.isPending ||
-                      generateTokenMutation.isPending) && (
+                      backendPaymentMutation.isPending) && (
                       <p className="text-xs text-center text-amber-200/80 animate-pulse">
                         {createOrderMutation.isPending && "Creating order..."}
                         {validateCouponMutation.isPending &&
                           "Validating coupon..."}
                         {validateOrderMutation.isPending &&
                           "Validating order..."}
-                        {generateTokenMutation.isPending &&
-                          "Generating secure token..."}
+                        {backendPaymentMutation.isPending &&
+                          "Initiating payment..."}
                       </p>
                     )}
                   </div>

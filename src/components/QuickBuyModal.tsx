@@ -6,11 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
-import { useGeneratePaymentToken } from "@/hooks/useGeneratePaymentToken";
+import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import { encrypt } from "@/utils/encryption";
-import { useEasebuzzScript } from "@/hooks/useEasebuzzScript";
-import { useEasebuzzInitiatePayment } from "@/hooks/useEasebuzzInitiatePayment";
 
 const MAX_QUANTITY_PER_ITEM = 3;
 
@@ -36,10 +33,8 @@ export default function QuickBuyModal({
   const { addToCart } = useCart(user?.clientId);
   const { toast } = useToast();
 const createOrderMutation = useCreateOrder();
-const generateTokenMutation = useGeneratePaymentToken();
-  const easebuzzPaymentMutation = useEasebuzzInitiatePayment();
+const backendPaymentMutation = useBackendPaymentInitiation();
 const validateOrderMutation = useValidateOrder();
-  const easebuzzScriptStatus = useEasebuzzScript();
 
 const { data: brandDetails, isLoading } = useBrandDetails(brand.BrandId, {
   enabled: isOpen, // ✅ Only fetch when modal is open
@@ -152,15 +147,6 @@ const handlePayNow = async () => {
   }
 
   if (isProcessing) {
-    return;
-  }
-
-  if (easebuzzScriptStatus !== "ready") {
-    toast({
-      title: "Payment system loading",
-      description: "Please wait a moment and try again.",
-      variant: "destructive",
-    });
     return;
   }
 
@@ -279,7 +265,7 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
           return;
         }
         console.log("Payment required. Amount:", validationResponse.amountToPay);
-        generatePaymentToken(validationResponse.amountToPay, orderNumber);
+        initiateBackendPaymentNow(orderNumber);
       },
       onError: (error: any) => {
         console.error("Validation error:", error);
@@ -293,101 +279,22 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
   );
 };
 
-const generatePaymentToken = (amount: number, orderNumber: string) => {
-  console.log("Generating payment token for order:", orderNumber);
-  generateTokenMutation.mutate(orderNumber, {
-    onSuccess: (tokenResponse) => {
-      console.log("Payment token generated successfully:", tokenResponse);
-      
-      if (!tokenResponse.sabbpe_token) {
-        toast({
-          title: "Token generation failed",
-          description: tokenResponse.message || "Failed to generate payment token.",
-          variant: "destructive",
-        });
-        return;
-      }
-      
-      toast({
-        title: "Token Generated",
-        description: "Payment token generated successfully.",
-      });
-      initiateEasebuzzPayment(amount, orderNumber, tokenResponse.sabbpe_token);
-    },
-    onError: (error: any) => {
-      console.error("Token generation error:", error);
-      toast({
-        title: "Token generation failed",
-        description: "Failed to generate payment token. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-};
-
-const initiateEasebuzzPayment = async (amount: number, orderNumber: string, token: string) => {
-  console.log("Initiating payment with token:", token);
-
-  if (easebuzzScriptStatus !== "ready") {
-    toast({
-      title: "Payment system loading",
-      description: "Please wait a moment and try again.",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  if (!user?.clientId) {
-    toast({
-      title: "Error",
-      description: "User information missing. Please login again.",
-      variant: "destructive",
-    });
-    return;
-  }
-
-  const encryptedOrderRef = await encrypt(`${orderNumber}|${user.clientId}`);
-  const sabbpeFrontendUrl = import.meta.env.VITE_SABBPE_FRONTEND_URL || window.location.hostname;
-
-  const paymentRequest = {
-    sabbpe_token: token,
-    amount,
-    productinfo: import.meta.env.VITE_SABBPE_PRODUCT_INFO || "Gift Voucher Purchase",
-    frontend_url: sabbpeFrontendUrl,
-    encrypted_order_ref: encryptedOrderRef,
-    client_id: user.clientId,
-    customer: {
-      firstname: import.meta.env.VITE_PAYMENT_CUSTFIRSTNAME || user?.name || "Test",
-      email: import.meta.env.VITE_PAYMENT_CUSTEMAIL || user?.email || "contact@sabbpe.com",
-      phone: import.meta.env.VITE_PAYMENT_CUSTMOBILE || user?.mobile || "9876543210",
-    },
-  };
-
-  easebuzzPaymentMutation.mutate(paymentRequest, {
+const initiateBackendPaymentNow = (orderNumber: string) => {
+  backendPaymentMutation.mutate(orderNumber, {
     onSuccess: (response) => {
-      console.log("Quick buy SabbPe response:", response);
+      console.log("Backend payment initiation response:", response);
 
       const isSuccess = response.status === 1 || response.status === true;
-      if (!isSuccess) {
+      const paymentUrl =
+        response.payment_url ||
+        response.paymentUrl ||
+        response.data;
+
+      if (!isSuccess || !paymentUrl) {
         toast({
           title: "Payment initiation failed",
           description:
-            response.message ||
-            "Unable to initiate payment. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      const paymentUrl =
-        response.payment_url ||
-        (response as { paymentUrl?: string }).paymentUrl ||
-        response.data;
-
-      if (!paymentUrl) {
-        toast({
-          title: "Payment error",
-          description: "Invalid payment response. Please try again.",
+            response.message || "Unable to initiate payment. Please try again.",
           variant: "destructive",
         });
         return;
@@ -397,10 +304,10 @@ const initiateEasebuzzPayment = async (amount: number, orderNumber: string, toke
       onClose();
     },
     onError: (error: any) => {
-      console.error("SabbPe initiate error:", error);
+      console.error("Payment initiation error:", error);
       toast({
         title: "Payment failed",
-        description: "Failed to initiate SabbPe payment. Please try again.",
+        description: "Failed to initiate payment. Please try again.",
         variant: "destructive",
       });
     },
@@ -410,8 +317,7 @@ const initiateEasebuzzPayment = async (amount: number, orderNumber: string, toke
 const isProcessing =
   createOrderMutation.isPending ||
   validateOrderMutation.isPending ||
-  generateTokenMutation.isPending ||
-  easebuzzPaymentMutation.isPending;
+  backendPaymentMutation.isPending;
 
 
   return (
@@ -590,18 +496,15 @@ const isProcessing =
       disabled={isProcessing}
       onClick={handlePayNow}
       className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
-        isValidAmount() && !isProcessing && easebuzzScriptStatus === "ready"
+        isValidAmount() && !isProcessing
           ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
           : "bg-muted text-muted-foreground opacity-60 hover:bg-muted/70"
       }`}
     >
-      {easebuzzScriptStatus === "loading" && "Loading..."}
-      {easebuzzScriptStatus === "error" && "Error"}
       {createOrderMutation.isPending && "Creating..."}
       {validateOrderMutation.isPending && "Validating..."}
-      {generateTokenMutation.isPending && "Token..."}
-      {easebuzzPaymentMutation.isPending && "Processing..."}
-      {!isProcessing && easebuzzScriptStatus === "ready" && "Pay Now"}
+      {backendPaymentMutation.isPending && "Processing..."}
+      {!isProcessing && "Pay Now"}
     </button>
   </div>
 </div>
