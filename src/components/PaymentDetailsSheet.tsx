@@ -135,12 +135,6 @@ export default function PaymentDetailsSheet({
       image: getImageUrl(brand) || undefined,
     });
 
-    addNotification({
-      title: "Added to Cart",
-      message: `${brand.BrandName} voucher has been added successfully into cart`,
-      type: "success",
-    });
-
     setShowSuccess(true);
 
     window.setTimeout(() => {
