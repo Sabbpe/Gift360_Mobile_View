@@ -78,8 +78,7 @@ const { data: cart, isLoading, isError, refetch } = useQuery({
 });
 
 
-  // ✅ OPTIMISTIC ADD - Updates UI immediately
-  // ✅ OPTIMISTIC ADD - Updates UI immediately
+  // ✅ BACKEND-DRIVEN ADD - UI updates only after the backend responds
   const addMutation = useMutation({
     mutationFn: (item: AddToCartRequest) => {
       // If not logged in, save to localStorage
@@ -101,58 +100,12 @@ const { data: cart, isLoading, isError, refetch } = useQuery({
       
       return addToCart(clientId!, item);
     },
-    onMutate: async (newItem) => {
-      await queryClient.cancelQueries({ queryKey: ["cart", clientId] });
-      const previousCart = queryClient.getQueryData<Cart>(["cart", clientId]);
-
-      if (previousCart) {
-        const existingItemIndex = previousCart.items.findIndex(
-          (item) => item.brandId === newItem.brandId && item.unitValue === newItem.unitValue
-        );
-
-        let updatedItems;
-        if (existingItemIndex > -1) {
-          updatedItems = [...previousCart.items];
-          updatedItems[existingItemIndex] = {
-            ...updatedItems[existingItemIndex],
-            quantity: updatedItems[existingItemIndex].quantity + newItem.quantity,
-            lineTotal: (updatedItems[existingItemIndex].quantity + newItem.quantity) * newItem.unitValue,
-          };
-        } else {
-          updatedItems = [
-            ...previousCart.items,
-            {
-              itemId: `temp-${Date.now()}`,
-              brandId: newItem.brandId,
-              brandName: newItem.brandName,
-              quantity: newItem.quantity,
-              unitValue: newItem.unitValue,
-              lineTotal: newItem.quantity * newItem.unitValue,
-              image: newItem.image,
-            },
-          ];
-        }
-
-        const newTotal = updatedItems.reduce((sum, item) => sum + item.lineTotal, 0);
-        queryClient.setQueryData(["cart", clientId], {
-          ...previousCart,
-          items: updatedItems,
-          totalAmount: newTotal,
-          totalItems: updatedItems.reduce((sum, item) => sum + item.quantity, 0),
-        });
-      }
-
-      return { previousCart };
-    },
     onSuccess: (data) => {
       if (clientId) {
         queryClient.setQueryData(["cart", clientId], data);
       }
     },
-    onError: (_error, _variables, context) => {
-      if (context?.previousCart && clientId) {
-        queryClient.setQueryData(["cart", clientId], context.previousCart);
-      }
+    onError: () => {
       toast({ title: "Failed to add to cart", variant: "destructive" });
     },
   });
@@ -261,7 +214,7 @@ const { data: cart, isLoading, isError, refetch } = useQuery({
     },
   });
 
-// ✅ MERGE GUEST CART ON LOGIN - WITH OPTIMISTIC UPDATE
+// ✅ MERGE GUEST CART ON LOGIN - backend-driven
 useEffect(() => {
   const mergeGuestCart = async () => {
     if (!clientId) return;
@@ -281,47 +234,13 @@ useEffect(() => {
     
     // Set flag IMMEDIATELY to prevent duplicate merges
     localStorage.setItem(mergeFlag, 'true');
-    
-    // ✅ OPTIMISTIC UPDATE: Show guest items in cart immediately
-    const currentCart = queryClient.getQueryData<Cart>(["cart", clientId]) || {
-      clientId: clientId!,
-      items: [],
-      totalAmount: 0,
-      totalItems: 0,
-      currency: "INR"
-    };
 
-    // Convert guest cart to cart items
-      const guestItems = guestCart.map((item, index) => ({
-        itemId: `guest-${Date.now()}-${index}`,
-        brandId: item.brandId,
-        brandName: item.brandName,
-        quantity: item.quantity,
-        unitValue: item.unitValue,
-        lineTotal: item.quantity * item.unitValue,
-        image: item.image,
-      }));
-
-    // Combine current cart with guest items
-    const combinedItems = [...currentCart.items, ...guestItems];
-    const newTotal = combinedItems.reduce((sum, item) => sum + item.lineTotal, 0);
-    const newTotalItems = combinedItems.reduce((sum, item) => sum + item.quantity, 0);
-
-    // ✅ Update cache immediately for instant UI update
-    queryClient.setQueryData(["cart", clientId], {
-      ...currentCart,
-      items: combinedItems,
-      totalAmount: newTotal,
-      totalItems: newTotalItems,
-    });
-    
-    // Clear guest cart IMMEDIATELY
-    clearGuestCart();
-
-    // ✅ Now merge in background and sync with backend
     try {
-      // Merge guest cart items with backend cart
+      // Merge guest cart items with backend cart (backend is the source of truth)
       await mergeCart(clientId, guestCart);
+      
+      // Clear the guest cart only AFTER the backend confirms the merge
+      clearGuestCart();
       
       // Refetch to get real data from backend (with proper itemIds)
       await refetch();
@@ -334,19 +253,30 @@ useEffect(() => {
       console.log("Merge completed successfully");
     } catch (error) {
       console.error("Failed to merge guest cart", error);
-      
-      // On error, remove flag and restore guest cart so user can retry
-      localStorage.removeItem(mergeFlag);
-      saveGuestCart(guestCart);
-      
-      // Revert to original cart on error
-      queryClient.setQueryData(["cart", clientId], currentCart);
-      
-      toast({
-        title: "Cart Sync Failed",
-        description: "Some items couldn't be added",
-        variant: "destructive"
-      });
+
+      const httpStatus = (error as { response?: { status?: number } })?.response?.status;
+
+      if (httpStatus === 400) {
+        // Some items were invalid (e.g. forged amount). The valid ones were
+        // already added by the backend before the invalid one failed, so
+        // refetch to show the actual server cart.
+        clearGuestCart();
+        await refetch();
+        toast({
+          title: "Item removed",
+          description: "An invalid item was removed from your cart.",
+          variant: "destructive"
+        });
+      } else {
+        // Transient failure — restore so the user can retry later.
+        localStorage.removeItem(mergeFlag);
+        saveGuestCart(guestCart);
+        toast({
+          title: "Cart Sync Failed",
+          description: "Some items couldn't be added",
+          variant: "destructive"
+        });
+      }
     }
   };
 

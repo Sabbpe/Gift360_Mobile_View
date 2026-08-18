@@ -27,8 +27,7 @@ import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import { cartBrandNames } from "@/data/recentlyBought";
-import FeedbackForm, { hasSubmittedFeedback } from "@/components/FeedbackForm";
-import FeedbackTrigger from "@/components/FeedbackTrigger";
+import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
 import { useBrands } from "@/hooks/useBrands";
@@ -590,7 +589,6 @@ function MobileHomeScreen() {
   const [topBrandVouchers, setTopBrandVouchers] = useState<TopBrandVoucher[]>([]);
   const [topBrandModalOpen, setTopBrandModalOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackTriggerOpen, setFeedbackTriggerOpen] = useState(false);
   const [topBrandLoading, setTopBrandLoading] = useState(false);
   const [topBrandError, setTopBrandError] = useState<string | null>(null);
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
@@ -667,12 +665,7 @@ function MobileHomeScreen() {
     setBuySheetOpen(true);
   };
 
-  // Show feedback trigger once after login (3s delay, only if not submitted yet)
-  useEffect(() => {
-    if (hasSubmittedFeedback()) return;
-    const timer = setTimeout(() => setFeedbackTriggerOpen(true), 3000);
-    return () => clearTimeout(timer);
-  }, []);
+  // (feedback auto-trigger removed — feedback is only reachable via the floating button)
 
   return (
     <>
@@ -724,14 +717,6 @@ function MobileHomeScreen() {
         }}
       />
       <FeedbackFloatingButton onClick={() => setFeedbackOpen(true)} />
-      <FeedbackTrigger
-        open={feedbackTriggerOpen}
-        onClose={() => setFeedbackTriggerOpen(false)}
-        onSubmit={() => {
-          setFeedbackTriggerOpen(false);
-          setFeedbackOpen(true);
-        }}
-      />
       <FeedbackForm open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <BottomNav />
       </main>

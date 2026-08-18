@@ -4,6 +4,7 @@ import { ArrowLeft, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { useCart } from "@/hooks/useCart";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import type { BrandDetailsParsed } from "@/types/brandDetails";
 
@@ -48,6 +49,7 @@ export default function BrandPaymentPage() {
 
   const { user } = useAuthContext();
   const { addToCart } = useCart(user?.clientId);
+  const { toast } = useToast();
   const [, setLocation] = useLocation();
   const payClickedRef = useRef(false);
 
@@ -118,17 +120,36 @@ export default function BrandPaymentPage() {
   const handlePayOnSabbpe = () => {
     if (!brandDetails || !safeAmount || payClickedRef.current) return;
 
+    // Client-side denomination validation for fixed-denomination brands
+    if (brandDetails.BrandType?.toLowerCase() === "fixed") {
+      const denominations = brandDetails.DenominationList || [];
+      if (denominations.length > 0 && !denominations.includes(safeAmount)) {
+        toast({
+          title: "Invalid amount",
+          description: "Please select a valid denomination for this gift card.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     payClickedRef.current = true;
 
-    addToCart({
-      brandId: brandDetails.BrandId,
-      brandName: brandDetails.BrandName,
-      quantity,
-      unitValue: safeAmount,
-      image: imageSrc !== FALLBACK ? imageSrc : undefined,
-    });
-
-    setLocation("/cart?autopay=easebuzz");
+    addToCart(
+      {
+        brandId: brandDetails.BrandId,
+        brandName: brandDetails.BrandName,
+        quantity,
+        unitValue: safeAmount,
+        image: imageSrc !== FALLBACK ? imageSrc : undefined,
+      },
+      {
+        onSuccess: () => setLocation("/cart?autopay=easebuzz"),
+        onError: () => {
+          payClickedRef.current = false;
+        },
+      }
+    );
   };
 
   if (!brandDetails) {
