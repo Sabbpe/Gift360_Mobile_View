@@ -1939,7 +1939,7 @@ export default function Cart() {
                                   </span>
                                 </div>
                                 <p className="text-xs sm:text-sm mt-1 text-muted-foreground">
-                                  Available: ₹{walletBalance.toFixed(2)} • Max: ₹{maxWalletUsage.toFixed(2)} ({cashbackRedeemPercent}% of cashback value, up to ₹{maxRedeemAmount})
+                                  Available: ₹{walletBalance.toFixed(2)} • Max: ₹{maxWalletUsage.toFixed(2)} (based on this cart's cashback)
                                 </p>
                                 {walletBalance <= 0 && (
                                   <p className="text-xs text-muted-foreground/60 mt-1 italic">
