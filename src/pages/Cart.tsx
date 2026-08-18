@@ -989,7 +989,28 @@ export default function Cart() {
     .filter(item => !isSuperCoinExcluded(item.brandName))
     .reduce((sum, item) => sum + item.lineTotal, 0);
 
-  const maxWalletUsage = subtotal * 0.5;
+  // Cart cashback value: for each item, its own brand cashback % × line total,
+  // summed across the cart (e.g. voucher A @5% + voucher B @10% => their
+  // respective cashback contributions added together). This mirrors the
+  // same per-item discount/cashback field already used for cashbackPercent
+  // and SuperCoin below, just expressed as an absolute value instead of a
+  // weighted-average %, and computed independently of wallet/coupon
+  // deductions so there's no circular dependency.
+  const cartCashbackValue = cartItems.reduce((sum, item) => {
+    const pct = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
+    return sum + item.lineTotal * (pct / 100);
+  }, 0);
+
+  // Backend-driven redemption rule: 50% of the cart's cashback value,
+  // hard-capped at a flat rupee amount (sabbpe.wallet.cashback-redeem-percent
+  // and sabbpe.wallet.max-redeem-amount). Falls back to 50% / ₹100 only
+  // until the wallet response arrives, matching the backend's own defaults.
+  const cashbackRedeemPercent = walletData?.cashbackRedeemPercent ?? 50;
+  const maxRedeemAmount = walletData?.maxRedeemAmount ?? 100;
+  const maxWalletUsage = Math.min(
+    cartCashbackValue * (cashbackRedeemPercent / 100),
+    maxRedeemAmount
+  );
 
   const walletDeduction = useWalletBalance
     ? Math.min(walletBalance, maxWalletUsage)
@@ -1918,7 +1939,7 @@ export default function Cart() {
                                   </span>
                                 </div>
                                 <p className="text-xs sm:text-sm mt-1 text-muted-foreground">
-                                  Available: ₹{walletBalance.toFixed(2)} • Max: ₹{maxWalletUsage.toFixed(2)} (50% of cart)
+                                  Available: ₹{walletBalance.toFixed(2)} • Max: ₹{maxWalletUsage.toFixed(2)} ({cashbackRedeemPercent}% of cashback value, up to ₹{maxRedeemAmount})
                                 </p>
                                 {walletBalance <= 0 && (
                                   <p className="text-xs text-muted-foreground/60 mt-1 italic">

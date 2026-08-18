@@ -11,6 +11,10 @@ export interface WalletBalance {
   offerBalance: number;
   cashBalance: number;
   voucherCashbackBalance: number;
+  /** % of the cart's cashback value that may be redeemed from the wallet (e.g. 50). */
+  cashbackRedeemPercent: number;
+  /** Flat rupee ceiling on wallet redemption regardless of cart size (e.g. 100). */
+  maxRedeemAmount: number;
 }
 
 export const fetchWalletBalance = async (clientId: string): Promise<WalletBalance> => {
