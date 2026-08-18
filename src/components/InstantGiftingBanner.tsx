@@ -3,6 +3,7 @@ import { ArrowRight, ShoppingCart, Gift, Store, Coins, RefreshCw, BadgeDollarSig
 import flipkartSuperCoinImg from "@/assets/FlipKartSuperCoin-removebg-preview.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import partnerImg from "@/assets/coorp.png";
+import rakhihomeImg from "@/assets/rakhihome.png";
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
@@ -29,7 +30,7 @@ function usePrefersReducedMotion(): boolean {
 
 function StepFlowSlide({ onExplore }: { onExplore?: () => void }) {
   return (
-    <div className="w-full h-[185px] flex flex-col px-4 py-3">
+    <div className="relative w-full h-[185px] flex flex-col px-4 py-3">
       <div className="flex items-start justify-between gap-2 mb-3">
         <div className="min-w-0">
           <p className="text-[8px] font-semibold uppercase tracking-[0.18em] text-gray-400 mb-0.5">
@@ -83,7 +84,7 @@ function SuperCoinSlide({ onExplore }: { onExplore?: () => void }) {
   }, []);
 
   return (
-    <div className="w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
+    <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex-1 min-w-0 space-y-1.5">
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-white bg-[#7C3AED]">
           REWARDS
@@ -152,7 +153,7 @@ function SuperCoinSlide({ onExplore }: { onExplore?: () => void }) {
 
 function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   return (
-    <div className="w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
+    <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex-1 min-w-0 space-y-1.5">
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-white bg-[#7C3AED]">
           PARTNER
@@ -248,7 +249,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick }: Inst
   }, [startAutoplay, stopAutoplay]);
 
   return (
-    <section className="w-full">
+    <section className="relative w-full">
       <style>{`
         @keyframes coin-float {
           0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
@@ -261,6 +262,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick }: Inst
           75% { filter: drop-shadow(0 0 12px rgba(255,200,0,0.7)) drop-shadow(0 0 24px rgba(255,180,0,0.4)); transform: scale(1.05); }
         }
       `}</style>
+      <img src={rakhihomeImg} alt="" className="absolute -top-3 -left-3 h-[72px] w-[72px] object-contain opacity-80 pointer-events-none z-0" />
       <div
         className="w-full overflow-hidden rounded-[20px] border border-[#EDEDED] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] bg-white"
         onTouchStart={stopAutoplay}

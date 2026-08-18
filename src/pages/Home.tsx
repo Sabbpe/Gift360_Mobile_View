@@ -35,6 +35,8 @@ import { useBrands } from "@/hooks/useBrands";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
+import giftcardbg from "@/assets/giftcardbg.png";
+import rakhiBannerImg from "@/assets/rakhibanner.png";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
@@ -85,20 +87,12 @@ function BalanceCard() {
 
   return (
     <section className="absolute left-0 right-0 top-[86px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
-      <div className="absolute left-1/2 top-[22px] h-[112px] w-[calc(100%-56px)] -translate-x-1/2 translate-y-[18px] rounded-[18px] border border-white/15 bg-white/10 shadow-lg backdrop-blur-sm" />
-      <div className="absolute left-1/2 top-[12px] h-[112px] w-[calc(100%-32px)] -translate-x-1/2 translate-y-[12px] rounded-[18px] border border-white/20 bg-white/15 shadow-xl backdrop-blur-sm" />
-      <div className="relative h-[112px] overflow-hidden rounded-[18px] border border-white/35 bg-white/20 px-[18px] py-[14px] text-white shadow-[0_18px_38px_rgba(27,25,75,0.24)] backdrop-blur-md animate-[float-y_4s_ease-in-out_infinite]">
-        <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.18),rgba(255,255,255,0.06))]" />
-        <div className="absolute inset-0 opacity-[0.16]">
-          <Gift className="absolute left-[148px] top-[12px] h-[42px] w-[42px] rotate-[-18deg] text-[#5b5b72]" strokeWidth={1.2} />
-          <Gift className="absolute left-[82px] top-[63px] h-[42px] w-[42px] rotate-[-21deg] text-[#5b5b72]" strokeWidth={1.2} />
-          <Gift className="absolute right-[25px] top-[62px] h-[34px] w-[34px] rotate-[-20deg] text-[#5b5b72]" strokeWidth={1.2} />
-          <WalletCards className="absolute left-[-9px] bottom-[9px] h-[34px] w-[34px] rotate-[-17deg] text-[#5b5b72]" strokeWidth={1.2} />
-          <WalletCards className="absolute right-[30px] top-[15px] h-[37px] w-[37px] rotate-[-14deg] text-[#5b5b72]" strokeWidth={1.2} />
-        </div>
-        <p className="relative text-[13px] font-normal leading-none tracking-[-0.01em] text-white/95">Your CashBack points</p>
+      <div className="relative h-[130px] overflow-hidden rounded-[18px] shadow-[0_18px_38px_rgba(27,25,75,0.24)] animate-[float-y_4s_ease-in-out_infinite]">
+        <img src={giftcardbg} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none scale-110" />
+        <div className="relative h-full px-[24px] py-[14px] text-black">
+          <p className="text-[13px] font-normal leading-none tracking-[-0.01em] text-black">Your CashBack points</p>
         <div className="relative mt-[12px] flex items-center gap-[14px]">
-          <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-white">
+          <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-black">
             <span className="text-[22px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
             {visible ? `₹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹ •••••••"}
           </p>
@@ -106,7 +100,7 @@ function BalanceCard() {
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
           </button>
         </div>
-        <div className="absolute bottom-[6px] right-[8px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
+        <div className="absolute bottom-[6px] right-[10px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
           <style>{`
             @keyframes gold-pulse-badge {
               0%, 100% { filter: drop-shadow(0 0 2px rgba(255,200,0,0.3)); transform: scale(1); }
@@ -116,6 +110,7 @@ function BalanceCard() {
           <img src={superCoinImg} alt="SuperCoin" className="h-[16px] w-[16px] object-contain" style={{ animation: "gold-pulse-badge 1.5s ease-in-out infinite" }} />
           <span className="text-[8px] font-semibold bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] bg-clip-text text-transparent">SuperCoins now available on</span>
           <img src={gWord} alt="Gift360" className="h-[12px] w-auto object-contain" />
+        </div>
         </div>
       </div>
     </section>
@@ -151,6 +146,33 @@ function PromoCard() {
   return (
     <section className="px-[21px] pt-[18px]">
       <InstantGiftingBanner onExplore={() => setLocation("/brands")} onPartnerClick={() => setLocation("/distributor")} />
+    </section>
+  );
+}
+
+function RakhiBanner() {
+  const [, setLocation] = useLocation();
+
+  return (
+    <section className="px-3 pt-[18px]">
+      <div className="relative w-full h-[100px] rounded-[16px] overflow-hidden">
+        <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="relative h-full flex flex-col justify-center px-8 py-2 z-10">
+          <h2 className="text-[16px] font-extrabold leading-[1.1] text-[#2D1B4E]">
+            Make <span className="text-[#D946A8]">Rakhi</span>{" "}Extra Special
+          </h2>
+          <p className="mt-1 text-[8px] font-medium leading-snug text-[#5B4C69] max-w-[180px]">
+            From thoughtful gifts to exciting vouchers, make every bond stronger.
+          </p>
+          <button
+            onClick={() => setLocation("/brands")}
+            className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#D946A8] px-3 py-1.5 text-[9px] font-semibold text-white shadow-md active:scale-[0.97] transition-all w-fit"
+          >
+            Explore Gifts
+            <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
+      </div>
     </section>
   );
 }
@@ -213,7 +235,7 @@ function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => 
               setShowSuggestions(false);
             }
           }}
-          placeholder="Search brands, vouchers..."
+          placeholder="Search Rakhi gifts & vouchers..."
           className="h-[44px] rounded-[16px] border border-[#e5e7eb] bg-white pl-10 pr-4 text-[13px] font-medium shadow-[0_4px_10px_rgba(0,0,0,0.06)]"
         />
         {showSuggestions && filteredSuggestions.length > 0 && (
@@ -266,7 +288,7 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
 
   return (
     <section className="pt-[27px]">
-      <h2 className="px-[21px] text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Recommended</h2>
+      <h2 className="px-[21px] text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Rakhi Recommendations</h2>
       <div className="no-scrollbar mt-[11px] flex snap-x gap-3 overflow-x-auto scroll-smooth px-[21px] pb-[3px]">
         {recommended.map((brand) => {
           const imageSrc = getRecommendedBrandImage(brand);
@@ -668,6 +690,7 @@ function MobileHomeScreen() {
           openStandardPaymentSheet(id);
         }}
       />
+      <RakhiBanner />
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       <TopBrandsGrid
         onOpenBrand={openTopBrandModal}
