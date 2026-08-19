@@ -4,6 +4,7 @@ import {
   fetchSuperCoinBalance,
   initSuperCoinHold,
   authorizeSuperCoinHold,
+  burnSuperCoinOrder,
   normalizeMobileToE164,
   searchSuperCoinUser,
   type SuperCoinBalanceResponse,
@@ -12,6 +13,8 @@ import {
   type SuperCoinAuthorizeHoldResponse,
   type SuperCoinSearchResponse,
   type SuperCoinTransactionalPayload,
+  type SuperCoinBurnOrderResponse,
+  type SuperCoinBurnOrderPayload,
 } from "@/api/supercoinApi";
 
 export const useSuperCoinAccount = (mobile?: string) => {
@@ -65,4 +68,9 @@ export const useAuthorizeSuperCoinHold = () =>
     Pick<SuperCoinTransactionalPayload, "identity" | "merchantWalletId" | "merchantTransactionId" | "otp">
   >({
     mutationFn: (payload) => authorizeSuperCoinHold(payload),
+  });
+
+export const useBurnSuperCoinOrder = () =>
+  useMutation<SuperCoinBurnOrderResponse, Error, SuperCoinBurnOrderPayload>({
+    mutationFn: (payload) => burnSuperCoinOrder(payload),
   });

@@ -136,6 +136,37 @@ export const fetchSuperCoinTransactionStatus = (
   payload: SuperCoinStatusPayload
 ) => postSuperCoin<SuperCoinTransactionResponse>(`/transaction/${transactionId}/status`, payload);
 
+export interface SuperCoinBurnOrderResponse {
+  success?: boolean;
+  orderId?: string;
+  orderNumber?: string;
+  status?: string;
+  coinsRedeemed?: number;
+  message?: string;
+  error?: string;
+  [key: string]: unknown;
+}
+
+export interface SuperCoinBurnOrderPayload {
+  orderNumber: string;
+  displayName: string;
+  amount: number;
+  clientId: string;
+}
+
+export const burnSuperCoinOrder = (payload: SuperCoinBurnOrderPayload) =>
+  postSuperCoin<SuperCoinBurnOrderResponse>("/burn-and-order", payload);
+
+export const SUPERCOIN_BURN_RATIO = 1.1;
+
+export const calculateSuperCoinsRequired = (voucherAmount: number): number => {
+  return Math.ceil(Math.round(voucherAmount * SUPERCOIN_BURN_RATIO * 100) / 100);
+};
+
+export const canAffordVoucher = (balance: number, voucherAmount: number): boolean => {
+  return balance >= calculateSuperCoinsRequired(voucherAmount);
+};
+
 export const extractSuperCoinBalance = (
   response?: SuperCoinBalanceResponse | null
 ): number => {

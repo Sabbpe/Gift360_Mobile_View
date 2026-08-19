@@ -1,6 +1,8 @@
 import { Bell, Eye, EyeOff, Gift, Send, ScanLine, UserPlus, User } from "lucide-react";
 import { useState, useMemo, useRef, useEffect } from "react";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import SuperCoinsConversionBanner from "@/components/SuperCoinsConversionBanner";
+import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useBrands } from "@/hooks/useBrands";
@@ -46,6 +48,7 @@ export default function Hero() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
@@ -192,6 +195,10 @@ export default function Hero() {
         </div>
 
         <div className="anim-fade-up delay-300">
+          <SuperCoinsConversionBanner onExplore={() => setSuperCoinsModalOpen(true)} />
+        </div>
+
+        <div className="anim-fade-up delay-300">
           <InstantGiftingBanner onExplore={() => setLocation('/brands')} onPartnerClick={() => setLocation('/distributor')} />
         </div>
 
@@ -332,6 +339,11 @@ export default function Hero() {
           setSheetOpen(false);
           setSheetBrandId(null);
         }}
+      />
+      <SuperCoinsBrandModal
+        open={superCoinsModalOpen}
+        brandId={SUPERCOIN_FEATURED_BRAND_ID}
+        onClose={() => setSuperCoinsModalOpen(false)}
       />
     </div>
   );

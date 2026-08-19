@@ -272,11 +272,11 @@ export default function SuperCoinStatusCard({
 
       {/* Reserved hold banner */}
       {coinsOnHold > 0 && (
-        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[rgba(151,71,255,0.08)] to-[rgba(151,71,255,0.04)] border border-[rgba(151,71,255,0.2)] shadow-[0_2px_8px_rgba(151,71,255,0.1)]">
           <div className="flex items-center gap-2">
-            <span className="text-amber-500 text-sm">🔒</span>
-            <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
-              {coinsOnHold.toFixed(2)} coin(s) reserved for this checkout
+            <span className="text-sm">🔒</span>
+            <p className="text-xs font-semibold text-[#7C3AED]">
+              {Math.round(coinsOnHold)} coin(s) reserved for this checkout
             </p>
           </div>
           {onCancelHold && (

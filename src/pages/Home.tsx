@@ -21,10 +21,12 @@ import {
 } from "lucide-react";
 import Hero from "@/components/Hero";
 import Header from "@/components/Header";
+import SuperCoinHeaderIcon from "@/components/SuperCoinHeaderIcon";
 import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
@@ -55,7 +57,7 @@ function getRecommendedBrandImage(brand: Brand): string | null {
   return getImageUrl(brand);
 }
 
-function HomeHeader() {
+function HomeHeader({ onSuperCoinClick }: { onSuperCoinClick: () => void }) {
   const [, setLocation] = useLocation();
   const { user } = useAuthContext();
   const displayName = localStorage.getItem("displayName") || user?.name || "User";
@@ -66,6 +68,7 @@ function HomeHeader() {
       <div className="flex items-center justify-between">
         <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi {firstName || "User"}!</h1>
         <div className="flex items-center gap-[14px]">
+          <SuperCoinHeaderIcon onClick={onSuperCoinClick} />
           <button onClick={() => setLocation("/notifications")} className="grid h-[20px] w-[20px] place-items-center active:scale-95" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </button>
@@ -116,7 +119,7 @@ function BalanceCard() {
   );
 }
 
-function ActionGrid({ onBuyVoucher }: { onBuyVoucher: () => void }) {
+function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => void; onSuperCoinClick?: () => void }) {
   const [, setLocation] = useLocation();
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
@@ -126,15 +129,17 @@ function ActionGrid({ onBuyVoucher }: { onBuyVoucher: () => void }) {
   ];
 
   return (
-    <section className="grid grid-cols-4 gap-[17px] px-[31px] pt-[52px]">
-      {actions.map(({ label, Icon, href, onClick }) => (
-        <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95">
-          <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
-            <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
-          </span>
-          <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-medium leading-[9px] text-[#161616]">{label}</span>
-        </button>
-      ))}
+    <section className="px-[21px] pt-[18px]">
+      <div className="grid grid-cols-4 gap-[17px] pt-[18px]">
+        {actions.map(({ label, Icon, href, onClick }) => (
+          <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95">
+            <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
+              <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
+            </span>
+            <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-medium leading-[9px] text-[#161616]">{label}</span>
+          </button>
+        ))}
+      </div>
     </section>
   );
 }
@@ -592,6 +597,7 @@ function MobileHomeScreen() {
   const [topBrandLoading, setTopBrandLoading] = useState(false);
   const [topBrandError, setTopBrandError] = useState<string | null>(null);
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
+  const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
 
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
@@ -665,6 +671,10 @@ function MobileHomeScreen() {
     setBuySheetOpen(true);
   };
 
+  const openSuperCoinsModal = () => {
+    setSuperCoinsModalOpen(true);
+  };
+
   // (feedback auto-trigger removed — feedback is only reachable via the floating button)
 
   return (
@@ -672,10 +682,10 @@ function MobileHomeScreen() {
       <Header />
       <main className="min-h-screen w-full overflow-x-hidden bg-[#F3F5F9] pb-[84px] font-body text-[#101010] md:hidden">
       <div className="relative overflow-visible pb-[70px]">
-        <HomeHeader />
+        <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
         <BalanceCard />
       </div>
-      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} />
+      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard />
       <RecommendedList
@@ -690,6 +700,11 @@ function MobileHomeScreen() {
       />
       <RecentlyUsed onBuy={openStandardPaymentSheet} />
       <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
+      <SuperCoinsBrandModal
+        open={superCoinsModalOpen}
+        brandId={SUPERCOIN_FEATURED_BRAND_ID}
+        onClose={() => setSuperCoinsModalOpen(false)}
+      />
       <BrandVoucherModal
         open={topBrandModalOpen}
         vouchers={topBrandVouchers}

@@ -17,7 +17,7 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
-import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
+import { isSuperCoinExcludedById, isSuperCoinExcluded, isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -125,10 +125,11 @@ useEffect(() => {
   console.log('🌐 Full URL:', window.location.href);
   console.log('🌐 Wouter location:', currentLocation);
   console.log('🌐 Search params:', window.location.search);
-  const urlParams = new URLSearchParams(currentLocation.split('?')[1] || '');
+  const urlParams = new URLSearchParams(searchParams);
   const categoryFromUrl = urlParams.get('categories');
   const tabFromUrl = urlParams.get('tab') as "about" | "how" | "terms" | null;
   const brandIdFromUrl = urlParams.get('brandId');
+  const superCoinsOnly = urlParams.get("supercoins") === "1";
 
   const [sheetInitialTab, setSheetInitialTab] = useState<"about" | "how" | "terms" | null>(null);
 
@@ -165,10 +166,19 @@ useEffect(() => {
 // Filter brands based on search query for suggestions
 const filteredBrandSuggestions = useMemo(() => {
   let results = safeBrands;
+
+  if (superCoinsOnly) {
+    results = results.filter((brand: Brand) =>
+      isSuperCoinEligible(
+        brand.BrandId || brand.brandId || "",
+        brand.BrandName || brand.brandName || ""
+      )
+    );
+  }
   
   if (searchQuery.trim()) {
     const query = searchQuery.toLowerCase();
-    results = safeBrands.filter((brand: Brand) => {
+    results = results.filter((brand: Brand) => {
       const brandName = brand.BrandName || brand.brandName || "";
       return brandName.toLowerCase().includes(query);
     });
@@ -187,7 +197,7 @@ const filteredBrandSuggestions = useMemo(() => {
     
     return nameA.localeCompare(nameB, undefined, { sensitivity: 'base' });
   });
-}, [safeBrands, searchQuery]);
+}, [safeBrands, searchQuery, superCoinsOnly]);
 
 
   // Use meta data from API
@@ -270,6 +280,19 @@ const filteredBrandSuggestions = useMemo(() => {
 
     return safeBrands;
   }, [submittedSearchQuery, searchResults, activeFiltersCount, filteredData, safeBrands]);
+
+  const eligibleDisplayBrands = useMemo(() => {
+    if (!superCoinsOnly) {
+      return displayBrands;
+    }
+
+    return (displayBrands as any[]).filter((brand) =>
+      isSuperCoinEligible(
+        brand.BrandId || brand.brandId || "",
+        brand.BrandName || brand.brandName || ""
+      )
+    );
+  }, [displayBrands, superCoinsOnly]);
 
   const inferDiscountBounds = (
     rawValue: string,
@@ -405,13 +428,13 @@ const filteredBrandSuggestions = useMemo(() => {
 
   const brandsAfterDiscountFilter = useMemo(() => {
     if (!filters.discountRanges.length) {
-      return displayBrands;
+      return eligibleDisplayBrands;
     }
 
-    return (displayBrands as any[]).filter((brand) =>
+    return (eligibleDisplayBrands as any[]).filter((brand) =>
       filters.discountRanges.some((rangeKey) => matchesDiscountRange(brand, rangeKey))
     );
-  }, [displayBrands, filters.discountRanges, discountRangeByKey]);
+  }, [eligibleDisplayBrands, filters.discountRanges, discountRangeByKey]);
 
 // Frontend sorting logic
 const sortedDisplayBrands = useMemo(() => {
@@ -1021,7 +1044,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 onSearchSubmit={handleSearchSubmit}
-                allBrandsData={displayBrands}
+                allBrandsData={eligibleDisplayBrands}
               />
             </div>
 
@@ -1033,6 +1056,11 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                 <div className="mb-6">
                   <p className="text-sm font-medium text-[#374151]">
                     Showing <span className="font-semibold text-[#111827]">{sortedDisplayBrands.length}</span> brands
+                    {superCoinsOnly && (
+                      <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+                        SuperCoins eligible only
+                      </span>
+                    )}
                     {submittedSearchQuery.trim() && (
                       <span className="ml-2 text-[hsl(var(--primary))]">
                         (searching for "{submittedSearchQuery}")
@@ -1095,10 +1123,11 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                   </div>
                   <h3 className="text-xl font-extrabold mb-2"><span className="text-gold-gradient">No brands found</span></h3>
                   <p className="text-white/60 mb-4">
-                    {submittedSearchQuery.trim()
-                      ? `No results found for "${submittedSearchQuery}"`
-                      : "Try adjusting your filters or search term"
-                    }
+                    {superCoinsOnly
+                      ? "No SuperCoins eligible brands matched your current search or filters."
+                      : submittedSearchQuery.trim()
+                        ? `No results found for "${submittedSearchQuery}"`
+                        : "Try adjusting your filters or search term"}
                   </p>
                   <button
                     onClick={() => {
