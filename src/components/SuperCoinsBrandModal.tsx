@@ -37,6 +37,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   });
   const createOrderMutation = useCreateOrder();
   const burnMutation = useBurnSuperCoinOrder();
+  const { identity: scIdentity, searchUserMutation, balanceMutation } = useSuperCoinAccount(user?.mobile);
 
   const [amount, setAmount] = useState(0);
   const [quantity, setQuantity] = useState(1);
@@ -120,8 +121,45 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
     setSuperCoinHoldExpiryMs(null);
     setTransactionTime(null);
     setBurnSuccess(false);
+    scSearchFiredRef.current = null;
+    scBalanceFiredRef.current = null;
     burnMutation.reset();
   }, [open]);
+
+  // Fetch SuperCoin balance when modal opens
+  const scSearchFiredRef = useRef<string | null>(null);
+  const scBalanceFiredRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!open || !scIdentity) return;
+    const key = scIdentity.identifier;
+    if (scSearchFiredRef.current === key) return;
+    scSearchFiredRef.current = key;
+    scBalanceFiredRef.current = null;
+    searchUserMutation.reset();
+    balanceMutation.reset();
+    searchUserMutation.mutate();
+  }, [open, scIdentity]);
+
+  useEffect(() => {
+    if (!scIdentity || !searchUserMutation.data) return;
+    const userExists =
+      searchUserMutation.data.userExists === true ||
+      String(searchUserMutation.data.state || "").toUpperCase() === "ACTIVATED";
+    if (!userExists) {
+      setSuperCoinState((s) => ({ ...s, balance: 0, eligible: false }));
+      return;
+    }
+    if (scBalanceFiredRef.current === scIdentity.identifier) return;
+    scBalanceFiredRef.current = scIdentity.identifier;
+    balanceMutation.mutate();
+  }, [scIdentity, searchUserMutation.data]);
+
+  useEffect(() => {
+    if (!balanceMutation.data) return;
+    const balance = extractSuperCoinBalance(balanceMutation.data);
+    setSuperCoinState((s) => ({ ...s, balance, eligible: balance > 0 }));
+  }, [balanceMutation.data]);
 
   useEffect(() => {
     if (!brand) return;
@@ -210,9 +248,21 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       });
 
       if (burnResult?.success === false) {
+        const code = burnResult.errorCode;
+        let description = burnResult.message || burnResult.error || "SuperCoin conversion was not successful. Please try again.";
+
+        if (code === "VOUCHER_CONVERSION_FAILED") {
+          description = "Voucher conversion failed. Your coins have been refunded.";
+          setSuperCoinAuthorized(false);
+          setSuperCoinHoldContext(null);
+          superCoinHoldContextRef.current = null;
+        } else if (code === "COIN_REDEEM_FAILED") {
+          description = "SuperCoin redemption failed. Please try again.";
+        }
+
         toast({
           title: "Conversion failed",
-          description: burnResult?.message || burnResult?.error || "SuperCoin conversion was not successful. Please try again.",
+          description,
           variant: "destructive",
         });
         return;
@@ -222,9 +272,10 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       setBurnSuccess(true);
     } catch (err: any) {
       console.error("SuperCoin burn failed", err);
+      const is500 = err?.response?.status === 500 || err?.status === 500;
       toast({
         title: "Conversion failed",
-        description: err?.message || "Failed to complete SuperCoin conversion. Please try again.",
+        description: is500 ? "Voucher conversion failed. Coins refunded." : err?.message || "Failed to complete SuperCoin conversion. Please try again.",
         variant: "destructive",
       });
     }
@@ -440,13 +491,6 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </div>
                     </div>
                   </div>
-                  <div className="absolute right-0 top-0 flex h-[30px] items-center rounded-bl-[20px] rounded-tl-[20px] bg-[linear-gradient(129.26deg,#9747FF_20.69%,#5B2B99_72.49%)] px-[10px] text-white">
-                    <div className="text-center text-[8px] font-normal leading-[12px]">
-                      Cashback
-                      <br />
-                      <span className="font-semibold">{`${discountPercent}%`}</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Amount selection */}
@@ -562,22 +606,6 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                     </div>
                   </div>
                 </div>
-
-                {/* SuperCoin Status Card */}
-                {superCoinIdentity && (
-                  <div className="mt-3">
-                    <SuperCoinStatusCard
-                      mobile={user?.mobile}
-                      enabled={superCoinAuthorized}
-                      maxRedeemable={superCoinsRequired}
-                      hideToggle
-                      coinsOnHold={superCoinAuthorized && superCoinHoldContext ? (superCoinHoldContext.amount ?? 0) : 0}
-                      onStateChange={({ eligible, balance }) =>
-                        setSuperCoinState({ enabled: false, eligible, balance })
-                      }
-                    />
-                  </div>
-                )}
 
                 {/* SuperCoin burn info + CTA */}
                 {superCoinIdentity && !superCoinAuthorized && (

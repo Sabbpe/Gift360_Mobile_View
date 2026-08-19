@@ -144,6 +144,7 @@ export interface SuperCoinBurnOrderResponse {
   coinsRedeemed?: number;
   message?: string;
   error?: string;
+  errorCode?: string;
   [key: string]: unknown;
 }
 
