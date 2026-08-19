@@ -173,6 +173,56 @@ const mapVoucherOrder = (order: any) => {
   };
 };
 
+/**
+ * Computes a cart item's cashback contribution — mirrors
+ * GiftcardOrderService.validateAndRecomputeItems exactly:
+ *   itemCashback = round(lineTotal * pct / 100, 4 decimals, HALF_UP)
+ *
+ * Done with exact integer arithmetic rather than float math, because a
+ * float-based rounding step (even one that goes through toFixed/string
+ * conversion) can't actually escape IEEE-754 double representation error —
+ * e.g. the literal 1.005 is truly stored as 1.00499999999999989..., so
+ * *any* path that re-parses it back into a JS number will round it down,
+ * regardless of how many decimal places you print along the way. Working
+ * entirely in integers (paise, basis points) sidesteps that class of bug
+ * rather than trying to detect and correct for it after the fact.
+ *
+ * Assumes lineTotal and pct each have at most 2 decimal digits, which
+ * matches how currency amounts and configured cashback % are actually
+ * stored — if a brand's discount is ever configured with 3+ decimal
+ * digits (e.g. "6.125"), this rounds pct to 2dp first, same as the
+ * precision the rest of this checkout flow already treats % at.
+ * Returns the item's cashback value in scale-4 integer units (i.e.
+ * divide by 10000 to get rupees).
+ */
+function itemCashbackScale4(lineTotal: number, pct: number): number {
+  const lineTotalPaise = Math.round(lineTotal * 100);
+  const pctBasis = Math.round(pct * 100);
+  const product = lineTotalPaise * pctBasis; // exact integer
+  const q = Math.floor(product / 100);
+  const r = product % 100;
+  return r * 2 >= 100 ? q + 1 : q; // HALF_UP tie-break, exact
+}
+
+/**
+ * Mirrors GiftcardOrderService.validateWalletAmount's final step:
+ *   maxWalletAllowed = min(round(cashbackValue * redeemPercent / 100, 2, HALF_UP), maxRedeemAmount)
+ * cashbackValueScale4 is the sum of itemCashbackScale4(...) across the
+ * cart. Returns the cap in whole paise (divide by 100 for rupees).
+ */
+function walletCapPaise(
+  cashbackValueScale4: number,
+  redeemPercent: number,
+  maxRedeemAmount: number
+): number {
+  const product = cashbackValueScale4 * redeemPercent; // exact integer
+  const q = Math.floor(product / 10000);
+  const r = product % 10000;
+  const percentOfCashbackPaise = r * 2 >= 10000 ? q + 1 : q; // HALF_UP, exact
+  const maxRedeemPaise = Math.round(maxRedeemAmount * 100);
+  return Math.min(percentOfCashbackPaise, maxRedeemPaise);
+}
+
 export default function Cart() {
   const { user, isAuthenticated } = useAuthContext();
   const guestCartCount = !isAuthenticated ? getGuestCartCount() : 0;
@@ -996,9 +1046,14 @@ export default function Cart() {
   // and SuperCoin below, just expressed as an absolute value instead of a
   // weighted-average %, and computed independently of wallet/coupon
   // deductions so there's no circular dependency.
-  const cartCashbackValue = cartItems.reduce((sum, item) => {
+  //
+  // Rounding matches GiftcardOrderService.validateAndRecomputeItems exactly:
+  // each item's cashback contribution is rounded to 4 decimals (HALF_UP)
+  // via exact integer arithmetic before summing, same as the backend's
+  // per-line BigDecimal step — not an approximation of it.
+  const cartCashbackValueScale4 = cartItems.reduce((sum, item) => {
     const pct = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
-    return sum + item.lineTotal * (pct / 100);
+    return sum + itemCashbackScale4(item.lineTotal, pct);
   }, 0);
 
   // Backend-driven redemption rule: 50% of the cart's cashback value,
@@ -1007,10 +1062,12 @@ export default function Cart() {
   // until the wallet response arrives, matching the backend's own defaults.
   const cashbackRedeemPercent = walletData?.cashbackRedeemPercent ?? 50;
   const maxRedeemAmount = walletData?.maxRedeemAmount ?? 100;
-  const maxWalletUsage = Math.min(
-    cartCashbackValue * (cashbackRedeemPercent / 100),
-    maxRedeemAmount
-  );
+  // Exact-integer final rounding to 2 decimals (HALF_UP), matching
+  // GiftcardOrderService.validateWalletAmount's percentOfCashbackValue step,
+  // so this number is byte-identical to what the backend will independently
+  // compute and check against.
+  const maxWalletUsage =
+    walletCapPaise(cartCashbackValueScale4, cashbackRedeemPercent, maxRedeemAmount) / 100;
 
   const walletDeduction = useWalletBalance
     ? Math.min(walletBalance, maxWalletUsage)
