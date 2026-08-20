@@ -3,7 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Sparkles, Calendar, CreditCard, Lock, Gift, Send,
-  Zap, ShieldCheck, MessageSquare, User, ChevronUp,
+  Zap, ShieldCheck, MessageSquare, User, ChevronUp, Copy, Check,
 } from "lucide-react";
 import { ScratchGate } from "@/components/ScratchGate";
 import { useGifting } from "@/hooks/useGifting";
@@ -51,6 +51,14 @@ export function ScratchCard({
   const [isDrawing, setIsDrawing] = useState(false);
   const [showGate, setShowGate] = useState(false);
   const [voucherState, setVoucherState] = useState<VoucherState>(initialState);
+  const [copiedField, setCopiedField] = useState<"number" | "pin" | null>(null);
+
+  const handleCopy = (text: string, field: "number" | "pin") => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 1500);
+    });
+  };
 
   useEffect(() => {
     setVoucherState(initialState);
@@ -151,14 +159,34 @@ export function ScratchCard({
             </p>
           </div>
 
-          <div className="flex gap-2 shrink-0">
-            <div className="flex-1 min-w-0 bg-[#1A3052] rounded-lg px-2 py-1.5">
-              <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">Card Number</p>
-              <p className="text-white font-bold text-[9px] tracking-tighter leading-tight break-all">{cardNumber}</p>
+          <div className="flex flex-col gap-1.5 shrink-0">
+            <div className="w-full bg-[#1A3052] rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">Card Number</p>
+                <p className="text-white font-bold text-[9px] tracking-tighter leading-tight break-all">{cardNumber}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleCopy(cardNumber, "number"); }}
+                className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors"
+              >
+                {copiedField === "number"
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Copy className="h-3 w-3 text-amber-300/70" />}
+              </button>
             </div>
-            <div className="flex-1 min-w-0 bg-[#1A3052] rounded-lg px-2 py-1.5">
-              <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">PIN</p>
-              <p className="text-white font-bold text-[10px] tracking-tight truncate">{cardPin}</p>
+            <div className="w-full bg-[#1A3052] rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+              <div className="min-w-0 flex-1">
+                <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">PIN</p>
+                <p className="text-white font-bold text-[10px] tracking-tight">{cardPin}</p>
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleCopy(cardPin, "pin"); }}
+                className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors"
+              >
+                {copiedField === "pin"
+                  ? <Check className="h-3 w-3 text-emerald-400" />
+                  : <Copy className="h-3 w-3 text-amber-300/70" />}
+              </button>
             </div>
           </div>
 
@@ -258,18 +286,34 @@ export function ScratchCard({
               <div className="flex-1 space-y-3">
                 <div>
                   <p className="text-[#EBBB64] font-bold text-xs mb-1">Card Number</p>
-                  <div className="bg-[#1A3052] rounded-[20px] px-4 py-2">
-                    <p className="text-white font-bold text-xs tracking-wide">
+                  <div className="bg-[#1A3052] rounded-[20px] px-4 py-2 flex items-center justify-between gap-2">
+                    <p className="text-white font-bold text-xs tracking-wide min-w-0 break-all">
                       {cardNumber}
                     </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCopy(cardNumber, "number"); }}
+                      className="shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                      {copiedField === "number"
+                        ? <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        : <Copy className="h-3.5 w-3.5 text-amber-300/70" />}
+                    </button>
                   </div>
                 </div>
                 <div>
                   <p className="text-[#EBBB64] font-bold text-xs mb-1">Card PIN</p>
-                  <div className="bg-[#1A3052] rounded-[20px] px-4 py-2">
+                  <div className="bg-[#1A3052] rounded-[20px] px-4 py-2 flex items-center justify-between gap-2">
                     <p className="text-white font-bold text-xs tracking-widest">
                       {cardPin}
                     </p>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); handleCopy(cardPin, "pin"); }}
+                      className="shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
+                    >
+                      {copiedField === "pin"
+                        ? <Check className="h-3.5 w-3.5 text-emerald-400" />
+                        : <Copy className="h-3.5 w-3.5 text-amber-300/70" />}
+                    </button>
                   </div>
                 </div>
               </div>
