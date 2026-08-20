@@ -13,7 +13,9 @@ import {
   Tag, ShoppingBag, Clock, CheckCircle, XCircle, RefreshCw,
   ChevronDown, ChevronUp, BookOpen, CheckCircle2, Calendar,
   CreditCard, Lock, AlertTriangle, Loader2, RotateCcw, ArrowLeft,
+  Coins,
 } from "lucide-react";
+import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -350,6 +352,97 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   );
 }
 
+// ── SuperCoin Voucher Card ───────────────────────────────────────────────────
+function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
+  order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
+}) {
+  const [showSheet, setShowSheet] = useState(false);
+  const item = order.items?.[0];
+  const meta = item?.meta || {};
+  const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
+  const imageUrl = getImageUrl(meta);
+  const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
+  const vouchers = extractVouchers(order);
+  const coinsRedeemed = Number(order?.pricing?.coins_redeemed ?? 0);
+  const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
+
+  return (
+    <>
+       <div
+         className="bg-white overflow-hidden w-full"
+         style={{
+           borderRadius: 12,
+           boxShadow: "0px 4px 16px -6px rgba(0, 0, 0, 0.12)",
+         }}
+       >
+        <div className="p-2 flex flex-col items-center text-center">
+          <div className="w-[64px] h-[64px] flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2">
+            <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
+              onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+          </div>
+          <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
+          {coinsRedeemed > 0 && (
+            <p className="font-bold text-[12px] text-[#7C3AED] mt-0.5 flex items-center gap-1">
+              {coinsRedeemed} <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
+            </p>
+          )}
+          <button
+            onClick={() => setShowSheet(true)}
+            className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+            style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
+          >
+            Redeem
+          </button>
+          {dateStr && (
+            <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+          )}
+        </div>
+      </div>
+      <button
+        onClick={onToggle}
+        className="w-full text-center text-[10px] font-medium py-1.5 flex items-center justify-center gap-1"
+        style={{ color: "#7b5cff" }}
+      >
+        {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {expanded ? "Hide" : "View Vouchers"}
+      </button>
+
+      {expanded && (
+        <div className="px-2 pb-3">
+          {vouchers.length === 0 ? (
+            <p className="text-xs text-center py-4" style={{ color: "#888888" }}>Voucher details are being processed</p>
+          ) : (
+            <div className="flex flex-wrap gap-2">
+              {vouchers.map((v, i) => (
+                <div key={v.key} className="w-[172px]">
+                  <ScratchCard cardNumber={v.cardNumber} cardPin={v.cardPin}
+                    expiryDate={v.expiryDate} amount={v.amount} index={i}
+                    brandName={v.brandName}
+                    orderItemId={v.orderItemId}
+                    itemId={v.itemId}
+                    orderNumber={order.order_number}
+                    clientId={clientId}
+                    initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
+                    compact />
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {showSheet && (
+        <RedeemSheet
+          vouchers={vouchers}
+          brandName={brandName}
+          redeemSteps={redeemSteps}
+          onClose={() => setShowSheet(false)}
+          onConfirmed={() => { onRedeemed(order, vouchers); setShowSheet(false); }} />
+      )}
+    </>
+  );
+}
+
 // ── Pending Card ──────────────────────────────────────────────────────────────
 function PendingCard({ order }: { order: any }) {
   const item = order.items?.[0];
@@ -458,6 +551,37 @@ function RedeemedCard({ item }: { item: any }) {
   );
 }
 
+// ── Redeemed voucher card ──────────────────────────────────────────────────────
+function RedeemedVoucherCard({ entry, expanded, onToggle }: {
+  entry: any; expanded: boolean; onToggle: () => void;
+}) {
+  const meta = entry.vouchers?.[0]?.vd_raw_response;
+  return (
+    <div className={`g-card overflow-hidden cursor-pointer transition-all duration-300 ${expanded ? "col-span-3" : ""}`}
+      onClick={onToggle}>
+      <div className="relative overflow-hidden">
+        <div className="h-28 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center p-3">
+          <img src={entry.image || FALLBACK} alt={entry.brandName}
+            className="max-h-full max-w-full object-contain drop-shadow-md"
+            onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+        </div>
+        <div className="absolute top-2 right-2">
+          <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
+            <CheckCircle size={10} /> Redeemed
+          </span>
+        </div>
+      </div>
+      <div className="px-3 py-3">
+        <p className="text-xs font-extrabold truncate" style={{ color: "#1a1a1a" }}>{entry.brandName}</p>
+        <p className="text-[11px] font-semibold" style={{ color: "#7b5cff" }}>₹{entry.amount}</p>
+        <p className="text-[10px] font-medium mt-1" style={{ color: "#888888" }}>
+          Redeemed {entry.redeemedAt ? format(new Date(entry.redeemedAt), "dd MMM") : ""}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 function EmptyState({ icon: Icon, title, subtitle, action }: {
   icon: any; title: string; subtitle: string; action?: React.ReactNode;
@@ -476,13 +600,16 @@ function EmptyState({ icon: Icon, title, subtitle, action }: {
 }
 
 // ── Main ──────────────────────────────────────────────────────────────────────
-type Tab = "vouchers" | "pending" | "redeemed";
+type OrderTab = "vouchers" | "pending" | "redeemed";
+type VoucherSubTab = "cash" | "supercoin";
 
 export default function Orders() {
   const { user, isAuthenticated } = useAuthContext();
   const [, setLocation] = useLocation();
-  const [tab, setTab] = useState<Tab>("vouchers");
-  const [orders, setOrders] = useState<any[]>([]);
+  const [orderTab, setOrderTab] = useState<OrderTab>("vouchers");
+  const [voucherSubTab, setVoucherSubTab] = useState<VoucherSubTab>("cash");
+  const [cashOrders, setCashOrders] = useState<any[]>([]);
+  const [superCoinOrders, setSuperCoinOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -492,15 +619,17 @@ export default function Orders() {
   });
 
   const fetchOrders = useCallback(async () => {
-    if (!user?.clientId) { setOrders([]); return; }
+    if (!user?.clientId) { setCashOrders([]); setSuperCoinOrders([]); return; }
     setLoading(true); setError(false);
     try {
-      const res = await brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12 });
-      const raw = Array.isArray(res?.data?.orders) ? res.data.orders : [];
-      setOrders(raw.map(mapOrder).sort((a: any, b: any) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      ));
-    } catch { setError(true); setOrders([]); }
+      const [cashRes, scRes] = await Promise.all([
+        brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12, type: "NORMAL" }),
+        brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12, type: "SUPERCOIN" }),
+      ]);
+      const sortFn = (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+      setCashOrders((Array.isArray(cashRes?.data?.orders) ? cashRes.data.orders : []).map(mapOrder).sort(sortFn));
+      setSuperCoinOrders((Array.isArray(scRes?.data?.orders) ? scRes.data.orders : []).map(mapOrder).sort(sortFn));
+    } catch { setError(true); setCashOrders([]); setSuperCoinOrders([]); }
     finally { setLoading(false); }
   }, [user?.clientId]);
 
@@ -508,15 +637,15 @@ export default function Orders() {
 
   // Check if we just came from payment — auto-expand latest paid order
   useEffect(() => {
-    if (!orders.length) return;
+    const allOrders = [...cashOrders, ...superCoinOrders];
+    if (!allOrders.length) return;
     const justPaid = sessionStorage.getItem('justReturnedFromPayment');
     if (justPaid) {
       sessionStorage.removeItem('justReturnedFromPayment');
-      setTab("vouchers");
-      const latest = orders.find(o => o.status?.toUpperCase() === "PAID");
+      const latest = allOrders.find(o => o.status?.toUpperCase() === "PAID");
       if (latest) setExpandedId(latest.order_id || latest.order_number);
     }
-  }, [orders]);
+  }, [cashOrders, superCoinOrders]);
 
   const redeemedIds = new Set(redeemed.map((r: any) => r.id || r.orderNumber));
 
@@ -538,20 +667,32 @@ export default function Orders() {
     setSuccessOrder(entry);
   };
 
-  // Split orders into buckets
-  const paidOrders = orders.filter(o =>
+  // Split current tab's orders into buckets
+  const allOrders = [...cashOrders, ...superCoinOrders];
+  const paidOrders = allOrders.filter(o =>
     o.status?.toUpperCase() === "PAID" &&
     !redeemedIds.has(o.order_id) &&
     !redeemedIds.has(o.order_number)
   );
-  const pendingOrders = orders.filter(o =>
+  const pendingOrders = allOrders.filter(o =>
     ["PENDING", "FAILED", "CANCELLED", "TAMPERED"].includes(o.status?.toUpperCase())
   );
 
-  const tabs: { id: Tab; label: string; Icon: any; count?: number }[] = [
-    { id: "vouchers", label: "Vouchers", Icon: Tag, count: paidOrders.length },
+  const vouchersPaidOrders = orderTab === "vouchers"
+    ? (voucherSubTab === "cash" ? cashOrders : superCoinOrders).filter(o =>
+        o.status?.toUpperCase() === "PAID" &&
+        !redeemedIds.has(o.order_id) &&
+        !redeemedIds.has(o.order_number)
+      )
+    : [];
+
+  const cashPaidCount = cashOrders.filter(o => o.status?.toUpperCase() === "PAID" && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
+  const scPaidCount = superCoinOrders.filter(o => o.status?.toUpperCase() === "PAID" && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
+
+  const orderTabs: { id: OrderTab; label: string; Icon: any }[] = [
+    { id: "vouchers", label: "Vouchers", Icon: Tag },
     { id: "pending", label: "Pending", Icon: Clock },
-    { id: "redeemed", label: "Redeemed", Icon: CheckCircle2 },
+    { id: "redeemed", label: "Redeemed", Icon: CheckCircle },
   ];
 
   if (!isAuthenticated) {
@@ -603,22 +744,22 @@ export default function Orders() {
               <h1 style={{ fontSize: "20px", fontWeight: "800", color: "#1a1a1a" }}>My Vouchers</h1>
             </div>
             {/* 3 equal tabs - pill style */}
-            <div className="flex rounded-full bg-white p-1 mx-4" style={{ border: "1px solid #F0F0F0" }}>
-              {tabs.map(({ id, label, Icon, count }) => (
+            <div className="flex rounded-full bg-white p-1 mx-2" style={{ border: "1px solid #F0F0F0" }}>
+              {orderTabs.map(({ id, label, Icon }) => (
                 <button
                   key={id}
-                  onClick={() => setTab(id)}
+                  onClick={() => setOrderTab(id)}
                   className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-full font-semibold text-[11px] transition-all ${
-                    tab === id ? "text-white shadow-sm" : "text-[#6B7280]"
+                    orderTab === id ? "text-white shadow-sm" : "text-[#6B7280]"
                   }`}
                   style={
-                    tab === id
+                    orderTab === id
                       ? { background: "linear-gradient(90deg, #7B61FF, #5B3FFF)" }
                       : { background: "transparent" }
                   }
                 >
                   <Icon className="w-4 h-4" />
-                  <span>{(count ?? 0) > 0 ? `${count} ` : ""}{label}</span>
+                  <span>{label}</span>
                 </button>
               ))}
             </div>
@@ -627,53 +768,133 @@ export default function Orders() {
 
         {/* Content */}
         <div className="max-w-3xl mx-auto px-2 sm:px-6 py-6">
-          {loading ? (
+          {loading && (
             <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 g-skeleton rounded-3xl" />)}</div>
-          ) : error ? (
+          )}
+          {!loading && error && (
             <div className="text-center py-16">
               <XCircle className="h-12 w-12 mx-auto text-red-400 mb-3" />
               <p className="font-bold mb-1">Failed to load</p>
               <p className="text-sm mb-4" style={{ color: "#888888" }}>Could not fetch your orders</p>
               <Button onClick={fetchOrders} className="rounded-2xl font-bold">Retry</Button>
             </div>
-          ) : tab === "vouchers" ? (
-            paidOrders.length === 0 ? (
-              <EmptyState icon={Tag} title="No Vouchers Yet"
-                subtitle="Your purchased vouchers will appear here after payment"
-                action={<Link href="/brands"><Button className="rounded-2xl h-12 px-8 font-bold shadow-g-primary">Browse Brands</Button></Link>} />
-            ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {paidOrders.map(order => {
-                  const id = order.order_id || order.order_number;
+          )}
+
+          {/* ── Vouchers Tab ── */}
+          {!loading && !error && orderTab === "vouchers" && (
+            <>
+              {/* Sub-tabs: Cash / SuperCoin */}
+              <div className="flex gap-2 mb-4">
+                {(["cash", "supercoin"] as VoucherSubTab[]).map(sub => {
+                  const subCount = sub === "cash" ? cashPaidCount : scPaidCount;
                   return (
-                    <div key={id} className={`flex flex-col ${expandedId === id ? "col-span-3" : ""}`}>
-                      <VoucherCard order={order}
-                        expanded={expandedId === id}
-                        onToggle={() => setExpandedId(prev => prev === id ? null : id)}
-                        onRedeemed={handleRedeemed}
-                        clientId={user?.clientId ?? ""} />
-                    </div>
+                    <button
+                      key={sub}
+                      onClick={() => setVoucherSubTab(sub)}
+                      className={`flex items-center gap-1.5 h-9 px-4 rounded-full text-[11px] font-semibold transition-all ${
+                        voucherSubTab === sub ? "text-white shadow-sm" : "text-[#6B7280] bg-white"
+                      }`}
+                      style={
+                        voucherSubTab === sub
+                          ? { background: "linear-gradient(90deg, #7B61FF, #5B3FFF)" }
+                          : { border: "1px solid #F0F0F0" }
+                      }
+                    >
+                      {sub === "cash" ? <CreditCard className="w-3.5 h-3.5" /> : <img src={superCoinIcon} alt="" className="w-4 h-4" />}
+                      <span>{sub === "cash" ? "Cash Orders" : "SuperCoins Orders"}</span>
+                      {subCount > 0 && (
+                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-white/20 text-[10px] px-1">
+                          {subCount}
+                        </span>
+                      )}
+                    </button>
                   );
                 })}
               </div>
-            )
-          ) : tab === "pending" ? (
-            pendingOrders.length === 0 ? (
-              <EmptyState icon={Clock} title="No Pending Orders" subtitle="All your orders have been processed" />
-            ) : (
-              <div className="space-y-4">
-                {pendingOrders.map(order => <PendingCard key={order.order_id || order.order_number} order={order} />)}
-              </div>
-            )
-          ) : (
-            redeemed.length === 0 ? (
-              <EmptyState icon={CheckCircle2} title="No Redeemed Vouchers"
-                subtitle="Vouchers you've used at merchants will appear here after balance confirmation" />
-            ) : (
-              <div className="space-y-4">
-                {redeemed.map((item: any) => <RedeemedCard key={item.id} item={item} />)}
-              </div>
-            )
+
+              {vouchersPaidOrders.length === 0 ? (
+                <EmptyState icon={Tag} title="No Vouchers Yet"
+                  subtitle="Your purchased vouchers will appear here after payment"
+                  action={<Link href="/brands"><Button className="rounded-2xl h-12 px-8 font-bold shadow-g-primary">Browse Brands</Button></Link>} />
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {vouchersPaidOrders.map(order => {
+                    const id = order.order_id || order.order_number;
+                    return (
+                      <div key={id} className={`flex flex-col ${expandedId === id ? "col-span-3" : ""}`}>
+                        {voucherSubTab === "supercoin" ? (
+                          <SuperCoinVoucherCard order={order}
+                            expanded={expandedId === id}
+                            onToggle={() => setExpandedId(prev => prev === id ? null : id)}
+                            onRedeemed={handleRedeemed}
+                            clientId={user?.clientId ?? ""} />
+                        ) : (
+                          <VoucherCard order={order}
+                            expanded={expandedId === id}
+                            onToggle={() => setExpandedId(prev => prev === id ? null : id)}
+                            onRedeemed={handleRedeemed}
+                            clientId={user?.clientId ?? ""} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Pending Tab ── */}
+          {!loading && !error && orderTab === "pending" && (
+            <>
+              {pendingOrders.length === 0 ? (
+                <EmptyState icon={Clock} title="No Pending Orders"
+                  subtitle="Orders waiting for payment confirmation will appear here" />
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {pendingOrders.map(order => {
+                    const id = order.order_id || order.order_number;
+                    const isSuperCoin = superCoinOrders.some(o => (o.order_id || o.order_number) === id);
+                    return (
+                      <div key={id} className={`flex flex-col ${expandedId === id ? "col-span-3" : ""}`}>
+                        {isSuperCoin ? (
+                          <SuperCoinVoucherCard order={order}
+                            expanded={expandedId === id}
+                            onToggle={() => setExpandedId(prev => prev === id ? null : id)}
+                            onRedeemed={handleRedeemed}
+                            clientId={user?.clientId ?? ""} />
+                        ) : (
+                          <VoucherCard order={order}
+                            expanded={expandedId === id}
+                            onToggle={() => setExpandedId(prev => prev === id ? null : id)}
+                            onRedeemed={handleRedeemed}
+                            clientId={user?.clientId ?? ""} />
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {/* ── Redeemed Tab ── */}
+          {!loading && !error && orderTab === "redeemed" && (
+            <>
+              {redeemed.length === 0 ? (
+                <EmptyState icon={CheckCircle} title="No Redeemed Vouchers"
+                  subtitle="Vouchers you've redeemed will appear here" />
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {redeemed.map((entry: any) => (
+                    <div key={entry.id} className={`flex flex-col ${expandedId === entry.id ? "col-span-3" : ""}`}>
+                      <RedeemedVoucherCard entry={entry}
+                        expanded={expandedId === entry.id}
+                        onToggle={() => setExpandedId(prev => prev === entry.id ? null : entry.id)} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -722,7 +943,8 @@ export default function Orders() {
                   className="w-full h-12 rounded-2xl font-bold"
                   style={{ background: "linear-gradient(90deg, #7b5cff, #5a4bff)", color: "white", border: "none" }}
                   onClick={() => {
-                    setTab("redeemed");
+                    setOrderTab("vouchers");
+                    setVoucherSubTab("supercoin");
                     setExpandedId(null);
                     setSuccessOrder(null);
                   }}

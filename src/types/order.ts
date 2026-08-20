@@ -103,6 +103,14 @@ export interface GiftActionResponse {
   orderItemId:  string;
 }
 
+export interface OrderPricing {
+  subtotal: number;
+  coupon_discount: number;
+  wallet_amount: number;
+  coins_redeemed: number;
+  final_payable: number;
+}
+
 export interface Order {
   order_id: string;
   client_id: string;
@@ -113,6 +121,8 @@ export interface Order {
   created_at: string;
   paid_at: string | null;
   items: OrderItem[];
+  pricing?: OrderPricing;
+  type?: string;
 }
 
 export interface OrdersResponse {
