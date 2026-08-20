@@ -78,9 +78,11 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
   return (
     <section className="px-[21px] pt-[26px]">
       <div className="flex items-center justify-between">
-        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">
-          Rakhi Special Picks
-        </h2>
+        <div className="inline-block bg-white rounded-xl px-3 py-1">
+          <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">
+            Rakhi Special Picks
+          </h2>
+        </div>
         <span className="text-[10px] font-medium text-[#7C3AED] bg-[#F3F0FF] px-2 py-0.5 rounded-full">
           Live
         </span>

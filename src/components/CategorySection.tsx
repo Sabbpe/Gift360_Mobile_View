@@ -6,7 +6,9 @@ export default function CategorySection({ title, items, onBuy }: { title: string
   const limited = items.slice(0, 8);
   return (
     <section className="w-full">
-      <h3 className="text-xl font-bold text-gray-900 mb-3">{title}</h3>
+      <div className="inline-block bg-white rounded-xl px-3 py-1 mb-3">
+        <h3 className="text-base font-bold text-black">{title}</h3>
+      </div>
       <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
         {limited.map((b) => (
           <div key={b.BrandId} className="flex-none">

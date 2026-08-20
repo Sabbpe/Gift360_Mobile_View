@@ -46,7 +46,7 @@ export default function Categories() {
         >
           <ArrowLeft className="h-5 w-5" style={{ color: "#1a1a1a" }} />
         </button>
-        <h1 className="font-semibold text-lg absolute left-1/2 -translate-x-1/2">Categories</h1>
+        <h1 className="font-semibold text-sm absolute left-1/2 -translate-x-1/2">Categories</h1>
         <div className="w-10 h-10" />
       </header>
 

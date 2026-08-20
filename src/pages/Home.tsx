@@ -69,7 +69,21 @@ function HomeHeader({ onSuperCoinClick }: { onSuperCoinClick: () => void }) {
       <div className="flex items-center justify-between">
         <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi {firstName || "User"}!</h1>
         <div className="flex items-center gap-[14px]">
-          <SuperCoinHeaderIcon onClick={onSuperCoinClick} />
+          <div className="relative">
+            <SuperCoinHeaderIcon onClick={onSuperCoinClick} />
+            <span className="absolute -top-2.5 -right-3 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[6px] font-bold text-white shadow-md overflow-hidden"
+              style={{
+                background: "linear-gradient(90deg, #7C3AED, #EC4899, #3B82F6, #7C3AED)",
+                backgroundSize: "300% 100%",
+                animation: "new-feature-pulse 2s ease-in-out infinite, gradient-shift 3s ease-in-out infinite",
+              }}>
+              <span className="relative z-10">Try Now</span>
+              <span className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
+                <span className="absolute top-0 h-full w-[40%] -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                  style={{ animation: "shimmer-sweep 2.5s ease-in-out infinite" }} />
+              </span>
+            </span>
+          </div>
           <button onClick={() => setLocation("/notifications")} className="grid h-[20px] w-[20px] place-items-center active:scale-95" aria-label="Notifications">
             <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
           </button>
@@ -124,16 +138,45 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
   const [, setLocation] = useLocation();
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
-    { label: "Near by stores", Icon: Send, href: "/nearby" },
+    { label: "Near by stores", Icon: Send, href: "/nearby", isNew: true },
     { label: "Orders", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
   ];
 
   return (
     <section className="px-[21px] pt-[18px]">
+      <style>{`
+        @keyframes new-feature-pulse {
+          0%, 100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: 0 0 4px rgba(124,58,237,0.3); }
+          50% { opacity: 0.9; transform: scale(1.08) translateY(-1px); box-shadow: 0 0 14px rgba(124,58,237,0.7), 0 0 24px rgba(59,130,246,0.3); }
+        }
+        @keyframes gradient-shift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes shimmer-sweep {
+          0% { left: -100%; }
+          100% { left: 200%; }
+        }
+      `}</style>
       <div className="grid grid-cols-4 gap-[17px] pt-[18px]">
-        {actions.map(({ label, Icon, href, onClick }) => (
-          <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95">
+        {actions.map(({ label, Icon, href, onClick, isNew }) => (
+          <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
+            {isNew && (
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[6px] font-bold text-white shadow-md overflow-hidden"
+                style={{
+                  background: "linear-gradient(90deg, #7C3AED, #EC4899, #3B82F6, #7C3AED)",
+                  backgroundSize: "300% 100%",
+                  animation: "new-feature-pulse 2s ease-in-out infinite, gradient-shift 3s ease-in-out infinite",
+                }}>
+                <span className="relative z-10">Try Now</span>
+                <span className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
+                  <span className="absolute top-0 h-full w-[40%] -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    style={{ animation: "shimmer-sweep 2.5s ease-in-out infinite" }} />
+                </span>
+              </span>
+            )}
             <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
               <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
             </span>
@@ -293,7 +336,9 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
 
   return (
     <section className="pt-[27px]">
-      <h2 className="px-[21px] text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Rakhi Recommendations</h2>
+      <div className="inline-block bg-white rounded-xl px-3 py-1 ml-[21px]">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Rakhi Recommendations</h2>
+      </div>
       <div className="no-scrollbar mt-[11px] flex snap-x gap-3 overflow-x-auto scroll-smooth px-[21px] pb-[3px]">
         {recommended.map((brand) => {
           const imageSrc = getRecommendedBrandImage(brand);
@@ -422,7 +467,7 @@ function TopBrandsGrid({
         )}
         <div className="grid h-[40px] w-[40px] place-items-center">
           {loadingBrandId === brand.BrandId ? (
-            <Loader2 className="h-5 w-5 animate-spin text-[#7C3AED]" />
+            <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
           ) : image ? (
             <img
               src={image}
@@ -447,7 +492,9 @@ function TopBrandsGrid({
 
   return (
     <section className="px-[21px] pt-[26px]">
-      <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Top Brands</h2>
+      <div className="inline-block bg-white rounded-xl px-3 py-1">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Top Brands</h2>
+      </div>
       {isLoading ? (
         <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -529,7 +576,9 @@ function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
 
   return (
     <section className="px-[21px] pt-[27px]">
-      <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-[#101010]">Recently Used</h2>
+      <div className="inline-block bg-white rounded-xl px-3 py-1">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Recently Used</h2>
+      </div>
       <div className="no-scrollbar mt-[12px] flex snap-x gap-3 overflow-x-auto scroll-smooth">
         {items.map((item) => (
           <article key={item.name} className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
