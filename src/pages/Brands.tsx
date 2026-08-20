@@ -18,6 +18,7 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded, isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
+import homebackImg from "@/assets/homeback.jpeg";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -764,15 +765,14 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
 
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden">
-      {/* Aurora backdrop */}
-      <div className="absolute inset-0" style={{ background: '#F3F5F9' }}>
-        <div className="absolute inset-0 hero-grain opacity-30 pointer-events-none" />
-        <div className="absolute -top-32 -left-24 w-96 h-96 rounded-full bg-amber-500/8 blur-3xl" />
-        <div className="absolute top-1/3 -right-24 w-96 h-96 rounded-full bg-yellow-400/8 blur-3xl" />
-      </div>
+      {/* Home backdrop */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${homebackImg})` }}
+      />
       <FloatingCoins />
 
-      <div className="relative flex flex-col flex-1">
+      <div className="relative z-10 flex flex-col flex-1">
       <Header />
 
       <main className="flex-1">

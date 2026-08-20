@@ -28,6 +28,7 @@ import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
+import homebackImg from "@/assets/homeback.jpeg";
 import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
@@ -136,7 +137,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
             <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
               <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
             </span>
-            <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-medium leading-[9px] text-[#161616]">{label}</span>
+            <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-bold leading-[9px] text-[#161616]">{label}</span>
           </button>
         ))}
       </div>
@@ -680,11 +681,16 @@ function MobileHomeScreen() {
   return (
     <>
       <Header />
-      <main className="min-h-screen w-full overflow-x-hidden bg-[#F3F5F9] pb-[84px] font-body text-[#101010] md:hidden">
-      <div className="relative overflow-visible pb-[70px]">
-        <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
-        <BalanceCard />
-      </div>
+      <main className="min-h-screen w-full overflow-x-hidden pb-[84px] font-body text-[#101010] md:hidden relative">
+        <div
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${homebackImg})` }}
+        />
+        <div className="relative z-10">
+        <div className="relative overflow-visible pb-[70px]">
+          <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
+          <BalanceCard />
+        </div>
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard />
@@ -734,6 +740,7 @@ function MobileHomeScreen() {
       <FeedbackFloatingButton onClick={() => setFeedbackOpen(true)} />
       <FeedbackForm open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       <BottomNav />
+        </div>
       </main>
     </>
   );

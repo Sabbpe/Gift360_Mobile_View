@@ -18,6 +18,7 @@ import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
+import homebackImg from "@/assets/homeback.jpeg";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
@@ -1783,17 +1784,11 @@ export default function Cart() {
       <Header />
 
       <main className="relative flex-1 overflow-hidden">
-        {/* Aurora backdrop */}
+        {/* Home backdrop */}
         <div
-          className="absolute inset-0"
-          style={{ background: "linear-gradient(179.64deg, #9747FF -354.99%, #FFFFFF 99.68%)" }}
-        >
-          <div className="absolute -top-10 -left-10 w-72 h-72 rounded-full blur-3xl anim-aurora"
-            style={{ background: "radial-gradient(circle, hsla(280,90%,60%,0.55), transparent 70%)" }} />
-          <div className="absolute top-32 -right-16 w-80 h-80 rounded-full blur-3xl anim-aurora"
-            style={{ background: "radial-gradient(circle, hsla(220,90%,55%,0.5), transparent 70%)", animationDelay: "3s" }} />
-          <div className="absolute inset-0 hero-grain opacity-50 pointer-events-none" />
-        </div>
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${homebackImg})` }}
+        />
 
         <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 sm:pt-8 sm:pb-10">

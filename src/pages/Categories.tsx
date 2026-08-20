@@ -7,6 +7,7 @@ import CategorySection from '@/components/CategorySection';
 import Header from '@/components/Header';
 import PaymentDetailsSheet from '@/components/PaymentDetailsSheet';
 import MobileBottomNav from '@/components/MobileBottomNav';
+import homebackImg from "@/assets/homeback.jpeg";
 
 export default function Categories() {
   const [, setLocation] = useLocation();
@@ -29,7 +30,12 @@ export default function Categories() {
   return (
     <>
       <Header />
-      <main className="min-h-screen w-full pb-24" style={{ background: "#F3F5F9" }}>
+      <main className="min-h-screen w-full pb-24 relative">
+        <div
+          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${homebackImg})` }}
+        />
+        <div className="relative z-10">
       <header
         className="flex items-center justify-between px-4 py-3"
         style={{ background: "#FFFFFF", borderBottom: "1px solid #F0F0F0" }}
@@ -52,6 +58,7 @@ export default function Categories() {
 
       <PaymentDetailsSheet brandId={sheetBrandId} open={buySheetOpen} onClose={() => setBuySheetOpen(false)} />
       <MobileBottomNav />
+        </div>
       </main>
     </>
   );

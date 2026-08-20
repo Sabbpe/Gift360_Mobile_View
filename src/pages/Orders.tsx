@@ -16,6 +16,7 @@ import {
   Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import homebackImg from "@/assets/homeback.jpeg";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -718,9 +719,13 @@ export default function Orders() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: "#F3F5F9" }}>
+    <div className="min-h-screen flex flex-col relative">
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${homebackImg})` }}
+      />
       <Header />
-      <main className="flex-1 pb-24 md:pb-0 relative">
+      <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <FloatingCoins count={6} />
         {/* Aurora header */}
         <div className="relative py-4 px-4 sm:px-6 lg:px-10">
