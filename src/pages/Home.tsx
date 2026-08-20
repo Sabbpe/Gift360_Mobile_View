@@ -44,6 +44,7 @@ import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
+import { RAKHI_RECOMMENDATION_BRANDS } from "@/data/rakhiBrands";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { brandApi } from "@/lib/valuedesignApi";
@@ -320,19 +321,38 @@ function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => 
 }
 
 function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
-  const { data: brands = [] } = useBrands();
+  const { data: allBrands = [], isLoading } = useBrands();
   const [, setLocation] = useLocation();
 
-  const recommended = useMemo(
-    () =>
-      [...(brands as Brand[])]
-        .filter((b) => parseFloat(b.Discount || "0") > 0)
-        .sort(
-          (a, b) => parseFloat(b.Discount || "0") - parseFloat(a.Discount || "0")
-        )
-        .slice(0, 6),
-    [brands]
+  const rakhiBrandIds = useMemo(
+    () => new Set(RAKHI_RECOMMENDATION_BRANDS.map((b) => b.brandId)),
+    []
   );
+
+  const recommended = useMemo(() => {
+    const brands = Array.isArray(allBrands) ? allBrands : [];
+    return brands.filter((b: any) => {
+      const id = b.BrandId || b.brandId || b.id || b.brand_id;
+      return rakhiBrandIds.has(id);
+    });
+  }, [allBrands, rakhiBrandIds]);
+
+  if (isLoading) {
+    return (
+      <section className="pt-[27px]">
+        <div className="inline-block bg-white rounded-xl px-3 py-1 ml-[21px]">
+          <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Rakhi Recommendations</h2>
+        </div>
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto px-[21px] pb-[3px]">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="w-[120px] min-w-[120px] h-[80px] rounded-[8px] bg-white animate-pulse" />
+          ))}
+        </div>
+      </section>
+    );
+  }
+
+  if (!recommended.length) return null;
 
   return (
     <section className="pt-[27px]">
@@ -340,39 +360,39 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
         <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Rakhi Recommendations</h2>
       </div>
       <div className="no-scrollbar mt-[11px] flex snap-x gap-3 overflow-x-auto scroll-smooth px-[21px] pb-[3px]">
-        {recommended.map((brand) => {
-          const imageSrc = getRecommendedBrandImage(brand);
-          const priceValue = brand.MinPrice || brand.MaxPrice || 0;
+        {recommended.map((brand: any) => {
+          const brandId = brand.BrandId || brand.brandId || brand.id || brand.brand_id;
+          const brandName = brand.BrandName || brand.brandName || brand.brand_name || "";
+          const images = brand.Images || brand.images || brand.image || {};
+          const imageSrc = images?.mobile || images?.featured || images?.raw || images?.base || images?.small || "";
+          const priceValue = Number(brand.MinPrice || brand.minPrice || brand.MaxPrice || brand.maxPrice || 0);
 
           return (
             <article
-              key={brand.BrandId}
+              key={brandId}
               className="w-[120px] min-w-[120px] h-[80px] snap-start flex-shrink-0 rounded-[8px] bg-white"
               style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
             >
               <div className="flex items-start gap-2" style={{ height: 32 }}>
                 <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {imageSrc ? (
-                    <img src={imageSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+                    <img src={imageSrc} alt={brandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
                   ) : (
                     <div style={{ width: 34, height: 28 }} />
                   )}
                 </div>
-
                 <div className="min-w-0" style={{ flex: 1 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                    <span className="text-[12px] font-semibold text-[#111827] truncate">{brand.BrandName}</span>
+                    <span className="text-[12px] font-semibold text-[#111827] truncate">{brandName}</span>
                     <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `₹${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
                   </div>
                 </div>
               </div>
-
               <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
-
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div className="text-[12px] font-bold text-[#111827]">{priceValue > 0 ? `₹${priceValue.toLocaleString()}` : '-'}</div>
                 <button
-                  onClick={() => { if (onBuy) onBuy(brand.BrandId); else setLocation(`/brand/${brand.BrandId}`); }}
+                  onClick={() => { if (onBuy) onBuy(brandId); else setLocation(`/brand/${brandId}`); }}
                   style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}
                 >
                   Buy
