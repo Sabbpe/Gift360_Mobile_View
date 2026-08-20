@@ -318,9 +318,6 @@ export default function SuperCoinOTPModal({
                   />{" "}
                   <span className="font-bold">{coinAmount.toFixed(2)} coins</span>
                 </p>
-                <p className="text-muted-foreground">
-                  Save <span className="font-bold text-emerald-600">₹{coinAmount.toFixed(2)}</span> on this order
-                </p>
               </div>
 
               {error && (

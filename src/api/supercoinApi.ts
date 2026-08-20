@@ -142,6 +142,8 @@ export interface SuperCoinBurnOrderResponse {
   orderNumber?: string;
   status?: string;
   coinsRedeemed?: number;
+  coinsEarned?: number;
+  balance?: number;
   message?: string;
   error?: string;
   errorCode?: string;

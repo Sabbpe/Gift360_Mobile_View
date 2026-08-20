@@ -1390,6 +1390,7 @@ export default function Cart() {
         console.log("Redirecting to payment URL:", paymentUrl);
 
         paymentInFlightRef.current = true;
+        clearActiveSuperCoinHold();
         window.location.href = paymentUrl;
         clearCart();
       },
@@ -1604,6 +1605,7 @@ export default function Cart() {
         console.log("ðŸ”‘ Redirecting to payment URL:", paymentUrl);
 
         paymentInFlightRef.current = true;
+        clearActiveSuperCoinHold();
         window.location.href = paymentUrl;
         clearCart();
       },

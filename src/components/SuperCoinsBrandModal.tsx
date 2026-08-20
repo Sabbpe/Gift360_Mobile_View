@@ -3,6 +3,7 @@ import { useLocation } from "wouter";
 import { AlertCircle, ChevronLeft, Loader2, Check, Clock } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
+import { fetchOrderDetails } from "@/api/orderApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
@@ -21,6 +22,12 @@ type Props = {
 
 const FALLBACK = FALLBACK_IMAGE;
 export const SUPERCOIN_FEATURED_BRAND_ID = "e6f0e8e0-784a-4877-9c95-826d53cbdf84";
+export const SUPERCOIN_PIZZAHUT_BRAND_ID = "f0bcff25-e555-11f0-a1f2-4201c0a81e02";
+
+export const SUPERCOIN_BRANDS = [
+  { id: SUPERCOIN_FEATURED_BRAND_ID, label: "Flipkart B2B" },
+  { id: SUPERCOIN_PIZZAHUT_BRAND_ID, label: "Pizza Hut" },
+] as const;
 
 type ModalTab = "about" | "how" | "terms";
 
@@ -32,8 +39,9 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const [, setLocation] = useLocation();
   const { user } = useAuthContext();
   const { toast } = useToast();
-  const { data: brand, isLoading, isError, error } = useBrandDetails(brandId, {
-    enabled: open && !!brandId,
+  const [selectedBrandId, setSelectedBrandId] = useState(brandId);
+  const { data: brand, isLoading, isError, error } = useBrandDetails(selectedBrandId, {
+    enabled: open && !!selectedBrandId,
   });
   const createOrderMutation = useCreateOrder();
   const burnMutation = useBurnSuperCoinOrder();
@@ -52,6 +60,10 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const [superCoinHoldExpiryMs, setSuperCoinHoldExpiryMs] = useState<number | null>(null);
   const [transactionTime, setTransactionTime] = useState<string | null>(null);
   const [burnSuccess, setBurnSuccess] = useState(false);
+  const [burnError, setBurnError] = useState<{ title: string; description: string; balance?: number } | null>(null);
+  const [burnResultData, setBurnResultData] = useState<{ coinsRedeemed?: number; coinsEarned?: number; balance?: number } | null>(null);
+  const [orderDetailsCoinsEarned, setOrderDetailsCoinsEarned] = useState<number | null>(null);
+  const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
 
   const superCoinMerchantWalletId =
     import.meta.env.VITE_SUPERCOIN_MERCHANT_WALLET_ID?.trim() || "";
@@ -76,6 +88,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
 
   const totalVoucherValue = amount * quantity;
   const superCoinsRequired = calculateSuperCoinsRequired(totalVoucherValue);
+  const superCoinsEarned = Math.round(totalVoucherValue * 0.01 * 100) / 100;
   const hasEnoughCoins = canAffordVoucher(superCoinState.balance, totalVoucherValue);
 
   const calcCountdown = useCallback((txTime: string) => {
@@ -112,6 +125,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
 
   useEffect(() => {
     if (!open) return;
+    setSelectedBrandId(brandId);
     setActiveTab("about");
     setQuantity(1);
     setSuperCoinAuthorized(false);
@@ -250,33 +264,53 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       if (burnResult?.success === false) {
         const code = burnResult.errorCode;
         let description = burnResult.message || burnResult.error || "SuperCoin conversion was not successful. Please try again.";
+        let title = "Conversion failed";
 
         if (code === "VOUCHER_CONVERSION_FAILED") {
-          description = "Voucher conversion failed. Your coins have been refunded.";
+          title = "Voucher conversion failed";
+          description = "Your coins have been refunded.";
           setSuperCoinAuthorized(false);
           setSuperCoinHoldContext(null);
           superCoinHoldContextRef.current = null;
         } else if (code === "COIN_REDEEM_FAILED") {
-          description = "SuperCoin redemption failed. Please try again.";
+          title = "SuperCoin redemption failed";
+          description = "Please try again.";
         }
 
-        toast({
-          title: "Conversion failed",
-          description,
-          variant: "destructive",
-        });
+        setBurnError({ title, description, balance: burnResult.balance ?? extractSuperCoinBalance(balanceMutation.data) });
         return;
       }
 
       setSuperCoinOTPModalOpen(false);
       setBurnSuccess(true);
+
+      // Fetch order details for coinsEarned + coinsRedeemed, and fresh balance
+      setOrderDetailsLoading(true);
+      const balancePromise = scIdentity
+        ? balanceMutation.mutateAsync()
+        : Promise.resolve(null);
+      const orderPromise = fetchOrderDetails(orderNumber).catch(() => null);
+
+      Promise.all([balancePromise, orderPromise]).then(([balRes, details]) => {
+        const freshBalance = balRes ? extractSuperCoinBalance(balRes) : null;
+        const redeemed = details?.coinsRedeemed ?? burnResult?.coinsRedeemed ?? 0;
+        setOrderDetailsCoinsEarned(details?.coinsEarned ?? burnResult?.coinsEarned ?? superCoinsEarned);
+        setBurnResultData({
+          coinsRedeemed: redeemed,
+          coinsEarned: details?.coinsEarned ?? burnResult?.coinsEarned ?? superCoinsEarned,
+          balance: freshBalance,
+        });
+      }).finally(() => {
+        setOrderDetailsLoading(false);
+      });
     } catch (err: any) {
       console.error("SuperCoin burn failed", err);
       const is500 = err?.response?.status === 500 || err?.status === 500;
-      toast({
+      const fallbackBalance = extractSuperCoinBalance(balanceMutation.data);
+      setBurnError({
         title: "Conversion failed",
         description: is500 ? "Voucher conversion failed. Coins refunded." : err?.message || "Failed to complete SuperCoin conversion. Please try again.",
-        variant: "destructive",
+        balance: err?.response?.data?.balance ?? err?.data?.balance ?? fallbackBalance,
       });
     }
   }, [superCoinIdentity, orderNumber, user?.clientId, brand, totalVoucherValue, burnMutation, toast]);
@@ -285,6 +319,10 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
     onClose();
     setTimeout(() => {
       setBurnSuccess(false);
+      setBurnError(null);
+      setBurnResultData(null);
+      setOrderDetailsCoinsEarned(null);
+      setOrderDetailsLoading(false);
       setSuperCoinAuthorized(false);
       setSuperCoinHoldContext(null);
       superCoinHoldContextRef.current = null;
@@ -407,6 +445,37 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             </div>
           </div>
 
+          {/* Brand selector pills */}
+          <div className="relative z-10 flex shrink-0 gap-2 px-4 pb-3 -mt-1">
+            {SUPERCOIN_BRANDS.map((b) => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => {
+                  if (b.id === selectedBrandId) return;
+                  setSelectedBrandId(b.id);
+                  setSuperCoinAuthorized(false);
+                  setSuperCoinHoldContext(null);
+                  superCoinHoldContextRef.current = null;
+                  scSearchFiredRef.current = null;
+                  scBalanceFiredRef.current = null;
+                  setBurnSuccess(false);
+                  setBurnError(null);
+                  setBurnResultData(null);
+                  setOrderDetailsCoinsEarned(null);
+                  setOrderDetailsLoading(false);
+                }}
+                className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+                  selectedBrandId === b.id
+                    ? "bg-white text-[#7C3AED]"
+                    : "bg-white/20 text-white hover:bg-white/30"
+                }`}
+              >
+                {b.label}
+              </button>
+            ))}
+          </div>
+
           {/* Success state - rendered outside scroll container for proper centering */}
           {!isLoading && !isError && burnSuccess && (
             <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
@@ -417,9 +486,43 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
               <p className="mt-2 text-sm text-[#667085]">
                 Your {brand?.BrandName} voucher has been purchased.
               </p>
-              <p className="mt-1 text-xs text-[#667085]">
-                {superCoinsRequired} SuperCoins converted successfully.
-              </p>
+              {burnResultData && (
+                <div className="mt-3 w-full max-w-[320px] rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] p-3 text-left">
+                  <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
+                    <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                    <span>SuperCoin Reward</span>
+                  </div>
+                  {orderDetailsLoading ? (
+                    <p className="mt-1 text-sm text-[#7C3AED]">
+                      Fetching earned coins...
+                    </p>
+                  ) : orderDetailsCoinsEarned != null ? (
+                    <p className="mt-1 text-sm text-[#7C3AED]">
+                      You earned {orderDetailsCoinsEarned.toFixed(2)} SuperCoins for this order.
+                    </p>
+                  ) : (
+                    <p className="mt-1 text-sm text-[#7C3AED]">
+                      SuperCoins earned will appear here once the order is processed.
+                    </p>
+                  )}
+                </div>
+              )}
+              {burnResultData && (
+                <div className="mt-2 w-full max-w-[320px] space-y-1">
+                  {burnResultData.balance != null && (
+                    <p className="text-[13px] text-black font-bold flex items-center gap-1.5">
+                      <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                      Balance: {burnResultData.balance} coins
+                    </p>
+                  )}
+                  {burnResultData.coinsRedeemed != null && (
+                    <p className="text-[13px] text-black font-bold flex items-center gap-1.5">
+                      <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                      Redeemed: {burnResultData.coinsRedeemed} coins
+                    </p>
+                  )}
+                </div>
+              )}
               <div className="mt-6 flex w-full max-w-[320px] flex-col gap-3">
                 <button
                   onClick={handleGoToOrders}
@@ -437,8 +540,48 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             </div>
           )}
 
-          {/* Content - only show when not in success state */}
-          {!burnSuccess && (
+          {/* Burn error state */}
+          {!isLoading && !burnSuccess && burnError && (
+            <div className="flex flex-1 flex-col items-center justify-center px-6 text-center">
+              <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+                <AlertCircle className="h-8 w-8 text-red-500" strokeWidth={2.5} />
+              </div>
+              <h3 className="text-lg font-bold text-[#101828]">{burnError.title}</h3>
+              <p className="mt-2 text-sm text-[#667085]">
+                {burnError.description}
+              </p>
+              {burnError.balance != null && (
+                <div className="mt-3 w-full max-w-[320px] rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] p-3">
+                  <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
+                    <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                    <span>Your SuperCoins balance: <span className="font-semibold">{burnError.balance}</span></span>
+                  </div>
+                </div>
+              )}
+              <div className="mt-6 flex w-full max-w-[320px] flex-col gap-3">
+                <button
+                  onClick={() => {
+                    setBurnError(null);
+                    setSuperCoinAuthorized(false);
+                    setSuperCoinHoldContext(null);
+                    superCoinHoldContextRef.current = null;
+                  }}
+                  className="w-full h-11 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)]"
+                >
+                  Try Again
+                </button>
+                <button
+                  onClick={handleClose}
+                  className="w-full h-10 rounded-[10px] bg-[#F3F4F6] text-[12px] font-medium text-[#667085]"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Content - only show when not in success or error state */}
+          {!burnSuccess && !burnError && (
           <div className="sc-sheet-content">
             {/* Loading */}
             {isLoading && (
@@ -631,6 +774,15 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </p>
                     )}
 
+                    {superCoinsEarned > 0 && (
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="text-[11px] font-medium text-[#667085] flex items-center gap-1">
+                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                          Earn {superCoinsEarned.toFixed(2)} SuperCoins
+                        </span>
+                      </div>
+                    )}
+
                     <button
                       onClick={() => void openSuperCoinFlow()}
                       disabled={!hasEnoughCoins || createOrderMutation.isPending || burnMutation.isPending}
@@ -682,9 +834,12 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                         Hold expired. Please apply again.
                       </p>
                     )}
-                    <p className="mt-1 text-[11px] text-[#7C3AED] font-medium">
-                      Saving {formatCurrency(superCoinHoldContext.amount)} on this order
-                    </p>
+                    {superCoinsEarned > 0 && (
+                      <p className="mt-1 text-[11px] font-medium text-[#7C3AED] flex items-center gap-1">
+                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                        Earn {superCoinsEarned.toFixed(2)} SuperCoins
+                      </p>
+                    )}
                     <button
                       onClick={() => void handleBurnComplete(superCoinHoldContext)}
                       disabled={burnMutation.isPending || countdown.expired}
