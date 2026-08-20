@@ -40,6 +40,7 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
   const renderCard = (brand: MatchedBrand, index: number) => {
     const imageSrc = getImageUrl(brand) || null;
     const badge = formatPurchases(brand.cartMeta.recentPurchases);
+    const discountNum = Number(brand.Discount ?? brand.discount ?? 0);
 
     return (
       <button
@@ -47,6 +48,11 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
         onClick={() => onOpenBrand(brand.BrandId)}
         className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] relative"
       >
+        {discountNum > 0 && (
+          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+            {discountNum}%
+          </span>
+        )}
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
           <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
         )}

@@ -449,16 +449,13 @@ function TopBrandsGrid({
     };
   }, []);
 
-  const firstRowBrands = topBrands.filter((_, index) => index % 2 === 0);
-  const secondRowBrands = topBrands.filter((_, index) => index % 2 === 1);
+  const midPoint = Math.ceil(topBrands.length / 2);
+  const firstRowBrands = topBrands.slice(0, midPoint);
+  const secondRowBrands = topBrands.slice(midPoint);
   const topRowItems =
     firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
-  const bottomRowItemsSource =
-    secondRowBrands.length > 0 ? secondRowBrands : firstRowBrands;
   const bottomRowItems =
-    bottomRowItemsSource.length > 0
-      ? [...bottomRowItemsSource, ...bottomRowItemsSource]
-      : [];
+    secondRowBrands.length > 0 ? [...secondRowBrands, ...secondRowBrands] : [...firstRowBrands, ...firstRowBrands];
 
   const handleTopBrandBuy = async (brandId: string) => {
     try {
@@ -471,9 +468,7 @@ function TopBrandsGrid({
 
   const renderBrandCard = (brand: Brand, index: number) => {
     const image = getImageUrl(brand);
-    const meta = brand.Discount
-      ? `${brand.Discount}% Cashback`
-      : brand.Category || "Gift Voucher";
+    const discountNum = Number(brand.Discount ?? 0);
 
     return (
       <button
@@ -482,6 +477,11 @@ function TopBrandsGrid({
         disabled={loadingBrandId === brand.BrandId}
         className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
       >
+        {discountNum > 0 && (
+          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+            {discountNum}%
+          </span>
+        )}
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
           <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
         )}
@@ -503,7 +503,7 @@ function TopBrandsGrid({
             {brand.BrandName}
           </p>
           <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
-            {meta}
+            {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
           </p>
         </div>
       </button>
@@ -677,20 +677,37 @@ function MobileHomeScreen() {
 
   const recentlyBoughtBrands: MatchedBrand[] = useMemo(() => {
     const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const cartNormMap = new Map<string, CartBrandEntry>();
+    for (const entry of cartBrandNames) {
+      cartNormMap.set(normalize(entry.displayName), entry);
+    }
 
-    return cartBrandNames
-      .map((entry) => {
-        const cartNorm = normalize(entry.displayName);
-        const matched = topBrandsFromApi.find((b) => {
-          const brandNorm = normalize(b.BrandName);
-          return (
+    return topBrandsFromApi
+      .filter((b) => {
+        const brandNorm = normalize(b.BrandName);
+        for (const [cartNorm] of cartNormMap) {
+          if (
             brandNorm === cartNorm ||
             brandNorm.includes(cartNorm) ||
             cartNorm.includes(brandNorm)
-          );
-        });
-        if (!matched) return null;
-        return { ...matched, cartMeta: entry };
+          ) {
+            return true;
+          }
+        }
+        return false;
+      })
+      .map((b) => {
+        const brandNorm = normalize(b.BrandName);
+        for (const [cartNorm, entry] of cartNormMap) {
+          if (
+            brandNorm === cartNorm ||
+            brandNorm.includes(cartNorm) ||
+            cartNorm.includes(brandNorm)
+          ) {
+            return { ...b, cartMeta: entry };
+          }
+        }
+        return null;
       })
       .filter((b): b is MatchedBrand => b !== null)
       .slice(0, 10);

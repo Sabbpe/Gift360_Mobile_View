@@ -577,17 +577,27 @@ const sortedDisplayBrands = useMemo(() => {
     const brandId = resolveCanonicalBrandId(brand);
     const brandName = brand.brandName || brand.BrandName || "Brand";
     const imageUrl = getImageUrl(brand) || "/icons/ecommerce.png";
+    const rawDiscount = brand.Discount ?? brand.discount ?? brand.cashback;
+    const discountNum = Number(rawDiscount);
 
     return (
       <div
         key={`${brandId || brandName}-${index}`}
         className="brand-card"
+        style={{ position: "relative" }}
         onClick={() => {
           if (brandId) {
             void openVoucherModal(brandId, brandName);
           }
         }}
       >
+        {discountNum > 0 && (
+          <span
+            className="absolute -top-0.5 -left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none"
+          >
+            {discountNum}%
+          </span>
+        )}
         <div className="relative inline-block">
           <img src={imageUrl} alt={brandName} loading="lazy" className="brand-logo" onError={(e) => { const target = e.target as HTMLImageElement; if (!target.dataset.fallback) { target.dataset.fallback = "1"; target.src = `https://images.gift360.io/${brandId}.png`; } else { target.src = "/brand-placeholder.png"; } }} />
           {!isSuperCoinExcludedById(brandId) && !isSuperCoinExcluded(brandName) && (
