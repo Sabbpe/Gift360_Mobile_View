@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
+
+// Kill switch for SuperCoin conversion — flip to false to re-enable.
+// While true, both the header icon and the home action button show the
+// "stocked out" message instead of opening the conversion modal, and the
+// header icon is visually dimmed/frozen (see SuperCoinHeaderIcon usage below).
+const SUPERCOIN_CONVERSION_PAUSED = true;
+const SUPERCOIN_PAUSED_MESSAGE = "Oops we are stocked out!! We will be back shortly";
 import {
   Loader2,
   ChevronLeft,
@@ -71,7 +79,7 @@ function HomeHeader({ onSuperCoinClick }: { onSuperCoinClick: () => void }) {
         <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi {firstName || "User"}!</h1>
         <div className="flex items-center gap-[14px]">
           <div className="relative">
-            <SuperCoinHeaderIcon onClick={onSuperCoinClick} />
+            <SuperCoinHeaderIcon onClick={onSuperCoinClick} frozen={SUPERCOIN_CONVERSION_PAUSED} />
             <span className="absolute -top-2.5 -right-3 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[6px] font-bold text-white shadow-md overflow-hidden"
               style={{
                 background: "linear-gradient(90deg, #7C3AED, #EC4899, #3B82F6, #7C3AED)",
@@ -654,6 +662,7 @@ function BottomNav() {
 }
 
 function MobileHomeScreen() {
+  const { toast } = useToast();
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [buySheetOpen, setBuySheetOpen] = useState(false);
   const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
@@ -759,6 +768,13 @@ function MobileHomeScreen() {
   };
 
   const openSuperCoinsModal = () => {
+    if (SUPERCOIN_CONVERSION_PAUSED) {
+      toast({
+        title: SUPERCOIN_PAUSED_MESSAGE,
+        variant: "destructive",
+      });
+      return;
+    }
     setSuperCoinsModalOpen(true);
   };
 
