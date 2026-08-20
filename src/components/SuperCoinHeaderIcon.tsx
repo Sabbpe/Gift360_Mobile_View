@@ -10,22 +10,25 @@ function markCoachmarkSeen() { localStorage.setItem(COACHMARK_KEY, "true"); }
 
 interface SuperCoinHeaderIconProps {
   onClick: () => void;
+  frozen?: boolean;
 }
 
-export default function SuperCoinHeaderIcon({ onClick }: SuperCoinHeaderIconProps) {
+export default function SuperCoinHeaderIcon({ onClick, frozen = false }: SuperCoinHeaderIconProps) {
   const [expanded, setExpanded] = useState(false);
   const [spinning, setSpinning] = useState(false);
   const [showCoachmark, setShowCoachmark] = useState(false);
 
   useEffect(() => {
+    if (frozen) return;
     if (!hasSeenCoachmark()) {
       const t = setTimeout(() => { setShowCoachmark(true); markCoachmarkSeen(); }, 1200);
       const dismiss = setTimeout(() => setShowCoachmark(false), 5200);
       return () => { clearTimeout(t); clearTimeout(dismiss); };
     }
-  }, []);
+  }, [frozen]);
 
   useEffect(() => {
+    if (frozen) return;
     const expand = () => {
       setExpanded(true);
       setSpinning(true);
@@ -37,7 +40,7 @@ export default function SuperCoinHeaderIcon({ onClick }: SuperCoinHeaderIconProp
     const first = setTimeout(expand, 800);
 
     return () => { clearInterval(interval); clearTimeout(first); };
-  }, []);
+  }, [frozen]);
 
   return (
     <div className="relative shrink-0">
@@ -84,7 +87,7 @@ export default function SuperCoinHeaderIcon({ onClick }: SuperCoinHeaderIconProp
       <button
         onClick={onClick}
         aria-label="Convert SuperCoins to gift voucher"
-        className="relative flex items-center gap-1 h-7 rounded-lg overflow-hidden"
+        className={`relative flex items-center gap-1 h-7 rounded-lg overflow-hidden ${frozen ? "opacity-40 grayscale" : ""}`}
         style={{
           width: expanded ? 110 : 28,
           padding: expanded ? "0 10px 0 6px" : "0",
