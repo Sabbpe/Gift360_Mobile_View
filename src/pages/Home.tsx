@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 // While true, both the header icon and the home action button show the
 // "stocked out" message instead of opening the conversion modal, and the
 // header icon is visually dimmed/frozen (see SuperCoinHeaderIcon usage below).
-const SUPERCOIN_CONVERSION_PAUSED = true;
+const SUPERCOIN_CONVERSION_PAUSED = false;
 const SUPERCOIN_PAUSED_MESSAGE = "Oops we are stocked out!! We will be back shortly";
 import {
   Loader2,
