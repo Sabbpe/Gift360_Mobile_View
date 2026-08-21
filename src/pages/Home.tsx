@@ -788,6 +788,7 @@ function MobileHomeScreen() {
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${homebackImg})` }}
         />
+        <div className="fixed inset-0 z-[1] bg-black/10 pointer-events-none" />
         <div className="relative z-10">
         <div className="relative overflow-visible pb-[70px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />

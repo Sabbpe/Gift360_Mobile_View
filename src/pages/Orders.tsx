@@ -182,7 +182,7 @@ function RedeemSheet({
                       ) : !isRevealed ? (
                         <div className="bg-muted rounded-xl p-4 flex items-center gap-2">
                           <Lock size={14} style={{ color: "#888888" }} />
-                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>Reveal this voucher from "View Vouchers" first (choose "Use myself").</p>
+                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>Reveal your code in View Vouchers, use it, then tap "Mark as Redeemed".</p>
                         </div>
                       ) : (
                         <>
@@ -247,7 +247,7 @@ function RedeemSheet({
                     style={{ background: "linear-gradient(90deg, #ff8aa0, #7b5cff)" }}
                     onClick={handleCheck}
                     disabled={checkState === "checking" || checkState === "used"}>
-                    {checkState === "checking" ? <><Loader2 size={16} className="g-spin" />Checking...</> : "I've Used This Voucher"}
+                    {checkState === "checking" ? <><Loader2 size={16} className="g-spin" />Checking...</> : "Mark as Redeemed"}
                   </Button>
                 )}
               </div>

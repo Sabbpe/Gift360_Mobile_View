@@ -26,7 +26,7 @@ export const SUPERCOIN_PIZZAHUT_BRAND_ID = "f0bcff25-e555-11f0-a1f2-4201c0a81e02
 
 export const SUPERCOIN_BRANDS = [
   { id: SUPERCOIN_FEATURED_BRAND_ID, label: "Flipkart B2B" },
-  { id: SUPERCOIN_PIZZAHUT_BRAND_ID, label: "Pizza Hut" },
+  { id: SUPERCOIN_PIZZAHUT_BRAND_ID, label: "Pizza Hut", hidden: true },
 ] as const;
 
 type ModalTab = "about" | "how" | "terms";
@@ -447,7 +447,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
 
           {/* Brand selector pills */}
           <div className="relative z-10 flex shrink-0 gap-2 px-4 pb-3 -mt-1">
-            {SUPERCOIN_BRANDS.map((b) => (
+            {SUPERCOIN_BRANDS.filter((b) => !b.hidden).map((b) => (
               <button
                 key={b.id}
                 type="button"
