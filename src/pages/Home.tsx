@@ -41,7 +41,7 @@ import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
-import { useBrands } from "@/hooks/useBrands";
+import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
@@ -52,7 +52,6 @@ import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
-import { RAKHI_RECOMMENDATION_BRANDS } from "@/data/rakhiBrands";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { brandApi } from "@/lib/valuedesignApi";
@@ -329,21 +328,9 @@ function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => 
 }
 
 function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
-  const { data: allBrands = [], isLoading } = useBrands();
+  const occasion = import.meta.env.VITE_RECOMMENDATION_OCCASION || "Rakhi";
+  const { data: recommended = [], isLoading } = useRecommendations(occasion);
   const [, setLocation] = useLocation();
-
-  const rakhiBrandIds = useMemo(
-    () => new Set(RAKHI_RECOMMENDATION_BRANDS.map((b) => b.brandId)),
-    []
-  );
-
-  const recommended = useMemo(() => {
-    const brands = Array.isArray(allBrands) ? allBrands : [];
-    return brands.filter((b: any) => {
-      const id = b.BrandId || b.brandId || b.id || b.brand_id;
-      return rakhiBrandIds.has(id);
-    });
-  }, [allBrands, rakhiBrandIds]);
 
   if (isLoading) {
     return (
@@ -372,8 +359,10 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
           const brandId = brand.BrandId || brand.brandId || brand.id || brand.brand_id;
           const brandName = brand.BrandName || brand.brandName || brand.brand_name || "";
           const images = brand.Images || brand.images || brand.image || {};
-          const imageSrc = images?.mobile || images?.featured || images?.raw || images?.base || images?.small || "";
-          const priceValue = Number(brand.MinPrice || brand.minPrice || brand.MaxPrice || brand.maxPrice || 0);
+          const imageSrc = images?.raw || images?.text || images?.mobile || images?.featured || images?.base || images?.small || "";
+          const minP = Number(brand.MinPrice || brand.minPrice) || 0;
+          const maxP = Number(brand.MaxPrice || brand.maxPrice) || 0;
+          const priceValue = minP > 0 ? minP : maxP > 0 ? maxP : 0;
 
           return (
             <article
