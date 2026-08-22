@@ -3,6 +3,8 @@ import { useState, useMemo, useRef, useEffect } from "react";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsConversionBanner from "@/components/SuperCoinsConversionBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
+import { superCoinConversionConfig } from "@/config/features.config";
+import { useToast } from "@/hooks/use-toast";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useBrands } from "@/hooks/useBrands";
@@ -43,12 +45,27 @@ function getBrandImg(b: any): string | null {
 }
 
 export default function Hero() {
+  const { toast } = useToast();
   const [showBalance, setShowBalance] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
+
+  // Gate every entry point into the SuperCoins modal through the shared
+  // kill switch — see features.config.ts. Do not call
+  // setSuperCoinsModalOpen(true) directly from JSX; use this instead.
+  const openSuperCoinsModal = () => {
+    if (superCoinConversionConfig.paused) {
+      toast({
+        title: superCoinConversionConfig.pausedMessage,
+        variant: "destructive",
+      });
+      return;
+    }
+    setSuperCoinsModalOpen(true);
+  };
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const [, setLocation] = useLocation();
@@ -195,7 +212,7 @@ export default function Hero() {
         </div>
 
         <div className="anim-fade-up delay-300">
-          <SuperCoinsConversionBanner onExplore={() => setSuperCoinsModalOpen(true)} />
+          <SuperCoinsConversionBanner onExplore={openSuperCoinsModal} />
         </div>
 
         <div className="anim-fade-up delay-300">

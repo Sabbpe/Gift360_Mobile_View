@@ -2,12 +2,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-// Kill switch for SuperCoin conversion — flip to false to re-enable.
-// While true, both the header icon and the home action button show the
-// "stocked out" message instead of opening the conversion modal, and the
-// header icon is visually dimmed/frozen (see SuperCoinHeaderIcon usage below).
-const SUPERCOIN_CONVERSION_PAUSED = false;
-const SUPERCOIN_PAUSED_MESSAGE = "Oops we are stocked out!! We will be back shortly";
+// Kill switch for SuperCoin conversion now lives in features.config.ts —
+// it's the single source of truth shared with Hero.tsx (and anywhere else
+// that can open the SuperCoins modal). Do not redeclare a local copy here.
+import { superCoinConversionConfig } from "@/config/features.config";
+const SUPERCOIN_CONVERSION_PAUSED = superCoinConversionConfig.paused;
+const SUPERCOIN_PAUSED_MESSAGE = superCoinConversionConfig.pausedMessage;
 import {
   Loader2,
   ChevronLeft,
