@@ -614,7 +614,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 {/* Brand card */}
                 <div className="sc-top-card overflow-hidden">
                   <div className="flex h-full items-center gap-3 p-3">
-                    <div className="h-[60px] w-[60px] shrink-0 overflow-hidden rounded-[8px] bg-[#F3F4F6]">
+                    <div className="h-[70px] w-[120px] shrink-0 overflow-hidden rounded-[10px] bg-white">
                       <img
                         src={imageSrc}
                         alt={brand.BrandName}

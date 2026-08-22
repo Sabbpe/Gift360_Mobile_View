@@ -1,6 +1,6 @@
 ﻿import { useState, useEffect, useRef } from "react";
 import { Link, useLocation, useSearch } from "wouter";
-import { AlertCircle, ShieldCheck, ArrowUpRight, Mail, ChevronRight } from "lucide-react";
+import { AlertCircle, ShieldCheck, ArrowUpRight, ChevronRight } from "lucide-react";
 import { useSendOtp } from "@/hooks/useSendOtp";
 import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -174,18 +174,6 @@ export default function Login() {
               <span>{error}</span>
             </div>
           )}
-
-          <label className="field">
-            <Mail size={18} />
-            <input
-              aria-label="Email address"
-              type="email"
-              placeholder="Enter your email ID"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(""); }}
-              disabled={otpSent}
-            />
-          </label>
 
           <label className="field phone">
             <span className="country">IN&nbsp;&nbsp;<b>+91</b></span>
