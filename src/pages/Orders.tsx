@@ -344,7 +344,17 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
-  const paidAmount = Number(order?.pricing?.final_payable ?? order?.total_amount ?? 0);
+  // Show the vouchers' own real, redeemable face value (summed across all
+  // physical cards on this order) rather than what was actually paid.
+  // These can genuinely differ -- e.g. a SuperCoin-subsidized purchase pays
+  // less cash than the voucher is worth -- and showing the paid amount here
+  // was both misleading (customers reasonably read this number as the
+  // voucher's value) and inconsistent with the expanded view directly below
+  // it, which already correctly shows each card's real balanceTotal.
+  const voucherValue = vouchers.reduce((sum, v) => sum + (Number(v.amount) || 0), 0);
+  const paidAmount = voucherValue > 0
+    ? voucherValue
+    : Number(order?.pricing?.final_payable ?? order?.total_amount ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
 
   return (

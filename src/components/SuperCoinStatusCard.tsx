@@ -284,7 +284,7 @@ export default function SuperCoinStatusCard({
         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
           <Check className="h-4 w-4 text-[#7C3AED] shrink-0" strokeWidth={2.5} />
           <p className="text-xs font-medium text-[#7C3AED]">
-            Yay! You saved ₹{activeDeduction.toFixed(2)} on this booking!
+            Yay! You saved ₹{(activeDeduction / supercoinMultiplier).toFixed(2)} on this booking!
           </p>
         </div>
       )}
