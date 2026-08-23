@@ -68,7 +68,8 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
       // card_items comes from GET /coupons/card-items (fetched separately -
       // see the useEffect in VoucherCard/SuperCoinVoucherCard below), one
       // entry per physical card, matched to the vd_raw_response items array
-      // by position (card_index === vi).
+      // by position (cardIndex === vi - see the field-name note below for
+      // why this is camelCase, not snake_case).
       //
       // PREVIOUSLY this read c?.card_items directly off the order object,
       // expecting the order-details response to already contain it - it
@@ -85,7 +86,16 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
         ?? (Array.isArray(c?.card_items) ? c.card_items : []);
       (c?.vd_raw_response?.brand_details || []).forEach((b: any) => {
         (b?.items || []).forEach((v: any, vi: number) => {
-          const matchingCardItem = cardItems.find((ci2: any) => ci2?.card_index === vi);
+          // NOTE: getCardItems() (GET /coupons/card-items) returns
+          // CardItemDTO, a Java/Jackson object serialized as camelCase
+          // (itemId, cardIndex, isGift, isScratched) - NOT snake_case.
+          // Matching on ci2?.card_index (etc.) below was always undefined
+          // against this real response shape, silently falling back to the
+          // shared item-level flags every time regardless of whether the
+          // endpoint call itself succeeded - confirmed via DB: both cards
+          // stayed is_scratched=0 after a "successful" scratch() call,
+          // proving the per-card branch was never actually reached.
+          const matchingCardItem = cardItems.find((ci2: any) => ci2?.cardIndex === vi);
           results.push({
             key: `${item.order_item_id}-${ci}-${vi}`,
             orderItemId: item.order_item_id || "",
@@ -95,12 +105,12 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
             isScratched: matchingCardItem
-              ? Boolean(matchingCardItem.is_scratched)
+              ? Boolean(matchingCardItem.isScratched)
               : Boolean(item.is_scratched),
             isGift: matchingCardItem
-              ? Boolean(matchingCardItem.is_gift)
+              ? Boolean(matchingCardItem.isGift)
               : Boolean(item.is_gift),
-            itemId: matchingCardItem?.item_id,
+            itemId: matchingCardItem?.itemId,
           });
         });
       });
