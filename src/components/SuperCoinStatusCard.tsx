@@ -16,7 +16,7 @@ type SuperCoinStatusCardProps = {
   estimatedEarn?: number;
   hideToggle?: boolean;
   coinsOnHold?: number;
-  onCancelHold?: () => void;
+  supercoinMultiplier?: number;
 };
 
 export default function SuperCoinStatusCard({
@@ -28,7 +28,7 @@ export default function SuperCoinStatusCard({
   estimatedEarn,
   hideToggle = false,
   coinsOnHold = 0,
-  onCancelHold,
+  supercoinMultiplier = 1.25,
 }: SuperCoinStatusCardProps) {
   const { identity, searchUserMutation, balanceMutation } = useSuperCoinAccount(mobile);
   const autoSearchKeyRef = useRef<string | null>(null);
@@ -206,7 +206,7 @@ export default function SuperCoinStatusCard({
                 </p>
                 {(activeDeduction > 0 || previewDeduction > 0) && (
                   <p className="text-sm font-semibold cart-text-primary">
-                    Save ₹{(activeDeduction > 0 ? activeDeduction : previewDeduction).toFixed(2)} on this order
+                    Save ₹{((activeDeduction > 0 ? activeDeduction : previewDeduction) / supercoinMultiplier).toFixed(2)} on this order
                   </p>
                 )}
                 <p className="text-sm font-semibold cart-text-primary">
@@ -272,22 +272,11 @@ export default function SuperCoinStatusCard({
 
       {/* Reserved hold banner */}
       {coinsOnHold > 0 && (
-        <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[rgba(151,71,255,0.08)] to-[rgba(151,71,255,0.04)] border border-[rgba(151,71,255,0.2)] shadow-[0_2px_8px_rgba(151,71,255,0.1)]">
-          <div className="flex items-center gap-2">
-            <span className="text-sm">🔒</span>
-            <p className="text-xs font-semibold text-[#7C3AED]">
-              {Math.round(coinsOnHold)} coin(s) reserved for this checkout
-            </p>
-          </div>
-          {onCancelHold && (
-            <button
-              type="button"
-              onClick={onCancelHold}
-              className="text-xs font-semibold text-red-500 hover:text-red-700 underline shrink-0"
-            >
-              Release
-            </button>
-          )}
+        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-[rgba(151,71,255,0.08)] to-[rgba(151,71,255,0.04)] border border-[rgba(151,71,255,0.2)] shadow-[0_2px_8px_rgba(151,71,255,0.1)]">
+          <span className="text-sm">🔒</span>
+          <p className="text-xs font-semibold text-[#7C3AED]">
+            {Math.round(coinsOnHold)} coin(s) reserved — saving ₹{(coinsOnHold / supercoinMultiplier).toFixed(2)} on this order
+          </p>
         </div>
       )}
       {/* Success banner below card */}
