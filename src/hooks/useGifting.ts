@@ -63,7 +63,12 @@ export function useGifting({
           description: message,
           variant:     "destructive",
         });
-        onStateChange(orderItemId, err?.response?.data?.message?.includes("gifted") ? "GIFTED" : "SCRATCHED");
+        // Use the backend's explicit errorCode rather than guessing from the
+        // message text - both terminal-state messages historically contain
+        // the word "gifted", which previously caused an already-SCRATCHED
+        // card (re-tapped/retried) to be incorrectly displayed as "Gifted".
+        const errorCode = err?.response?.data?.errorCode;
+        onStateChange(orderItemId, errorCode === "ALREADY_GIFTED" ? "GIFTED" : "SCRATCHED");
       } else {
         toast({
           title:       "Could not reveal voucher",
@@ -135,7 +140,13 @@ export function useGifting({
           description: message,
           variant:     "destructive",
         });
-        onStateChange(orderItemId, err?.response?.data?.message?.includes("scratched") ? "SCRATCHED" : "GIFTED");
+        // Use the backend's explicit errorCode rather than guessing from the
+        // message text - the mirror-image of the same bug fixed in
+        // confirmScratch above: "already gifted, cannot scratch" contains
+        // the word "scratched", which previously caused an already-GIFTED
+        // card to be incorrectly displayed as "SCRATCHED" on a retry.
+        const errorCode = err?.response?.data?.errorCode;
+        onStateChange(orderItemId, errorCode === "ALREADY_SCRATCHED" ? "SCRATCHED" : "GIFTED");
       } else {
         toast({
           title:       "Could not gift voucher",
