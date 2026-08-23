@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { getVoucherState } from "@/types/order";
+import type { CardItem } from "@/types/order";
+import { getCardItems } from "@/api/giftingApi";
 
 const FALLBACK_IMAGE = "/brand-placeholder.png";
 
@@ -95,6 +97,44 @@ export default function OrderDetails() {
   const { data, isLoading } = useOrders(user?.clientId);
 
   const order = data?.orders.find((o) => o.order_id === orderId);
+
+  // Per-card gift/scratch state, fetched separately from the main order
+  // details response (which only exposes one shared state per order item).
+  // Keyed by order_item_id -> array of CardItem, ordered by cardIndex to
+  // line up positionally with each item's vd_raw_response coupon array.
+  // See getCardItems() in api/giftingApi.ts for the full context.
+  const [cardItemsByOrderItem, setCardItemsByOrderItem] = useState<Record<string, CardItem[]>>({});
+
+  useEffect(() => {
+    if (!order || !user?.clientId) return;
+
+    let cancelled = false;
+
+    Promise.allSettled(
+      order.items.map((item) =>
+        getCardItems(user.clientId!, item.order_item_id).then((cardItems) => ({
+          orderItemId: item.order_item_id,
+          cardItems,
+        }))
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, CardItem[]> = {};
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          next[result.value.orderItemId] = result.value.cardItems;
+        }
+        // On failure, that item's entry is simply left out of `next` — the
+        // render below falls back to the old shared-state behavior for it
+        // rather than breaking the whole page over one bad fetch.
+      }
+      setCardItemsByOrderItem(next);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [order?.order_id, user?.clientId]);
 
   const getStatusColor = (status: string) => {
     switch (status.toUpperCase()) {
@@ -341,34 +381,57 @@ export default function OrderDetails() {
                           </div>
 
                           <div className="grid sm:grid-cols-2 gap-4">
-                            {couponItems.map((coupon, idx) => (
-                              <ScratchCard
-                                // Stable, order-item-scoped key. Using a bare
-                                // array index here previously caused React to
-                                // reuse a ScratchCard component instance (and
-                                // its local voucherState) across DIFFERENT
-                                // orders/cards when navigating between order
-                                // details pages without a full unmount -
-                                // manifesting as a card visually showing a
-                                // stale "Gifted"/"Scratched" state left over
-                                // from a completely different order's card at
-                                // the same list position. See: customer
-                                // report where a freshly-purchased sibling
-                                // card showed "Gifted" despite never having
-                                // been gifted (confirmed via DB: is_gift=0).
-                                key={`${item.order_item_id}-${idx}`}
-                                cardNumber={coupon.getCardNo}
-                                cardPin={coupon.getCardPin}
-                                expiryDate={coupon.getExpiryDate}
-                                amount={coupon.balanceTotal}
-                                brandName={brandName}
-                                index={idx}
-                                orderItemId={item.order_item_id}
-                                clientId={user?.clientId ?? ""}
-                                orderNumber={order.order_number}
-                                initialState={getVoucherState(item)}
-                              />
-                            ))}
+                            {couponItems.map((coupon, idx) => {
+                              // Per-card state, matched by position (idx) to
+                              // this card's real itemId/isGift/isScratched.
+                              // Falls back to the old shared item-level
+                              // state if the per-card fetch hasn't
+                              // completed yet or failed for this item -
+                              // degraded but not broken.
+                              const cardItem = cardItemsByOrderItem[item.order_item_id]?.[idx];
+                              const cardState = cardItem
+                                ? getVoucherState({
+                                    is_scratched: cardItem.isScratched,
+                                    is_gift: cardItem.isGift,
+                                  })
+                                : getVoucherState(item);
+
+                              return (
+                                <ScratchCard
+                                  // Stable, order-item-scoped key. Using a bare
+                                  // array index here previously caused React to
+                                  // reuse a ScratchCard component instance (and
+                                  // its local voucherState) across DIFFERENT
+                                  // orders/cards when navigating between order
+                                  // details pages without a full unmount -
+                                  // manifesting as a card visually showing a
+                                  // stale "Gifted"/"Scratched" state left over
+                                  // from a completely different order's card at
+                                  // the same list position. See: customer
+                                  // report where a freshly-purchased sibling
+                                  // card showed "Gifted" despite never having
+                                  // been gifted (confirmed via DB: is_gift=0).
+                                  key={`${item.order_item_id}-${idx}`}
+                                  cardNumber={coupon.getCardNo}
+                                  cardPin={coupon.getCardPin}
+                                  expiryDate={coupon.getExpiryDate}
+                                  amount={coupon.balanceTotal}
+                                  brandName={brandName}
+                                  index={idx}
+                                  orderItemId={item.order_item_id}
+                                  // The actual fix for "scratch one card,
+                                  // sibling wrongly shows/becomes Gifted":
+                                  // pass THIS card's own itemId so
+                                  // scratch()/gift() target it specifically
+                                  // instead of falling back to the legacy,
+                                  // whole-item-shared path.
+                                  itemId={cardItem?.itemId}
+                                  clientId={user?.clientId ?? ""}
+                                  orderNumber={order.order_number}
+                                  initialState={cardState}
+                                />
+                              );
+                            })}
                           </div>
 
                           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">

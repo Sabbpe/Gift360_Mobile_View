@@ -72,6 +72,19 @@ export function getVoucherState(item: Pick<OrderItem, 'is_scratched' | 'is_gift'
   return 'PENDING';
 }
 
+/**
+ * Per-physical-card gift/scratch state, returned by GET /coupons/card-items.
+ * See getCardItems() in giftingApi.ts for why this exists — order items
+ * only expose ONE shared state across all their cards; this is the actual
+ * per-card truth, matched to display data by cardIndex.
+ */
+export interface CardItem {
+  itemId:      string;
+  cardIndex:   number;
+  isGift:      boolean;
+  isScratched: boolean;
+}
+
 // ── Gifting API types ─────────────────────────────────────────────────────────
 
 export interface ScratchRequest {
