@@ -343,7 +343,20 @@ export default function OrderDetails() {
                           <div className="grid sm:grid-cols-2 gap-4">
                             {couponItems.map((coupon, idx) => (
                               <ScratchCard
-                                key={idx}
+                                // Stable, order-item-scoped key. Using a bare
+                                // array index here previously caused React to
+                                // reuse a ScratchCard component instance (and
+                                // its local voucherState) across DIFFERENT
+                                // orders/cards when navigating between order
+                                // details pages without a full unmount -
+                                // manifesting as a card visually showing a
+                                // stale "Gifted"/"Scratched" state left over
+                                // from a completely different order's card at
+                                // the same list position. See: customer
+                                // report where a freshly-purchased sibling
+                                // card showed "Gifted" despite never having
+                                // been gifted (confirmed via DB: is_gift=0).
+                                key={`${item.order_item_id}-${idx}`}
                                 cardNumber={coupon.getCardNo}
                                 cardPin={coupon.getCardPin}
                                 expiryDate={coupon.getExpiryDate}
