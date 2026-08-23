@@ -952,6 +952,11 @@ export default function Cart() {
   const cartItemCount = cartItems.length;
 
   const [brandDiscountMap, setBrandDiscountMap] = useState<Record<string, number>>({});
+  // Per-brand SuperCoin multiplier (default 1.25, matching giftvouchers_brands'
+  // DB default and the dedicated-conversion flow's surcharge). Fetched
+  // alongside discount in the same request rather than a second round-trip -
+  // both come from the same GET.../brands/{id} response.
+  const [brandSupercoinMultiplierMap, setBrandSupercoinMultiplierMap] = useState<Record<string, number>>({});
   const fetchedBrandIdsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
@@ -965,9 +970,13 @@ export default function Cart() {
     Promise.all(
       unknownBrandIds.map((brandId) =>
         brandApi
-          .post<{ discount?: string | number } | null>(`/brands/${brandId}`, {})
-          .then((r) => ({ brandId, discount: Number(r?.data?.discount) || 0 }))
-          .catch(() => ({ brandId, discount: 0 }))
+          .post<{ discount?: string | number; supercoinMultiplier?: string | number } | null>(`/brands/${brandId}`, {})
+          .then((r) => ({
+            brandId,
+            discount: Number(r?.data?.discount) || 0,
+            supercoinMultiplier: Number(r?.data?.supercoinMultiplier) || 1.25,
+          }))
+          .catch(() => ({ brandId, discount: 0, supercoinMultiplier: 1.25 }))
       )
     ).then((results) => {
       if (cancelled) return;
@@ -975,6 +984,13 @@ export default function Cart() {
         const next = { ...prev };
         results.forEach((r) => {
           next[r.brandId] = r.discount;
+        });
+        return next;
+      });
+      setBrandSupercoinMultiplierMap((prev) => {
+        const next = { ...prev };
+        results.forEach((r) => {
+          next[r.brandId] = r.supercoinMultiplier;
         });
         return next;
       });
@@ -1085,21 +1101,45 @@ export default function Cart() {
     (item) => item.discount !== undefined || brandDiscountMap[item.brandId] !== undefined
   );
 
-  const maxSuperCoinRedeemable = discountsLoaded
-    ? cartItems
-        .filter(item => !isSuperCoinExcluded(item.brandName))
-        .reduce((sum, item) => {
-          const itemDiscountPercent = item.discount ?? brandDiscountMap[item.brandId] ?? 0;
-          const itemTotal = item.quantity * item.unitValue;
-          return sum + itemTotal * (itemDiscountPercent / 100) * 0.8;
-        }, 0)
-    : superCoinState.balance;
+  // Replaces the old formula (itemTotal × cashbackPercent/100 × 0.8, ₹-
+  // denominated, no multiplier) with the intended rule: cap = 50% of each
+  // eligible item's own face value, converted to an actual COIN count using
+  // THAT item's own supercoin_multiplier (giftvouchers_brands.supercoin_multiplier,
+  // default 1.25 - matches sabbpe.supercoin.redemption-surcharge-percent=25).
+  // Backend enforces the identical calculation server-side in
+  // FlipkartScController.initHold - see that method's comment for why (the
+  // old formula had zero backend equivalent, so a tampered client request
+  // could submit any coin amount at redemption time).
+  //
+  // maxSuperCoinRedeemable is now a COIN count (not ₹) - it's passed
+  // straight into SuperCoinOTPModal's maxRedeemable prop, which the modal
+  // uses as the upper bound for how many coins it actually requests in the
+  // hold. effectiveMultiplier lets the ₹ deduction below correctly convert
+  // a partial coin redemption back to ₹ even if a future per-brand override
+  // means cart items don't all share the same multiplier.
+  let totalRupeeCap = 0;
+  let totalCoinCap = 0;
+  if (discountsLoaded) {
+    cartItems
+      .filter(item => !isSuperCoinExcluded(item.brandName))
+      .forEach(item => {
+        const itemTotal = item.quantity * item.unitValue;
+        const multiplier = brandSupercoinMultiplierMap[item.brandId] ?? 1.25;
+        const itemRupeeCap = itemTotal * 0.5;
+        const itemCoinCap = Math.ceil(itemRupeeCap * multiplier);
+        totalRupeeCap += itemRupeeCap;
+        totalCoinCap += itemCoinCap;
+      });
+  }
+  const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
+  const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
 
   const superCoinDeduction = !allItemsSuperCoinExcluded && superCoinAuthorized && superCoinState.eligible
     ? Math.min(
         superCoinHoldContext?.amount ?? superCoinState.balance,
-        maxSuperCoinRedeemable
-      )
+        maxSuperCoinRedeemable,
+        superCoinState.balance
+      ) / effectiveSupercoinMultiplier
     : 0;
 
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
@@ -1140,8 +1180,9 @@ export default function Cart() {
       !allItemsSuperCoinExcluded && superCoinEnabled && superCoinState.eligible
         ? Math.min(
             superCoinHoldContext?.amount ?? superCoinState.balance,
-            maxSuperCoinRedeemable
-          )
+            maxSuperCoinRedeemable,
+            superCoinState.balance
+          ) / effectiveSupercoinMultiplier
         : 0;
     const currentFinalPayable = Math.max(
       0,
