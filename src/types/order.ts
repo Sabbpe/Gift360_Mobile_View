@@ -180,6 +180,7 @@ export interface GiftcardOrderDetailsResponse {
   couponDiscount: number;
   netAmountPaid: number;
   coinsEarned?: number | null;
+  cashbackEarned?: number | null;
   coinsRedeemed?: number | null;
   coinIssued?: boolean | null;
   scMerchantTxnId?: string | null;

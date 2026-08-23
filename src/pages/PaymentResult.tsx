@@ -618,6 +618,28 @@ export default function PaymentResult() {
                   </div>
                 )}
 
+                {paymentData.status === "success" &&
+                  (orderDetailsLoading ||
+                    (orderDetails?.cashbackEarned !== null &&
+                      orderDetails?.cashbackEarned !== undefined)) && (
+                  <div className="p-3 rounded-lg border bg-[rgba(34,197,94,0.08)] border-[rgba(34,197,94,0.25)] space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-[#16A34A] font-medium">
+                      <span>💰</span>
+                      <span>Cashback Reward</span>
+                    </div>
+                    {orderDetailsLoading ? (
+                      <p className="text-sm text-[#16A34A]">
+                        Fetching earned cashback...
+                      </p>
+                    ) : (
+                      <p className="text-sm text-[#16A34A]">
+                        You earned ₹{orderDetails?.cashbackEarned} cashback for this order.
+                        It's already in your wallet.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 <div className="text-sm">
                   <div className="p-3 rounded-lg bg-[rgba(151,71,255,0.04)] border border-[rgba(151,71,255,0.2)]">
                     <p className="text-[#7C3AED] mb-1">Status</p>
