@@ -20,6 +20,7 @@ import homebackImg from "@/assets/homeback.jpeg";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
+import { getCardItems } from "@/api/giftingApi";
 
 const FALLBACK = FALLBACK_IMAGE;
 const REDEEMED_KEY = "g360_redeemed_vouchers";
@@ -60,16 +61,28 @@ interface VoucherView {
   itemId?: string;
 }
 
-const extractVouchers = (order: any): VoucherView[] => {
+const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]>): VoucherView[] => {
   const results: VoucherView[] = [];
   for (const item of (order?.items || [])) {
     (item?.coupons || []).forEach((c: any, ci: number) => {
-      // card_items comes from giftcard_coupon_items via the order-detail
-      // stored procedure — one entry per physical card, matched to the
-      // vd_raw_response items array by position (card_index === vi).
-      // Falls back to undefined itemId on older orders synced before this
-      // existed; gift() still works via legacy orderItemId-only path then.
-      const cardItems: any[] = Array.isArray(c?.card_items) ? c.card_items : [];
+      // card_items comes from GET /coupons/card-items (fetched separately -
+      // see the useEffect in VoucherCard/SuperCoinVoucherCard below), one
+      // entry per physical card, matched to the vd_raw_response items array
+      // by position (card_index === vi).
+      //
+      // PREVIOUSLY this read c?.card_items directly off the order object,
+      // expecting the order-details response to already contain it - it
+      // never did, so matchingCardItem was always undefined and every card
+      // silently fell back to the shared, whole-order-item flags below.
+      // Worse, isScratched below didn't even attempt the per-card lookup -
+      // it read the shared flag unconditionally. Combined, that meant:
+      // scratch ONE card in a 2+ card order, and the shared is_scratched
+      // flag flips, so EVERY card (including untouched ones) displays as
+      // scratched/revealed - or, if a gift on a sibling card was attempted,
+      // gets rejected as "already revealed" purely because of a completely
+      // different card. Fixed on both fronts below.
+      const cardItems: any[] = cardItemsByOrderItem?.[item.order_item_id]
+        ?? (Array.isArray(c?.card_items) ? c.card_items : []);
       (c?.vd_raw_response?.brand_details || []).forEach((b: any) => {
         (b?.items || []).forEach((v: any, vi: number) => {
           const matchingCardItem = cardItems.find((ci2: any) => ci2?.card_index === vi);
@@ -81,7 +94,9 @@ const extractVouchers = (order: any): VoucherView[] => {
             cardPin: v?.getCardPin || "",
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
-            isScratched: Boolean(item.is_scratched),
+            isScratched: matchingCardItem
+              ? Boolean(matchingCardItem.is_scratched)
+              : Boolean(item.is_scratched),
             isGift: matchingCardItem
               ? Boolean(matchingCardItem.is_gift)
               : Boolean(item.is_gift),
@@ -267,6 +282,46 @@ function RedeemSheet({
   );
 }
 
+// Fetches per-card gift/scratch state for every item in an order, keyed by
+// order_item_id, so extractVouchers() can resolve each physical card's own
+// real status instead of the shared, whole-order-item flags. Shared by both
+// VoucherCard and SuperCoinVoucherCard below.
+function useCardItemsForOrder(order: any, clientId: string): Record<string, any[]> {
+  const [cardItemsByOrderItem, setCardItemsByOrderItem] = useState<Record<string, any[]>>({});
+
+  useEffect(() => {
+    if (!order?.items?.length || !clientId) return;
+    let cancelled = false;
+
+    Promise.allSettled(
+      order.items.map((item: any) =>
+        getCardItems(clientId, item.order_item_id).then((cardItems) => ({
+          orderItemId: item.order_item_id,
+          cardItems,
+        }))
+      )
+    ).then((results) => {
+      if (cancelled) return;
+      const next: Record<string, any[]> = {};
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          next[result.value.orderItemId] = result.value.cardItems;
+        }
+        // Failure for one item is left out of `next` - extractVouchers()
+        // falls back to the old shared-flag behavior for that item only,
+        // rather than breaking the whole card over one bad fetch.
+      }
+      setCardItemsByOrderItem(next);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [order?.order_id, clientId]);
+
+  return cardItemsByOrderItem;
+}
+
 // ── Voucher Card (PAID, not redeemed) ─────────────────────────────────────────
 function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
@@ -277,7 +332,8 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
-  const vouchers = extractVouchers(order);
+  const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
+  const vouchers = extractVouchers(order, cardItemsByOrderItem);
   const paidAmount = Number(order?.pricing?.final_payable ?? order?.total_amount ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
 
@@ -363,7 +419,8 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
   const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
-  const vouchers = extractVouchers(order);
+  const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
+  const vouchers = extractVouchers(order, cardItemsByOrderItem);
   const coinsRedeemed = Number(order?.pricing?.coins_redeemed ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
 
