@@ -591,7 +591,11 @@ export default function PaymentResult() {
                   </div>
                 )}
 
-                {paymentData.status === "success" && (
+                {paymentData.status === "success" &&
+                  (orderDetailsLoading ||
+                    (orderDetails?.coinsRedeemed !== null &&
+                      orderDetails?.coinsRedeemed !== undefined &&
+                      orderDetails.coinsRedeemed > 0)) && (
                   <div className="p-3 rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] space-y-2">
                     <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
                       <img src={superCoinIcon} alt="" className="h-4 w-4" />

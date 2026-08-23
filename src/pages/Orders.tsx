@@ -363,13 +363,19 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
           </div>
           <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
           <p className="font-normal text-[10px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
-          <button
-            onClick={() => setShowSheet(true)}
-            className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
-            style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
-          >
-            Redeem
-          </button>
+          {/* Only show Redeem once at least one card has actually been
+              revealed - opening "Mark as Redeemed" / redeem instructions
+              before the customer has even seen a real code is premature and
+              confusing (nothing to redeem yet). */}
+          {vouchers.some(v => v.isScratched) && (
+            <button
+              onClick={() => setShowSheet(true)}
+              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+              style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
+            >
+              Redeem
+            </button>
+          )}
           {dateStr && (
             <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
@@ -454,13 +460,17 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
               {coinsRedeemed} <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
             </p>
           )}
-          <button
-            onClick={() => setShowSheet(true)}
-            className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
-            style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
-          >
-            Redeem
-          </button>
+          {/* Only show Redeem once at least one card has actually been
+              revealed - see VoucherCard's identical fix above. */}
+          {vouchers.some(v => v.isScratched) && (
+            <button
+              onClick={() => setShowSheet(true)}
+              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+              style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
+            >
+              Redeem
+            </button>
+          )}
           {dateStr && (
             <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
