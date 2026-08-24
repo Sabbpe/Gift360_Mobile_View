@@ -175,6 +175,7 @@ export default function AdminDashboard() {
   const [cartStaleFilter, setCartStaleFilter] = useState(0);
 
   const [orderPage, setOrderPage] = useState(0);
+  const [customerPage, setCustomerPage] = useState(0);
   const [voucherStatusFilter, setVoucherStatusFilter] = useState<
     "" | "generated" | "failed"
   >("");
@@ -225,7 +226,7 @@ export default function AdminDashboard() {
       safeLoad("brands", () => fetchBrandStats({ from, to }), (b) => setBrands(b.data ?? [])),
       safeLoad(
         "customers",
-        () => fetchCustomerStats({ from, to, page: 0, size: 50 }),
+        () => fetchCustomerStats({ from, to, page: customerPage, size: 50 }),
         (c) => setCustomers(c.data ?? [])
       ),
       safeLoad(
@@ -266,7 +267,7 @@ export default function AdminDashboard() {
     ]);
 
     setLoading(false);
-  }, [from, to, orderPage, voucherStatusFilter, brandFilter, cartStaleFilter]);
+  }, [from, to, orderPage, customerPage, voucherStatusFilter, brandFilter, cartStaleFilter]);
 
   useEffect(() => {
     if (authed) loadAll();
@@ -285,6 +286,24 @@ export default function AdminDashboard() {
       setJourneyLoading(false);
     }
   }, []);
+
+  const [customersCsvLoading, setCustomersCsvLoading] = useState(false);
+
+  const downloadAllCustomersCsv = useCallback(async () => {
+    // The on-screen `customers` state is always just the current page (50
+    // rows) -- CSV export should be the full list, not whatever page the
+    // user happens to be viewing. Fetches fresh with a generously large
+    // page size rather than reusing the paginated state.
+    setCustomersCsvLoading(true);
+    try {
+      const all = await fetchCustomerStats({ from, to, page: 0, size: 100000 });
+      downloadCsv(all.data ?? [], "gift360-customers.csv");
+    } catch (err) {
+      console.error("Failed to export full customer list:", err);
+    } finally {
+      setCustomersCsvLoading(false);
+    }
+  }, [from, to]);
 
   if (!authed) {
     return <AdminLogin onSuccess={() => setAuthed(true)} />;
@@ -365,12 +384,16 @@ export default function AdminDashboard() {
                     value={summary.supercoins_burnt}
                   />
                   <StatCard
-                    label="\u2248 \u20b9 Value of Coins Burnt"
-                    value={`\u20b9${summary.supercoins_burnt_value_inr_approx}`}
+                    label="≈ ₹ Value of Coins Burnt"
+                    value={`₹${summary.supercoins_burnt_value_inr_approx}`}
                   />
                   <StatCard
-                    label="SuperCoins Held (not yet burnt)"
+                    label="SuperCoins Held (abandoned/failed, will auto-release)"
                     value={summary.supercoins_held_not_burnt}
+                  />
+                  <StatCard
+                    label="⚠ Genuine Open Risk (paid, no voucher, unrefunded)"
+                    value={summary.supercoins_unresolved_risk}
                   />
                   <StatCard
                     label="SuperCoins Refunded"
@@ -683,7 +706,16 @@ export default function AdminDashboard() {
           {/* ================= CUSTOMERS ================= */}
           <TabsContent value="customers">
             <div className="flex justify-end mb-3">
-              <DownloadButton rows={customers} filename="gift360-customers.csv" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                disabled={customersCsvLoading}
+                onClick={downloadAllCustomersCsv}
+              >
+                <Download className="h-3.5 w-3.5" />
+                {customersCsvLoading ? "Preparing full export…" : "Download CSV (all customers)"}
+              </Button>
             </div>
             <Card>
               <CardContent className="p-0 overflow-x-auto">
@@ -779,6 +811,20 @@ export default function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+
+            <div className="flex justify-between items-center mt-3">
+              <Button
+                variant="outline"
+                disabled={customerPage === 0}
+                onClick={() => setCustomerPage((p) => Math.max(0, p - 1))}
+              >
+                Previous
+              </Button>
+              <span className="text-sm text-[#6B7280]">Page {customerPage + 1}</span>
+              <Button variant="outline" onClick={() => setCustomerPage((p) => p + 1)}>
+                Next
+              </Button>
+            </div>
           </TabsContent>
 
           {/* ================= SUPERCOINS ================= */}
