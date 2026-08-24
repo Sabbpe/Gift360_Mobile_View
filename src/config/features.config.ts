@@ -46,7 +46,7 @@ export interface SuperCoinConversionConfig {
 }
 
 export const superCoinConversionConfig: SuperCoinConversionConfig = {
-  paused: true,
+  paused: false,
   pausedMessage:
     "We're stocked out on SuperCoins vouchers right now — check back in 2 days! " +
     "Meanwhile, browse 400+ other brands.",
