@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { X, CheckCircle, MessageSquare, Loader2, Zap, MousePointerClick, CreditCard, Star, Lightbulb, AlertTriangle, ThumbsUp, HelpCircle } from "lucide-react";
 import { submitFeedback } from "@/api/feedbackApi";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { trackEvent } from "@/lib/analytics";
 
 const FEEDBACK_KEY = "gift360_feedback_submitted";
 
@@ -60,6 +61,14 @@ export default function FeedbackForm({ open, onClose }: Props) {
         clientId: user?.clientId,
       });
       markFeedbackSubmitted();
+      // GA4 feedback_submitted -- fires on genuine submission success, with
+      // the overall/NPS scores as parameters so low scores can be
+      // correlated against what page/step the customer was on.
+      trackEvent("feedback_submitted", {
+        overall: answers.overall,
+        nps: answers.nps,
+        has_suggestion: answers.hasSuggestion,
+      });
       setSubmitted(true);
       setTimeout(() => {
         handleClose();

@@ -1,5 +1,5 @@
 // pages/PaymentResult.tsx - Professional Generic Payment Status
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useLocation, useSearch } from "wouter";
 import { useUpdateOrderStatus } from "@/hooks/useUpdateOrderStatus";
 import { useFetchCoupons } from "@/hooks/useFetchCoupons";
@@ -20,6 +20,7 @@ import {
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { fetchOrderDetails } from "@/api/orderApi";
 import type { GiftcardOrderDetailsResponse } from "@/types/order";
+import { trackEvent } from "@/lib/analytics";
 
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
@@ -59,6 +60,7 @@ export default function PaymentResult() {
   const [orderDetails, setOrderDetails] = useState<GiftcardOrderDetailsResponse | null>(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [orderDetailsError, setOrderDetailsError] = useState<string | null>(null);
+  const purchaseTrackedRef = useRef(false);
   
   const getReservationIdForOrder = (orderNumber: string) => {
     try {
@@ -357,6 +359,23 @@ export default function PaymentResult() {
                 description: `Order #${decryptedOrderNumber} has been successfully placed.`,
               });
 
+              // GA4 purchase -- fires here, on genuine payment confirmation,
+              // deliberately NOT gated behind voucher generation succeeding.
+              // Tonight's entire session was full of orders that are
+              // genuinely PAID but where voucher generation failed --
+              // gating this event on that outcome would silently undercount
+              // real revenue for exactly those customers. No `value` is
+              // available at this point (the gateway redirect URL only ever
+              // carries a status + transaction id, never an amount) -- the
+              // event still fires as a valid conversion signal without it.
+              if (!purchaseTrackedRef.current) {
+                purchaseTrackedRef.current = true;
+                trackEvent("purchase", {
+                  transaction_id: decryptedOrderNumber,
+                  currency: "INR",
+                });
+              }
+
               // Use user?.clientId consistently - this is the authoritative source for orders
               // Don't rely on decryptedClientId which might be inconsistent
               const clientId = user?.clientId;
@@ -380,6 +399,16 @@ export default function PaymentResult() {
                     },
                     onError: (error: any) => {
                       const errorMessage = error.message || "Order confirmed. Vouchers will be available shortly.";
+                      // GA4 voucher_generation_failed -- fires the moment a
+                      // customer's browser genuinely sees a failed coupon
+                      // fetch, on a payment we just confirmed as PAID. This
+                      // is the real-time equivalent of the "PAID but no
+                      // coupon_id" pattern manually diagnosed all night for
+                      // individual customers via SQL.
+                      trackEvent("voucher_generation_failed", {
+                        transaction_id: decryptedOrderNumber,
+                        error_message: errorMessage,
+                      });
                       toast({
                         title: "Note",
                         description: errorMessage,

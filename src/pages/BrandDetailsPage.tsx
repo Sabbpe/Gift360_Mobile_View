@@ -23,6 +23,7 @@ import { FloatingCoins } from "@/components/FloatingCoins";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
+import { trackEvent } from "@/lib/analytics";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { BrandGuardRailStatus } from "@/components/BrandGuardRailStatus";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -126,6 +127,19 @@ const stampControls = useAnimation();
   const { cart, addToCart } = useCart(user?.clientId);
   const { toast } = useToast();
   const lastClickTime = useRef(0);
+
+  // GA4 view_item -- fires once per brand loaded, not on every re-render.
+  useEffect(() => {
+    if (!brand?.BrandId) return;
+    trackEvent("view_item", {
+      items: [
+        {
+          item_id: brand.BrandCode,
+          item_name: brand.BrandName,
+        },
+      ],
+    });
+  }, [brand?.BrandId]);
 
   const { data: nearbyStores = [], isLoading: loadingNearbyStores } =
     useNearbyStores(nearbyStoresRequest, enableNearbyQuery);

@@ -44,7 +44,9 @@ import {
   fetchOrders,
   fetchBrandStats,
   fetchCustomerStats,
+  fetchCustomerJourney,
   fetchSuperCoinTrend,
+  fetchRetentionTrend,
   fetchErrorBreakdown,
   fetchGeography,
   fetchAbandonedCarts,
@@ -54,6 +56,12 @@ import {
   downloadCsv,
   ADMIN_KEY_STORAGE,
 } from "@/api/adminApi";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Download } from "lucide-react";
 
 const COLORS = ["#7C3AED", "#3B82F6", "#10B981", "#F59E0B", "#EF4444"];
@@ -153,6 +161,7 @@ export default function AdminDashboard() {
   const [brands, setBrands] = useState<any[]>([]);
   const [customers, setCustomers] = useState<any[]>([]);
   const [superCoins, setSuperCoins] = useState<any[]>([]);
+  const [retention, setRetention] = useState<any[]>([]);
   const [errors, setErrors] = useState<any[]>([]);
   const [geography, setGeography] = useState<any[]>([]);
   const [abandonedSummary, setAbandonedSummary] = useState<any[]>([]);
@@ -160,6 +169,9 @@ export default function AdminDashboard() {
   const [cartsSummary, setCartsSummary] = useState<any>(null);
   const [cartsByCustomer, setCartsByCustomer] = useState<any[]>([]);
   const [cartsByBrand, setCartsByBrand] = useState<any[]>([]);
+  const [journeyOpen, setJourneyOpen] = useState(false);
+  const [journeyLoading, setJourneyLoading] = useState(false);
+  const [journeyData, setJourneyData] = useState<{ profile: any; timeline: any[] } | null>(null);
   const [cartStaleFilter, setCartStaleFilter] = useState(0);
 
   const [orderPage, setOrderPage] = useState(0);
@@ -193,6 +205,9 @@ export default function AdminDashboard() {
       setCustomers(c.data ?? []);
       setSuperCoins(sc.data ?? []);
 
+      const retentionData = await fetchRetentionTrend({ from, to });
+      setRetention(retentionData.data ?? []);
+
       const errData = await fetchErrorBreakdown({ from, to });
       setErrors(errData.data ?? []);
 
@@ -225,6 +240,20 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authed) loadAll();
   }, [authed, loadAll]);
+
+  const openCustomerJourney = useCallback(async (clientId: string) => {
+    setJourneyOpen(true);
+    setJourneyLoading(true);
+    setJourneyData(null);
+    try {
+      const data = await fetchCustomerJourney({ clientId });
+      setJourneyData(data);
+    } catch (err) {
+      console.error("Customer journey load failed:", err);
+    } finally {
+      setJourneyLoading(false);
+    }
+  }, []);
 
   if (!authed) {
     return <AdminLogin onSuccess={() => setAuthed(true)} />;
@@ -263,6 +292,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="brands">Brand-wise</TabsTrigger>
             <TabsTrigger value="customers">Customer-wise</TabsTrigger>
             <TabsTrigger value="supercoins">SuperCoins</TabsTrigger>
+            <TabsTrigger value="retention">Retention</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
             <TabsTrigger value="geography">Geography</TabsTrigger>
             <TabsTrigger value="abandoned">Abandoned Carts</TabsTrigger>
@@ -300,8 +330,16 @@ export default function AdminDashboard() {
                     value={Number(summary.supercoins_earned)}
                   />
                   <StatCard
-                    label="SuperCoins Redeemed"
-                    value={summary.supercoins_redeemed}
+                    label="SuperCoins Burnt"
+                    value={summary.supercoins_burnt}
+                  />
+                  <StatCard
+                    label="\u2248 \u20b9 Value of Coins Burnt"
+                    value={`\u20b9${summary.supercoins_burnt_value_inr_approx}`}
+                  />
+                  <StatCard
+                    label="SuperCoins Held (not yet burnt)"
+                    value={summary.supercoins_held_not_burnt}
                   />
                   <StatCard
                     label="SuperCoins Refunded"
@@ -458,10 +496,18 @@ export default function AdminDashboard() {
                             className={
                               o.voucher_status === "GENERATED"
                                 ? "text-green-600 font-medium"
-                                : "text-red-600 font-medium"
+                                : o.voucher_status === "FAILED"
+                                ? "text-red-600 font-medium"
+                                : "text-[#9CA3AF]"
                             }
                           >
-                            {o.voucher_status}
+                            {o.voucher_status === "GENERATED"
+                              ? "Generated"
+                              : o.voucher_status === "FAILED"
+                              ? "Failed"
+                              : o.voucher_status === "NOT_APPLICABLE_PENDING"
+                              ? "Pending"
+                              : "N/A (never paid)"}
                           </span>
                         </TableCell>
                         <TableCell className="text-xs">
@@ -619,8 +665,10 @@ export default function AdminDashboard() {
                       <TableHead>Total Spent</TableHead>
                       <TableHead>Vouchers Received</TableHead>
                       <TableHead>SC Earned</TableHead>
-                      <TableHead>SC Redeemed</TableHead>
+                      <TableHead>SC Burnt</TableHead>
+                      <TableHead>Feedback</TableHead>
                       <TableHead>Last Order</TableHead>
+                      <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -639,11 +687,34 @@ export default function AdminDashboard() {
                         </TableCell>
                         <TableCell>{c.vouchers_received}</TableCell>
                         <TableCell>{Number(c.supercoins_earned)}</TableCell>
-                        <TableCell>{c.supercoins_redeemed}</TableCell>
+                        <TableCell>{c.supercoins_burnt}</TableCell>
+                        <TableCell className="text-xs">
+                          {c.feedback_count > 0 ? (
+                            <div>
+                              <div>
+                                Overall {c.avg_overall ?? "—"} / NPS {c.avg_nps ?? "—"}
+                              </div>
+                              <div className="text-[#6B7280]">
+                                ({c.feedback_count} response{c.feedback_count > 1 ? "s" : ""})
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="text-[#9CA3AF]">No feedback</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-xs">
                           {c.last_order_at
                             ? new Date(c.last_order_at).toLocaleDateString("en-IN")
                             : "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openCustomerJourney(c.client_id)}
+                          >
+                            View Journey
+                          </Button>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -667,8 +738,10 @@ export default function AdminDashboard() {
                         {sumField(customers, "supercoins_earned").toFixed(2)}
                       </TableCell>
                       <TableCell className="font-medium">
-                        {sumField(customers, "supercoins_redeemed")}
+                        {sumField(customers, "supercoins_burnt")}
                       </TableCell>
+                      <TableCell />
+                      <TableCell />
                       <TableCell />
                     </TableRow>
                   </TableFooter>
@@ -701,9 +774,15 @@ export default function AdminDashboard() {
                     />
                     <Line
                       type="monotone"
-                      dataKey="redeemed"
+                      dataKey="burnt"
                       stroke="#3B82F6"
-                      name="Redeemed"
+                      name="Burnt"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="held_not_burnt"
+                      stroke="#9CA3AF"
+                      name="Held (not yet burnt)"
                     />
                     <Line
                       type="monotone"
@@ -723,9 +802,10 @@ export default function AdminDashboard() {
                     <TableRow>
                       <TableHead>Day</TableHead>
                       <TableHead>Earned</TableHead>
-                      <TableHead>Redeemed</TableHead>
+                      <TableHead>Burnt</TableHead>
+                      <TableHead>Held (not yet burnt)</TableHead>
                       <TableHead>Refunded</TableHead>
-                      <TableHead>Orders Using SuperCoins</TableHead>
+                      <TableHead>Orders That Burnt SC</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -733,12 +813,123 @@ export default function AdminDashboard() {
                       <TableRow key={i}>
                         <TableCell>{s.day}</TableCell>
                         <TableCell>{Number(s.earned)}</TableCell>
-                        <TableCell>{s.redeemed}</TableCell>
+                        <TableCell>{s.burnt}</TableCell>
+                        <TableCell>{s.held_not_burnt}</TableCell>
                         <TableCell>{s.refunded}</TableCell>
-                        <TableCell>{s.orders_using_supercoins}</TableCell>
+                        <TableCell>{s.orders_that_burnt_supercoins}</TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ================= RETENTION ================= */}
+          <TabsContent value="retention">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm">Retention (Daily)</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-xs text-[#6B7280] mb-3">
+                  Cashback flow: discount% × voucher value. Standard (neither
+                  cashback nor SuperCoins): 2× that value. SuperCoins method:
+                  coins earned × ₹0.75. Only orders with a genuinely issued
+                  voucher are counted.
+                </div>
+                <ResponsiveContainer width="100%" height={340}>
+                  <LineChart data={retention}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="day" tick={{ fontSize: 11 }} />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Line
+                      type="monotone"
+                      dataKey="retention"
+                      stroke="#7C3AED"
+                      name="Total Retention"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="retention_cashback"
+                      stroke="#EF4444"
+                      name="Cashback Flow"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="retention_supercoins"
+                      stroke="#3B82F6"
+                      name="SuperCoins Method"
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="retention_standard"
+                      stroke="#10B981"
+                      name="Standard"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card className="mt-4">
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Day</TableHead>
+                      <TableHead>Total Retention</TableHead>
+                      <TableHead>Cashback (₹ / orders)</TableHead>
+                      <TableHead>SuperCoins (₹ / orders)</TableHead>
+                      <TableHead>Standard (₹ / orders)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {retention.map((r, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{r.day}</TableCell>
+                        <TableCell className="font-medium">
+                          ₹{Number(r.retention).toLocaleString("en-IN")}
+                        </TableCell>
+                        <TableCell>
+                          ₹{Number(r.retention_cashback).toLocaleString("en-IN")}
+                          {" / "}
+                          {r.cashback_orders}
+                        </TableCell>
+                        <TableCell>
+                          ₹{Number(r.retention_supercoins).toLocaleString("en-IN")}
+                          {" / "}
+                          {r.supercoins_orders}
+                        </TableCell>
+                        <TableCell>
+                          ₹{Number(r.retention_standard).toLocaleString("en-IN")}
+                          {" / "}
+                          {r.standard_orders}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                  <TableFooter>
+                    <TableRow>
+                      <TableCell className="font-medium">
+                        Total ({retention.length} days)
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(retention, "retention"))}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(retention, "retention_cashback"))}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(retention, "retention_supercoins"))}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {fmtINR(sumField(retention, "retention_standard"))}
+                      </TableCell>
+                    </TableRow>
+                  </TableFooter>
                 </Table>
               </CardContent>
             </Card>
@@ -1167,6 +1358,60 @@ export default function AdminDashboard() {
             Loading…
           </div>
         )}
+
+        <Dialog open={journeyOpen} onOpenChange={setJourneyOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>
+                {journeyData?.profile?.client_name ?? "Customer Journey"}
+              </DialogTitle>
+            </DialogHeader>
+            {journeyLoading && (
+              <div className="text-sm text-[#6B7280]">Loading journey…</div>
+            )}
+            {!journeyLoading && journeyData && (
+              <div>
+                <div className="text-sm text-[#6B7280] mb-4">
+                  {journeyData.profile?.client_email} · {journeyData.profile?.client_mobile}
+                </div>
+                {journeyData.timeline.length === 0 && (
+                  <div className="text-sm text-[#6B7280]">No activity found.</div>
+                )}
+                <div className="space-y-3">
+                  {journeyData.timeline.map((event: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className="border-l-2 border-[#7C3AED] pl-3 py-1"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-[#7C3AED]">
+                          {event.event_type}
+                        </span>
+                        <span className="text-xs text-[#6B7280]">
+                          {event.event_at
+                            ? new Date(event.event_at).toLocaleString("en-IN")
+                            : ""}
+                        </span>
+                      </div>
+                      <div className="text-sm">
+                        {event.ref}
+                        {event.amount != null && ` — ₹${event.amount}`}
+                      </div>
+                      {event.detail && (
+                        <div className="text-xs text-[#6B7280]">{event.detail}</div>
+                      )}
+                      <div className="text-xs text-[#6B7280]">
+                        {event.status_detail}
+                        {event.voucher_outcome && ` · ${event.voucher_outcome}`}
+                        {event.coins_involved > 0 && ` · ${event.coins_involved} coins`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

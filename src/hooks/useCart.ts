@@ -4,6 +4,7 @@ import { getCart, addToCart, updateCartQuantity, removeFromCart, clearCart, merg
 import type { Cart, AddToCartRequest, OrderRequest } from "@/types/cart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { trackEvent } from "@/lib/analytics";
 
 // LocalStorage cart key
 const GUEST_CART_KEY = "guestCart";
@@ -100,10 +101,24 @@ const { data: cart, isLoading, isError, refetch } = useQuery({
       
       return addToCart(clientId!, item);
     },
-    onSuccess: (data) => {
+    onSuccess: (data, item) => {
       if (clientId) {
         queryClient.setQueryData(["cart", clientId], data);
       }
+      // GA4 add_to_cart -- centralized here so it fires exactly once per real
+      // add, regardless of which UI entry point (QuickBuyModal, BrandBuySheet,
+      // BrandDetailsPage) triggered it, and only on genuine success.
+      trackEvent("add_to_cart", {
+        items: [
+          {
+            item_id: item.brandId,
+            quantity: item.quantity,
+            price: item.unitValue,
+          },
+        ],
+        value: item.quantity * item.unitValue,
+        currency: "INR",
+      });
     },
     onError: () => {
       toast({ title: "Failed to add to cart", variant: "destructive" });

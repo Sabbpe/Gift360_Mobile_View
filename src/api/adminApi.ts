@@ -67,8 +67,20 @@ export const fetchCustomerStats = async (
   return res.data;
 };
 
+export const fetchCustomerJourney = async (
+  params: { clientId?: string; email?: string }
+) => {
+  const res = await adminApiClient.get("/customer-journey", { params });
+  return res.data;
+};
+
 export const fetchSuperCoinTrend = async (range: DateRange = {}) => {
   const res = await adminApiClient.get("/supercoins", { params: range });
+  return res.data;
+};
+
+export const fetchRetentionTrend = async (range: DateRange = {}) => {
+  const res = await adminApiClient.get("/retention", { params: range });
   return res.data;
 };
 

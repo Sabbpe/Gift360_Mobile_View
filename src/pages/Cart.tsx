@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check, Clock } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
+import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
@@ -1237,6 +1238,14 @@ export default function Cart() {
         merchantTransactionId: activeHoldContext.merchantTransactionId,
         merchantWalletId: activeHoldContext.merchantWalletId,
       });
+      // GA4 supercoin_removed -- fires only on a genuinely confirmed
+      // cancellation (the real Flipkart-side unhold call succeeded), not
+      // just on the local state clear that always happens in `finally`
+      // below regardless of whether the backend call actually worked.
+      trackEvent("supercoin_removed", {
+        coins: activeHoldContext.amount,
+        transaction_id: orderNumber || superCoinOrderNumber || undefined,
+      });
     } catch (error) {
       console.warn("Failed to cancel SuperCoin hold", error);
     } finally {
@@ -1433,6 +1442,15 @@ export default function Cart() {
 
         paymentInFlightRef.current = true;
         clearActiveSuperCoinHold();
+        // GA4 payment_initiated -- backend-driven SabbPe path (the current
+        // production flow, server-computed amount). Mirrors the same event
+        // on the Atom and Easebuzz paths above for consistency.
+        trackEvent("payment_initiated", {
+          value: uiTotalToPay,
+          currency: "INR",
+          transaction_id: orderNumber,
+          gateway: "sabbpe",
+        });
         window.location.href = paymentUrl;
         clearCart();
       },
@@ -1529,6 +1547,18 @@ export default function Cart() {
 
           try {
             paymentInFlightRef.current = true;
+            // GA4 payment_initiated -- fires only once every guard clause
+            // above has passed and the customer is genuinely being handed
+            // off to the gateway. This is the exact gap tonight's manual
+            // investigations kept reconstructing by hand (order shows PAID
+            // at the gateway but the app never reflected it) -- now visible
+            // directly against the eventual purchase event in GA4.
+            trackEvent("payment_initiated", {
+              value: amount,
+              currency: "INR",
+              transaction_id: orderNumber,
+              gateway: "atom",
+            });
             new window.AtomPaynetz(options, import.meta.env.VITE_PAYMENT_ENV);
             clearCart();
           } catch (error) {
@@ -1648,6 +1678,13 @@ export default function Cart() {
 
         paymentInFlightRef.current = true;
         clearActiveSuperCoinHold();
+        // GA4 payment_initiated -- Easebuzz path, mirrors the other two.
+        trackEvent("payment_initiated", {
+          value: amount,
+          currency: "INR",
+          transaction_id: orderNumber,
+          gateway: "easebuzz",
+        });
         window.location.href = paymentUrl;
         clearCart();
       },
@@ -1712,6 +1749,19 @@ export default function Cart() {
     setSheetAmount(item.unitValue);
     setSheetQuantity(item.quantity);
     setSheetOpen(true);
+    // GA4 begin_checkout -- the moment a specific item moves from cart
+    // browsing into the actual payment flow (amount/quantity now fixed).
+    trackEvent("begin_checkout", {
+      items: [
+        {
+          item_id: item.brandId,
+          quantity: item.quantity,
+          price: item.unitValue,
+        },
+      ],
+      value: item.quantity * item.unitValue,
+      currency: "INR",
+    });
   };
 
   if (!isAuthenticated) {
@@ -2495,6 +2545,14 @@ export default function Cart() {
               saveSuperCoinHoldForOrder(superCoinOrderNumber, context);
             }
             setSuperCoinOTPModalOpen(false);
+            // GA4 supercoin_applied -- fires only on a genuine, fresh OTP
+            // authorization, not on rehydrating an existing hold from
+            // storage on page reload (see the separate setSuperCoinAuthorized
+            // call earlier in this file that does that instead).
+            trackEvent("supercoin_applied", {
+              coins: context.amount,
+              transaction_id: superCoinOrderNumber || undefined,
+            });
           }}
           onSwitchToCashback={() => {
             setSuperCoinOTPModalOpen(false);
