@@ -184,57 +184,88 @@ export default function AdminDashboard() {
 
   const loadAll = useCallback(async () => {
     setLoading(true);
-    try {
-      const [s, o, b, c, sc] = await Promise.all([
-        fetchSummary({ from, to }),
-        fetchOrders({
-          from,
-          to,
-          page: orderPage,
-          size: 50,
-          voucherStatus: voucherStatusFilter || undefined,
-          brandCode: brandFilter || undefined,
-        }),
-        fetchBrandStats({ from, to }),
-        fetchCustomerStats({ from, to, page: 0, size: 50 }),
-        fetchSuperCoinTrend({ from, to }),
-      ]);
-      setSummary(s);
-      setOrders(o.data ?? []);
-      setBrands(b.data ?? []);
-      setCustomers(c.data ?? []);
-      setSuperCoins(sc.data ?? []);
 
-      const retentionData = await fetchRetentionTrend({ from, to });
-      setRetention(retentionData.data ?? []);
+    // Each fetch is isolated -- one endpoint failing (a bad query, a
+    // transient 500, anything) must never blank out the tabs that
+    // succeeded. Tonight's incident: fetchCustomerStats threw, which with
+    // the old Promise.all([...]) pattern silently discarded results from
+    // orders/summary/brands/supercoins too, even though those requests had
+    // already succeeded -- Promise.all is all-or-nothing. This helper
+    // catches and logs per-call instead, so a single broken tab stays
+    // broken (with a console error to diagnose) while everything else
+    // still renders normally.
+    const safeLoad = async <T,>(
+      label: string,
+      fn: () => Promise<T>,
+      onSuccess: (data: T) => void
+    ) => {
+      try {
+        const data = await fn();
+        onSuccess(data);
+      } catch (err) {
+        console.error(`Admin dashboard: failed to load ${label}:`, err);
+      }
+    };
 
-      const errData = await fetchErrorBreakdown({ from, to });
-      setErrors(errData.data ?? []);
+    await Promise.allSettled([
+      safeLoad("summary", () => fetchSummary({ from, to }), setSummary),
+      safeLoad(
+        "orders",
+        () =>
+          fetchOrders({
+            from,
+            to,
+            page: orderPage,
+            size: 50,
+            voucherStatus: voucherStatusFilter || undefined,
+            brandCode: brandFilter || undefined,
+          }),
+        (o) => setOrders(o.data ?? [])
+      ),
+      safeLoad("brands", () => fetchBrandStats({ from, to }), (b) => setBrands(b.data ?? [])),
+      safeLoad(
+        "customers",
+        () => fetchCustomerStats({ from, to, page: 0, size: 50 }),
+        (c) => setCustomers(c.data ?? [])
+      ),
+      safeLoad(
+        "supercoins",
+        () => fetchSuperCoinTrend({ from, to }),
+        (sc) => setSuperCoins(sc.data ?? [])
+      ),
+      safeLoad(
+        "retention",
+        () => fetchRetentionTrend({ from, to }),
+        (r) => setRetention(r.data ?? [])
+      ),
+      safeLoad(
+        "errors",
+        () => fetchErrorBreakdown({ from, to }),
+        (e) => setErrors(e.data ?? [])
+      ),
+      safeLoad(
+        "geography",
+        () => fetchGeography({ from, to }),
+        (g) => setGeography(g.data ?? [])
+      ),
+      safeLoad(
+        "abandoned carts",
+        () => fetchAbandonedCarts({ from, to, page: 0, size: 100 }),
+        (a) => {
+          setAbandonedSummary(a.summary ?? []);
+          setAbandonedDetails(a.data ?? []);
+        }
+      ),
+      safeLoad("carts summary", () => fetchCartsSummary(), setCartsSummary),
+      safeLoad(
+        "carts by customer",
+        () => fetchCartsByCustomer({ minStaleHours: cartStaleFilter, page: 0, size: 100 }),
+        (c) => setCartsByCustomer(c.data ?? [])
+      ),
+      safeLoad("carts by brand", () => fetchCartsByBrand(), (c) => setCartsByBrand(c.data ?? [])),
+    ]);
 
-      const geoData = await fetchGeography({ from, to });
-      setGeography(geoData.data ?? []);
-
-      const abandonedData = await fetchAbandonedCarts({ from, to, page: 0, size: 100 });
-      setAbandonedSummary(abandonedData.summary ?? []);
-      setAbandonedDetails(abandonedData.data ?? []);
-
-      const cSummary = await fetchCartsSummary();
-      setCartsSummary(cSummary);
-
-      const cByCustomer = await fetchCartsByCustomer({
-        minStaleHours: cartStaleFilter,
-        page: 0,
-        size: 100,
-      });
-      setCartsByCustomer(cByCustomer.data ?? []);
-
-      const cByBrand = await fetchCartsByBrand();
-      setCartsByBrand(cByBrand.data ?? []);
-    } catch (err) {
-      console.error("Admin dashboard load failed:", err);
-    } finally {
-      setLoading(false);
-    }
+    setLoading(false);
   }, [from, to, orderPage, voucherStatusFilter, brandFilter, cartStaleFilter]);
 
   useEffect(() => {
