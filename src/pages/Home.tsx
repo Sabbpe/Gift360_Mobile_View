@@ -49,6 +49,7 @@ import giftcardbg from "@/assets/giftcardbg.png";
 import rakhiBannerImg from "@/assets/rakhibanner.png";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
+import certfLogo from "@/assets/certf logo.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
@@ -797,6 +798,14 @@ function MobileHomeScreen() {
         onOpenBrand={openTopBrandModal}
       />
       <RecentlyUsed onBuy={openStandardPaymentSheet} />
+
+      {/* CERTIFICATION LOGO */}
+      <section className="px-[21px] pt-[27px] pb-[10px]">
+        <div className="flex items-center justify-center">
+          <img src={certfLogo} alt="Certifications" className="h-10 w-auto object-contain" />
+        </div>
+      </section>
+
       <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
       <SuperCoinsBrandModal
         open={superCoinsModalOpen}

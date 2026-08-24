@@ -1,5 +1,6 @@
 import { Gift } from "lucide-react";
 import { Link } from "wouter";
+import certfLogo from "@/assets/certf logo.png";
 
 export default function Footer() {
   return (
@@ -30,6 +31,11 @@ export default function Footer() {
           <p className="text-xs sm:text-sm text-muted-foreground text-center md:text-right">
             All rights reserved.
           </p>
+        </div>
+
+        {/* CERTIFICATION LOGO */}
+        <div className="flex items-center justify-center mt-6 pt-6 border-t">
+          <img src={certfLogo} alt="Certifications" className="h-10 sm:h-12 w-auto object-contain" />
         </div>
       </div>
     </footer>
