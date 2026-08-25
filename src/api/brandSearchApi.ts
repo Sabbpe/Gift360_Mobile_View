@@ -286,6 +286,52 @@ export const fetchTopBrands = async (occasion?: string): Promise<Brand[]> => {
     .filter((brand): brand is Brand => Boolean(brand));
 };
 
+export const fetchPersonalRecommendations = async (): Promise<Brand[]> => {
+  const res = await brandApi.post<FetchBrandsApiResponse>(
+    "/v1/personal-recommendations",
+    {}
+  );
+
+  const responseItems = Array.isArray(res.data)
+    ? res.data
+    : res.data.data || res.data.brands || res.data.result || [];
+
+  // Same mapping as fetchTopBrands so cards render identically between
+  // the "Picks for You" section and the occasion-based sections
+  return responseItems
+    .filter(Boolean)
+    .map((brand): Brand | null => {
+      const resolvedBrandId =
+        brand.id || brand.brandId || brand.brand_id || brand.brand_name;
+      const resolvedBrandName = brand.brandName || brand.brand_name;
+
+      if (!resolvedBrandId || !resolvedBrandName) {
+        return null;
+      }
+
+      return {
+        BrandId: resolvedBrandId,
+        BrandName: resolvedBrandName,
+        Category: brand.category || "",
+        Images: parseBrandImages(
+          brand.brand_image_url ||
+            (brand as any).imageUrl ||
+            brand.image ||
+            brand.images ||
+            brand.Image
+        ),
+        Discount:
+          brand.cashback?.toString() || brand.discount?.toString() || undefined,
+        MinPrice: brand.minPrice,
+        MaxPrice: brand.maxPrice,
+        Occasions: Array.isArray((brand as any).occasions)
+          ? (brand as any).occasions
+          : undefined,
+      };
+    })
+    .filter((brand): brand is Brand => Boolean(brand));
+};
+
 export const fetchBrandPaymentDetails = async (
   brandId: string
 ): Promise<BrandDetailsParsed> => {

@@ -61,7 +61,7 @@ import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import { getImageUrl } from "@/utils/imageUrl";
-import { fetchBrandVoucherList, fetchTopBrands, type TopBrandVoucher } from "@/api/brandSearchApi";
+import { fetchBrandVoucherList, fetchTopBrands, fetchPersonalRecommendations, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { brandApi } from "@/lib/valuedesignApi";
@@ -445,6 +445,97 @@ function OccasionPicksSection({
     <section className="px-[21px] pt-[26px]">
       <div className="inline-block bg-white rounded-xl px-3 py-1">
         <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">{title}</h2>
+      </div>
+      {isLoading ? (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="g-skeleton h-[96px] min-w-[88px] flex-shrink-0 rounded-[12px]" />
+          ))}
+        </div>
+      ) : (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {recommended.map((brand, index) => {
+            const image = getImageUrl(brand);
+            const discountNum = Number(brand.Discount ?? 0);
+
+            return (
+              <button
+                key={`${brand.BrandId}-${index}`}
+                onClick={() => void handleBrandClick(brand.BrandId)}
+                disabled={loadingBrandId === brand.BrandId}
+                className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
+              >
+                {discountNum > 0 && (
+                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+                    {discountNum}%
+                  </span>
+                )}
+                {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
+                  <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+                )}
+                <div className="grid h-[40px] w-[40px] place-items-center">
+                  {loadingBrandId === brand.BrandId ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
+                  ) : image ? (
+                    <img
+                      src={image}
+                      alt={brand.BrandName}
+                      className="h-[40px] w-[40px] object-contain"
+                    />
+                  ) : (
+                    <Store className="h-6 w-6 text-[#94a3b8]" strokeWidth={2} />
+                  )}
+                </div>
+                <div className="mt-2 w-full">
+                  <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+                    {brand.BrandName}
+                  </p>
+                  <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+                    {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function PersonalPicksSection({
+  onOpenBrand,
+}: {
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const { data: recommended = [], isLoading } = useQuery({
+    queryKey: ["personal-recommendations"],
+    queryFn: () => fetchPersonalRecommendations(),
+    staleTime: 5 * 60 * 1000,
+    retry: false, // guest users (no auth) shouldn't retry-loop on this
+  });
+  const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
+
+  // Guest users or customers with no order history get an empty array
+  // from the backend -> render nothing, existing occasion sections
+  // below carry on exactly as before.
+  if (!isLoading && !recommended.length) return null;
+
+  const handleBrandClick = async (brandId: string) => {
+    try {
+      setLoadingBrandId(brandId);
+      await onOpenBrand(brandId);
+    } finally {
+      setLoadingBrandId(null);
+    }
+  };
+
+  return (
+    <section className="px-[21px] pt-[26px]">
+      <div className="inline-block bg-white rounded-xl px-3 py-1">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">
+          Picks for You
+        </h2>
       </div>
       {isLoading ? (
         <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
@@ -929,6 +1020,9 @@ function MobileHomeScreen() {
         }}
       />
       <RakhiBanner />
+      <PersonalPicksSection
+        onOpenBrand={openTopBrandModal}
+      />
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
