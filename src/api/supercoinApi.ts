@@ -1,4 +1,4 @@
-﻿import { brandApi } from "@/lib/valuedesignApi";
+import { brandApi } from "@/lib/valuedesignApi";
 
 export type SuperCoinIdentityType = "MOBILE" | "FK_USER" | "HASHED_MOBILE";
 
@@ -189,4 +189,17 @@ export const extractSuperCoinBalance = (
   }
 
   return 0;
+};
+
+export interface SuperCoinConfigResponse {
+  capPercent?: number;
+  [key: string]: unknown;
+}
+
+// Live-configurable SuperCoin cap percent (sabbpe.supercoin.cap-percent on
+// the backend). Fetched fresh, not cached client-side, so a property change
+// on the server is reflected without a frontend redeploy.
+export const fetchSuperCoinConfig = async (): Promise<SuperCoinConfigResponse> => {
+  const response = await brandApi.get<SuperCoinConfigResponse>("/v1/supercoin/config");
+  return response.data;
 };

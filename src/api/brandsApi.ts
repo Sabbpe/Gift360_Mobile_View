@@ -30,6 +30,11 @@ export interface RecommendationsResponse {
   };
 }
 
+export const fetchOccasions = async (): Promise<string[]> => {
+  const res = await brandApi.post<string[]>("/v1/occasions", {});
+  return Array.isArray(res.data) ? res.data.filter((o) => typeof o === "string" && o.trim()) : [];
+};
+
 export const fetchRecommendations = async (occasion: string): Promise<Brand[]> => {
   const res = await brandApi.post<any>("/v1/recommendations", { occasion });
   const raw = res.data;

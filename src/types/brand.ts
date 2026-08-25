@@ -27,6 +27,7 @@ export interface Brand {
   Discount?: string;
   MinPrice?: number;
   MaxPrice?: number;
+  Occasions?: string[];
 }
 
 

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
@@ -8,6 +9,13 @@ import { useToast } from "@/hooks/use-toast";
 import { superCoinConversionConfig } from "@/config/features.config";
 const SUPERCOIN_CONVERSION_PAUSED = superCoinConversionConfig.paused;
 const SUPERCOIN_PAUSED_MESSAGE = superCoinConversionConfig.pausedMessage;
+
+// The dedicated "convert SuperCoins" home button now routes into the same
+// checkout flow used for any normal brand purchase (cashback-vs-SuperCoins
+// choice, the real 20/80 split, the platform fee) rather than the old,
+// separate burn-and-order mechanism -- with this one brand pre-selected.
+// EGCGBFKBS001/burn-and-order stay in the codebase, just unused from here.
+const FLIPKART_B2C_BRAND_ID = "73e3d992-d87e-43e4-aed3-e87cfe6952f5";
 import {
   Loader2,
   ChevronLeft,
@@ -41,6 +49,7 @@ import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
+import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
@@ -382,13 +391,13 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
                 <div className="min-w-0" style={{ flex: 1 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span className="text-[12px] font-semibold text-[#111827] truncate">{brandName}</span>
-                    <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `₹${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
+                    <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `\u20b9${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
                   </div>
                 </div>
               </div>
               <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div className="text-[12px] font-bold text-[#111827]">{priceValue > 0 ? `₹${priceValue.toLocaleString()}` : '-'}</div>
+                <div className="text-[12px] font-bold text-[#111827]">{priceValue > 0 ? `\u20b9${priceValue.toLocaleString()}` : '-'}</div>
                 <button
                   onClick={() => { if (onBuy) onBuy(brandId); else setLocation(`/brand/${brandId}`); }}
                   style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}
@@ -401,6 +410,126 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
         })}
       </div>
     </section>
+  );
+}
+
+function OccasionPicksSection({
+  occasion,
+  onOpenBrand,
+}: {
+  occasion: string;
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const { data: recommended = [], isLoading } = useQuery({
+    queryKey: ["occasion-brands", occasion],
+    queryFn: () => fetchTopBrands(occasion),
+    enabled: !!occasion,
+    staleTime: 5 * 60 * 1000,
+  });
+  const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
+
+  if (!isLoading && !recommended.length) return null;
+
+  const handleBrandClick = async (brandId: string) => {
+    try {
+      setLoadingBrandId(brandId);
+      await onOpenBrand(brandId);
+    } finally {
+      setLoadingBrandId(null);
+    }
+  };
+
+  const title = `${occasion} Picks`;
+
+  return (
+    <section className="px-[21px] pt-[26px]">
+      <div className="inline-block bg-white rounded-xl px-3 py-1">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">{title}</h2>
+      </div>
+      {isLoading ? (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="g-skeleton h-[96px] min-w-[88px] flex-shrink-0 rounded-[12px]" />
+          ))}
+        </div>
+      ) : (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {recommended.map((brand, index) => {
+            const image = getImageUrl(brand);
+            const discountNum = Number(brand.Discount ?? 0);
+
+            return (
+              <button
+                key={`${brand.BrandId}-${index}`}
+                onClick={() => void handleBrandClick(brand.BrandId)}
+                disabled={loadingBrandId === brand.BrandId}
+                className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
+              >
+                {discountNum > 0 && (
+                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+                    {discountNum}%
+                  </span>
+                )}
+                {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
+                  <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+                )}
+                <div className="grid h-[40px] w-[40px] place-items-center">
+                  {loadingBrandId === brand.BrandId ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
+                  ) : image ? (
+                    <img
+                      src={image}
+                      alt={brand.BrandName}
+                      className="h-[40px] w-[40px] object-contain"
+                    />
+                  ) : (
+                    <Store className="h-6 w-6 text-[#94a3b8]" strokeWidth={2} />
+                  )}
+                </div>
+                <div className="mt-2 w-full">
+                  <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+                    {brand.BrandName}
+                  </p>
+                  <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+                    {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function OccasionPicksSections({
+  onOpenBrand,
+}: {
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const { data: occasions = [] } = useOccasions();
+
+  // Pinned campaigns render first (current campaign season); everything else
+  // stays alphabetical below them. New occasions still appear automatically.
+  const OCCASION_PRIORITY = ["Rakhi"];
+
+  const orderedOccasions = useMemo(() => {
+    const pinned = OCCASION_PRIORITY.filter((p) => occasions.includes(p));
+    const rest = occasions
+      .filter((o) => !OCCASION_PRIORITY.includes(o))
+      .sort((a, b) => a.localeCompare(b));
+    return [...pinned, ...rest];
+  }, [occasions]);
+
+  if (!orderedOccasions.length) return null;
+
+  return (
+    <>
+      {orderedOccasions.map((occasion) => (
+        <OccasionPicksSection key={occasion} occasion={occasion} onOpenBrand={onOpenBrand} />
+      ))}
+    </>
   );
 }
 
@@ -765,7 +894,14 @@ function MobileHomeScreen() {
       });
       return;
     }
-    setSuperCoinsModalOpen(true);
+    // Routes into the normal purchase sheet with Flipkart's B2C card
+    // pre-selected -- same flow as handleTopBrandVoucherSelect below, which
+    // already adds to cart and navigates to /cart, where the real
+    // cashback-vs-SuperCoins choice takes over. Replaces the old
+    // burn-and-order/SuperCoinsModal path (kept dormant, not removed).
+    setSheetBrandId(FLIPKART_B2C_BRAND_ID);
+    setSheetInitialAmount(undefined);
+    setBuySheetOpen(true);
   };
 
   // (feedback auto-trigger removed — feedback is only reachable via the floating button)
@@ -793,7 +929,12 @@ function MobileHomeScreen() {
         }}
       />
       <RakhiBanner />
+      <OccasionPicksSections
+        onOpenBrand={openTopBrandModal}
+      />
+      {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement — code kept for later
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
+      */}
       <TopBrandsGrid
         onOpenBrand={openTopBrandModal}
       />

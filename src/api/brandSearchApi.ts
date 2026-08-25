@@ -242,14 +242,18 @@ function parseDenominations(
     .filter(Boolean);
 }
 
-export const fetchTopBrands = async (): Promise<Brand[]> => {
-  const res = await brandApi.post<FetchBrandsApiResponse>("/v1/fetchbrands", {});
+export const fetchTopBrands = async (occasion?: string): Promise<Brand[]> => {
+  const res = await brandApi.post<FetchBrandsApiResponse>(
+    "/v1/fetchbrands",
+    occasion ? { occasion } : {}
+  );
 
   const responseItems = Array.isArray(res.data)
     ? res.data
     : res.data.data || res.data.brands || res.data.result || [];
 
   return responseItems
+    .filter(Boolean)
     .map((brand): Brand | null => {
       const resolvedBrandId =
         brand.id || brand.brandId || brand.brand_id || brand.brand_name;
@@ -264,12 +268,19 @@ export const fetchTopBrands = async (): Promise<Brand[]> => {
         BrandName: resolvedBrandName,
         Category: brand.category || "",
         Images: parseBrandImages(
-          brand.brand_image_url || brand.image || brand.images || brand.Image
+          brand.brand_image_url ||
+            (brand as any).imageUrl ||
+            brand.image ||
+            brand.images ||
+            brand.Image
         ),
         Discount:
           brand.cashback?.toString() || brand.discount?.toString() || undefined,
         MinPrice: brand.minPrice,
         MaxPrice: brand.maxPrice,
+        Occasions: Array.isArray((brand as any).occasions)
+          ? (brand as any).occasions
+          : undefined,
       };
     })
     .filter((brand): brand is Brand => Boolean(brand));

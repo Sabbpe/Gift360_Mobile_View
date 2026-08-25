@@ -46,6 +46,7 @@ import SuperCoinOTPModal, {
 import {
   cancelSuperCoinHold,
   normalizeMobileToE164,
+  fetchSuperCoinConfig,
 } from "@/api/supercoinApi";
 import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -277,6 +278,23 @@ export default function Cart() {
   });
   const [superCoinOTPModalOpen, setSuperCoinOTPModalOpen] = useState(false);
   const [superCoinAuthorized, setSuperCoinAuthorized] = useState(false);
+  // Live-configurable cap percent (sabbpe.supercoin.cap-percent), fetched
+  // from the backend so this stays in sync with the real enforced value
+  // without needing a frontend redeploy. 20 is only the fallback used
+  // before the fetch resolves (or if it fails) -- matches the backend's
+  // own @Value default for the same property.
+  const [superCoinCapPercent, setSuperCoinCapPercent] = useState(20);
+  useEffect(() => {
+    fetchSuperCoinConfig()
+      .then((config) => {
+        if (typeof config.capPercent === "number" && config.capPercent > 0) {
+          setSuperCoinCapPercent(config.capPercent);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch SuperCoin config, using fallback cap:", err);
+      });
+  }, []);
   const [superCoinHoldContext, setSuperCoinHoldContext] = useState<SuperCoinHoldContext | null>(null);
   const superCoinHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
   const paymentInFlightRef = useRef(false);
@@ -1103,7 +1121,8 @@ export default function Cart() {
   );
 
   // Replaces the old formula (itemTotal × cashbackPercent/100 × 0.8, ₹-
-  // denominated, no multiplier) with the intended rule: cap = 50% of each
+  // denominated, no multiplier) with the intended rule: cap = a live-configurable
+  // percent (superCoinCapPercent, default 20%) of each
   // eligible item's own face value, converted to an actual COIN count using
   // THAT item's own supercoin_multiplier (giftvouchers_brands.supercoin_multiplier,
   // default 1.25 - matches sabbpe.supercoin.redemption-surcharge-percent=25).
@@ -1126,7 +1145,7 @@ export default function Cart() {
       .forEach(item => {
         const itemTotal = item.quantity * item.unitValue;
         const multiplier = brandSupercoinMultiplierMap[item.brandId] ?? 1.25;
-        const itemRupeeCap = itemTotal * 0.5;
+        const itemRupeeCap = itemTotal * (superCoinCapPercent / 100);
         const itemCoinCap = Math.ceil(itemRupeeCap * multiplier);
         totalRupeeCap += itemRupeeCap;
         totalCoinCap += itemCoinCap;
@@ -1143,11 +1162,16 @@ export default function Cart() {
       ) / effectiveSupercoinMultiplier
     : 0;
 
+  // Flat platform fee applied to every order, on top of the discounted
+  // amount -- matches GiftcardOrderService.calculateExpectedNetPayable on
+  // the backend exactly (added after the floor-at-zero, so it applies even
+  // to a fully-discounted order that would otherwise show ₹0).
+  const PLATFORM_FEE = 5;
+
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
-  const finalPayable = Math.max(
-    0,
-    couponAdjustedAmount - walletDeduction - superCoinDeduction
-  );
+  const finalPayable =
+    Math.max(0, couponAdjustedAmount - walletDeduction - superCoinDeduction) +
+    PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
   const estimatedEarn = finalPayable * 0.01;
 
@@ -2320,6 +2344,15 @@ export default function Cart() {
                       </span>
                       <span className="font-medium text-sm sm:text-base cart-text-primary">
                         ₹{processingFee.toFixed(2)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm sm:text-base cart-text-secondary">
+                        Platform Fee
+                      </span>
+                      <span className="font-medium text-sm sm:text-base cart-text-primary">
+                        ₹{PLATFORM_FEE.toFixed(2)}
                       </span>
                     </div>
                   </div>
