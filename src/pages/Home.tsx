@@ -22,7 +22,6 @@ import {
   Bell,
   Eye,
   EyeOff,
-  AlertCircle,
   Gift,
   Search,
   Package,
@@ -43,9 +42,7 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
-import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/homeback.jpeg";
-import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
@@ -503,88 +500,21 @@ function OccasionPicksSection({
   );
 }
 
-function OccasionPicksSections({
+function TopBrandsSection({
   onOpenBrand,
 }: {
   onOpenBrand: (brandId: string) => Promise<void> | void;
 }) {
-  const { data: occasions = [] } = useOccasions();
-
-  // Pinned campaigns render first (current campaign season); everything else
-  // stays alphabetical below them. New occasions still appear automatically.
-  const OCCASION_PRIORITY = ["Rakhi"];
-
-  const orderedOccasions = useMemo(() => {
-    const pinned = OCCASION_PRIORITY.filter((p) => occasions.includes(p));
-    const rest = occasions
-      .filter((o) => !OCCASION_PRIORITY.includes(o))
-      .sort((a, b) => a.localeCompare(b));
-    return [...pinned, ...rest];
-  }, [occasions]);
-
-  if (!orderedOccasions.length) return null;
-
-  return (
-    <>
-      {orderedOccasions.map((occasion) => (
-        <OccasionPicksSection key={occasion} occasion={occasion} onOpenBrand={onOpenBrand} />
-      ))}
-    </>
-  );
-}
-
-function TopBrandsGrid({
-  onOpenBrand,
-}: {
-  onOpenBrand: (brandId: string) => Promise<void> | void;
-}) {
-  const [topBrands, setTopBrands] = useState<Brand[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  const { data: topBrands = [], isLoading } = useQuery({
+    queryKey: ["occasion-brands", "top brands"],
+    queryFn: () => fetchTopBrands("top brands"),
+    staleTime: 5 * 60 * 1000,
+  });
   const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
+  if (!isLoading && !topBrands.length) return null;
 
-    const loadTopBrands = async () => {
-      setIsLoading(true);
-      setHasError(false);
-
-      try {
-        const response = await fetchTopBrands();
-
-        if (isMounted) {
-          setTopBrands(response);
-        }
-      } catch (error) {
-        console.error("Failed to fetch top brands:", error);
-        if (isMounted) {
-          setHasError(true);
-          setTopBrands([]);
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
-    void loadTopBrands();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  const midPoint = Math.ceil(topBrands.length / 2);
-  const firstRowBrands = topBrands.slice(0, midPoint);
-  const secondRowBrands = topBrands.slice(midPoint);
-  const topRowItems =
-    firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
-  const bottomRowItems =
-    secondRowBrands.length > 0 ? [...secondRowBrands, ...secondRowBrands] : [...firstRowBrands, ...firstRowBrands];
-
-  const handleTopBrandBuy = async (brandId: string) => {
+  const handleBrandClick = async (brandId: string) => {
     try {
       setLoadingBrandId(brandId);
       await onOpenBrand(brandId);
@@ -593,6 +523,12 @@ function TopBrandsGrid({
     }
   };
 
+  const midPoint = Math.ceil(topBrands.length / 2);
+  const firstRowBrands = topBrands.slice(0, midPoint);
+  const secondRowBrands = topBrands.slice(midPoint);
+  const topRowItems = firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
+  const bottomRowItems = secondRowBrands.length > 0 ? [...secondRowBrands, ...secondRowBrands] : [...firstRowBrands, ...firstRowBrands];
+
   const renderBrandCard = (brand: Brand, index: number) => {
     const image = getImageUrl(brand);
     const discountNum = Number(brand.Discount ?? 0);
@@ -600,7 +536,7 @@ function TopBrandsGrid({
     return (
       <button
         key={`${brand.BrandId}-${index}`}
-        onClick={() => void handleTopBrandBuy(brand.BrandId)}
+        onClick={() => void handleBrandClick(brand.BrandId)}
         disabled={loadingBrandId === brand.BrandId}
         className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
       >
@@ -651,20 +587,6 @@ function TopBrandsGrid({
             />
           ))}
         </div>
-      ) : hasError ? (
-        <div className="mt-[11px] rounded-[12px] bg-white px-4 py-5 shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
-          <div className="flex items-center justify-center gap-2 text-[#b42318]">
-            <AlertCircle className="h-4 w-4" />
-            <p className="text-[13px] font-semibold">Unable to load top brands right now.</p>
-          </div>
-          <p className="mt-1 text-center text-[11px] text-[#667085]">
-            Please try again in a moment.
-          </p>
-        </div>
-      ) : topBrands.length === 0 ? (
-        <div className="mt-[11px] rounded-[12px] bg-[#f5f5f5] px-4 py-4 text-center text-[12px] text-[#888888]">
-          No top brands available right now.
-        </div>
       ) : (
         <div className="marquee-mask mt-[11px] overflow-hidden">
           <div
@@ -684,6 +606,38 @@ function TopBrandsGrid({
     </section>
   );
 }
+
+function OccasionPicksSections({
+  onOpenBrand,
+}: {
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const { data: occasions = [] } = useOccasions();
+
+  // Pinned campaigns render first (current campaign season); everything else
+  // stays alphabetical below them. New occasions still appear automatically.
+  const OCCASION_PRIORITY = ["Rakhi"];
+
+  const orderedOccasions = useMemo(() => {
+    const pinned = OCCASION_PRIORITY.filter((p) => occasions.includes(p));
+    const rest = occasions
+      .filter((o) => !OCCASION_PRIORITY.includes(o))
+      .sort((a, b) => a.localeCompare(b));
+    return [...pinned, ...rest];
+  }, [occasions]);
+
+  if (!orderedOccasions.length) return null;
+
+  return (
+    <>
+      {orderedOccasions.map((occasion) => (
+        <OccasionPicksSection key={occasion} occasion={occasion} onOpenBrand={onOpenBrand} />
+      ))}
+    </>
+  );
+}
+
+
 
 function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
   const [items, setItems] = useState<BrandItem[]>([]);
@@ -797,49 +751,7 @@ function MobileHomeScreen() {
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
   const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
 
-  const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
-
-  useEffect(() => {
-    fetchTopBrands().then(setTopBrandsFromApi).catch(() => {});
-  }, []);
-
-  const recentlyBoughtBrands: MatchedBrand[] = useMemo(() => {
-    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-    const cartNormMap = new Map<string, CartBrandEntry>();
-    for (const entry of cartBrandNames) {
-      cartNormMap.set(normalize(entry.displayName), entry);
-    }
-
-    return topBrandsFromApi
-      .filter((b) => {
-        const brandNorm = normalize(b.BrandName);
-        for (const [cartNorm] of cartNormMap) {
-          if (
-            brandNorm === cartNorm ||
-            brandNorm.includes(cartNorm) ||
-            cartNorm.includes(brandNorm)
-          ) {
-            return true;
-          }
-        }
-        return false;
-      })
-      .map((b) => {
-        const brandNorm = normalize(b.BrandName);
-        for (const [cartNorm, entry] of cartNormMap) {
-          if (
-            brandNorm === cartNorm ||
-            brandNorm.includes(cartNorm) ||
-            cartNorm.includes(brandNorm)
-          ) {
-            return { ...b, cartMeta: entry };
-          }
-        }
-        return null;
-      })
-      .filter((b): b is MatchedBrand => b !== null)
-      .slice(0, 10);
-  }, [topBrandsFromApi]);
+  const { data: occasions = [] } = useOccasions();
 
   const openStandardPaymentSheet = (brandId: string) => {
     setSheetBrandId(brandId);
@@ -929,15 +841,13 @@ function MobileHomeScreen() {
         }}
       />
       <RakhiBanner />
+      <TopBrandsSection onOpenBrand={openTopBrandModal} />
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
       {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement — code kept for later
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       */}
-      <TopBrandsGrid
-        onOpenBrand={openTopBrandModal}
-      />
       <RecentlyUsed onBuy={openStandardPaymentSheet} />
 
       {/* CERTIFICATION LOGO */}
