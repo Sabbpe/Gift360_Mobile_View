@@ -22,6 +22,7 @@ import {
   Bell,
   Eye,
   EyeOff,
+  AlertCircle,
   Gift,
   Search,
   Package,
@@ -42,7 +43,9 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
+import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/homeback.jpeg";
+import { cartBrandNames } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
@@ -500,113 +503,6 @@ function OccasionPicksSection({
   );
 }
 
-function TopBrandsSection({
-  onOpenBrand,
-}: {
-  onOpenBrand: (brandId: string) => Promise<void> | void;
-}) {
-  const { data: topBrands = [], isLoading } = useQuery({
-    queryKey: ["occasion-brands", "top brands"],
-    queryFn: () => fetchTopBrands("top brands"),
-    staleTime: 5 * 60 * 1000,
-  });
-  const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
-
-  if (!isLoading && !topBrands.length) return null;
-
-  const handleBrandClick = async (brandId: string) => {
-    try {
-      setLoadingBrandId(brandId);
-      await onOpenBrand(brandId);
-    } finally {
-      setLoadingBrandId(null);
-    }
-  };
-
-  const midPoint = Math.ceil(topBrands.length / 2);
-  const firstRowBrands = topBrands.slice(0, midPoint);
-  const secondRowBrands = topBrands.slice(midPoint);
-  const topRowItems = firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
-  const bottomRowItems = secondRowBrands.length > 0 ? [...secondRowBrands, ...secondRowBrands] : [...firstRowBrands, ...firstRowBrands];
-
-  const renderBrandCard = (brand: Brand, index: number) => {
-    const image = getImageUrl(brand);
-    const discountNum = Number(brand.Discount ?? 0);
-
-    return (
-      <button
-        key={`${brand.BrandId}-${index}`}
-        onClick={() => void handleBrandClick(brand.BrandId)}
-        disabled={loadingBrandId === brand.BrandId}
-        className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
-      >
-        {discountNum > 0 && (
-          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
-            {discountNum}%
-          </span>
-        )}
-        {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
-        )}
-        <div className="grid h-[40px] w-[40px] place-items-center">
-          {loadingBrandId === brand.BrandId ? (
-            <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
-          ) : image ? (
-            <img
-              src={image}
-              alt={brand.BrandName}
-              className="h-[40px] w-[40px] object-contain"
-            />
-          ) : (
-            <Store className="h-6 w-6 text-[#94a3b8]" strokeWidth={2} />
-          )}
-        </div>
-        <div className="mt-2 w-full">
-          <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
-            {brand.BrandName}
-          </p>
-          <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
-            {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
-          </p>
-        </div>
-      </button>
-    );
-  };
-
-  return (
-    <section className="px-[21px] pt-[26px]">
-      <div className="inline-block bg-white rounded-xl px-3 py-1">
-        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Top Brands</h2>
-      </div>
-      {isLoading ? (
-        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
-          {Array.from({ length: 4 }).map((_, index) => (
-            <div
-              key={index}
-              className="g-skeleton h-[96px] min-w-[88px] flex-shrink-0 rounded-[12px]"
-            />
-          ))}
-        </div>
-      ) : (
-        <div className="marquee-mask mt-[11px] overflow-hidden">
-          <div
-            className="flex w-max gap-3 pb-3 anim-marquee-ltr"
-            style={{ animationDuration: "200s" }}
-          >
-            {topRowItems.map(renderBrandCard)}
-          </div>
-          <div
-            className="mt-3 flex w-max gap-3 anim-marquee-rtl"
-            style={{ animationDuration: "220s" }}
-          >
-            {bottomRowItems.map(renderBrandCard)}
-          </div>
-        </div>
-      )}
-    </section>
-  );
-}
-
 function PersonalPicksSection({
   onOpenBrand,
 }: {
@@ -616,10 +512,13 @@ function PersonalPicksSection({
     queryKey: ["personal-recommendations"],
     queryFn: () => fetchPersonalRecommendations(),
     staleTime: 5 * 60 * 1000,
-    retry: false,
+    retry: false, // guest users (no auth) shouldn't retry-loop on this
   });
   const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
 
+  // Guest users or customers with no order history get an empty array
+  // from the backend -> render nothing, existing occasion sections
+  // below carry on exactly as before.
   if (!isLoading && !recommended.length) return null;
 
   const handleBrandClick = async (brandId: string) => {
@@ -725,7 +624,157 @@ function OccasionPicksSections({
   );
 }
 
+function TopBrandsGrid({
+  onOpenBrand,
+}: {
+  onOpenBrand: (brandId: string) => Promise<void> | void;
+}) {
+  const [topBrands, setTopBrands] = useState<Brand[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const [loadingBrandId, setLoadingBrandId] = useState<string | null>(null);
 
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadTopBrands = async () => {
+      setIsLoading(true);
+      setHasError(false);
+
+      try {
+        const response = await fetchTopBrands();
+
+        if (isMounted) {
+          setTopBrands(response);
+        }
+      } catch (error) {
+        console.error("Failed to fetch top brands:", error);
+        if (isMounted) {
+          setHasError(true);
+          setTopBrands([]);
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    void loadTopBrands();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const midPoint = Math.ceil(topBrands.length / 2);
+  const firstRowBrands = topBrands.slice(0, midPoint);
+  const secondRowBrands = topBrands.slice(midPoint);
+  const topRowItems =
+    firstRowBrands.length > 0 ? [...firstRowBrands, ...firstRowBrands] : [];
+  const bottomRowItems =
+    secondRowBrands.length > 0 ? [...secondRowBrands, ...secondRowBrands] : [...firstRowBrands, ...firstRowBrands];
+
+  const handleTopBrandBuy = async (brandId: string) => {
+    try {
+      setLoadingBrandId(brandId);
+      await onOpenBrand(brandId);
+    } finally {
+      setLoadingBrandId(null);
+    }
+  };
+
+  const renderBrandCard = (brand: Brand, index: number) => {
+    const image = getImageUrl(brand);
+    const discountNum = Number(brand.Discount ?? 0);
+
+    return (
+      <button
+        key={`${brand.BrandId}-${index}`}
+        onClick={() => void handleTopBrandBuy(brand.BrandId)}
+        disabled={loadingBrandId === brand.BrandId}
+        className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
+      >
+        {discountNum > 0 && (
+          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+            {discountNum}%
+          </span>
+        )}
+        {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
+          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+        )}
+        <div className="grid h-[40px] w-[40px] place-items-center">
+          {loadingBrandId === brand.BrandId ? (
+            <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
+          ) : image ? (
+            <img
+              src={image}
+              alt={brand.BrandName}
+              className="h-[40px] w-[40px] object-contain"
+            />
+          ) : (
+            <Store className="h-6 w-6 text-[#94a3b8]" strokeWidth={2} />
+          )}
+        </div>
+        <div className="mt-2 w-full">
+          <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+            {brand.BrandName}
+          </p>
+          <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+            {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
+          </p>
+        </div>
+      </button>
+    );
+  };
+
+  return (
+    <section className="px-[21px] pt-[26px]">
+      <div className="inline-block bg-white rounded-xl px-3 py-1">
+        <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">Top Brands</h2>
+      </div>
+      {isLoading ? (
+        <div className="no-scrollbar mt-[11px] flex gap-3 overflow-x-auto pb-2">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <div
+              key={index}
+              className="g-skeleton h-[96px] min-w-[88px] flex-shrink-0 rounded-[12px]"
+            />
+          ))}
+        </div>
+      ) : hasError ? (
+        <div className="mt-[11px] rounded-[12px] bg-white px-4 py-5 shadow-[0_4px_14px_rgba(15,23,42,0.08)]">
+          <div className="flex items-center justify-center gap-2 text-[#b42318]">
+            <AlertCircle className="h-4 w-4" />
+            <p className="text-[13px] font-semibold">Unable to load top brands right now.</p>
+          </div>
+          <p className="mt-1 text-center text-[11px] text-[#667085]">
+            Please try again in a moment.
+          </p>
+        </div>
+      ) : topBrands.length === 0 ? (
+        <div className="mt-[11px] rounded-[12px] bg-[#f5f5f5] px-4 py-4 text-center text-[12px] text-[#888888]">
+          No top brands available right now.
+        </div>
+      ) : (
+        <div className="marquee-mask mt-[11px] overflow-hidden">
+          <div
+            className="flex w-max gap-3 pb-3 anim-marquee-ltr"
+            style={{ animationDuration: "200s" }}
+          >
+            {topRowItems.map(renderBrandCard)}
+          </div>
+          <div
+            className="mt-3 flex w-max gap-3 anim-marquee-rtl"
+            style={{ animationDuration: "220s" }}
+          >
+            {bottomRowItems.map(renderBrandCard)}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
 
 function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
   const [items, setItems] = useState<BrandItem[]>([]);
@@ -839,7 +888,49 @@ function MobileHomeScreen() {
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
   const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
 
-  const { data: occasions = [] } = useOccasions();
+  const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
+
+  useEffect(() => {
+    fetchTopBrands().then(setTopBrandsFromApi).catch(() => {});
+  }, []);
+
+  const recentlyBoughtBrands: MatchedBrand[] = useMemo(() => {
+    const normalize = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const cartNormMap = new Map<string, CartBrandEntry>();
+    for (const entry of cartBrandNames) {
+      cartNormMap.set(normalize(entry.displayName), entry);
+    }
+
+    return topBrandsFromApi
+      .filter((b) => {
+        const brandNorm = normalize(b.BrandName);
+        for (const [cartNorm] of cartNormMap) {
+          if (
+            brandNorm === cartNorm ||
+            brandNorm.includes(cartNorm) ||
+            cartNorm.includes(brandNorm)
+          ) {
+            return true;
+          }
+        }
+        return false;
+      })
+      .map((b) => {
+        const brandNorm = normalize(b.BrandName);
+        for (const [cartNorm, entry] of cartNormMap) {
+          if (
+            brandNorm === cartNorm ||
+            brandNorm.includes(cartNorm) ||
+            cartNorm.includes(brandNorm)
+          ) {
+            return { ...b, cartMeta: entry };
+          }
+        }
+        return null;
+      })
+      .filter((b): b is MatchedBrand => b !== null)
+      .slice(0, 10);
+  }, [topBrandsFromApi]);
 
   const openStandardPaymentSheet = (brandId: string) => {
     setSheetBrandId(brandId);
@@ -923,22 +1014,24 @@ function MobileHomeScreen() {
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard />
-      {/* RecommendedList hidden per requirement — code kept for later
       <RecommendedList
         onBuy={(id) => {
           openStandardPaymentSheet(id);
         }}
       />
-      */}
       <RakhiBanner />
-      <PersonalPicksSection onOpenBrand={openTopBrandModal} />
+      <PersonalPicksSection
+        onOpenBrand={openStandardPaymentSheet}
+      />
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
-      <TopBrandsSection onOpenBrand={openTopBrandModal} />
       {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement — code kept for later
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       */}
+      <TopBrandsGrid
+        onOpenBrand={openTopBrandModal}
+      />
       <RecentlyUsed onBuy={openStandardPaymentSheet} />
 
       {/* CERTIFICATION LOGO */}

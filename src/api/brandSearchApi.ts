@@ -296,8 +296,11 @@ export const fetchPersonalRecommendations = async (): Promise<Brand[]> => {
     ? res.data
     : res.data.data || res.data.brands || res.data.result || [];
 
-  // Same mapping as fetchTopBrands so cards render identically between
-  // the "Picks for You" section and the occasion-based sections
+  // Data here comes from giftvouchers_public (via get_personal_recommendations),
+  // same source as fetchBrandVoucherList -- images arrive as a nested/sometimes
+  // double-JSON-encoded object ({ raw: "..." }), not a flat URL string like
+  // fetchTopBrands' brands-table source. Reuse that proven unwrap logic instead
+  // of parseBrandImages, which only handles flat strings.
   return responseItems
     .filter(Boolean)
     .map((brand): Brand | null => {
@@ -309,17 +312,35 @@ export const fetchPersonalRecommendations = async (): Promise<Brand[]> => {
         return null;
       }
 
+      let parsedImage: any = null;
+      if (brand.image && typeof brand.image === "object") {
+        parsedImage = brand.image;
+      } else if (typeof brand.image === "string") {
+        parsedImage = parseBrandImages(brand.image);
+      } else if (brand.images || brand.brand_image_url) {
+        parsedImage = parseBrandImages(brand.images || brand.brand_image_url || null);
+      }
+
+      if (parsedImage) {
+        const fields = ["raw", "featured", "thumbnail", "mobile", "base", "small", "text"] as const;
+        for (const field of fields) {
+          const value = parsedImage[field];
+          if (typeof value === "string" && (value.startsWith("{") || value.startsWith("["))) {
+            try {
+              const parsed = JSON.parse(value);
+              if (typeof parsed === "object" && parsed !== null) {
+                parsedImage[field] = parsed.raw || parsed.featured || parsed.thumbnail || parsed.mobile || parsed.base || parsed.small || parsed.text || value;
+              }
+            } catch { /* not valid JSON, keep original value */ }
+          }
+        }
+      }
+
       return {
         BrandId: resolvedBrandId,
         BrandName: resolvedBrandName,
         Category: brand.category || "",
-        Images: parseBrandImages(
-          brand.brand_image_url ||
-            (brand as any).imageUrl ||
-            brand.image ||
-            brand.images ||
-            brand.Image
-        ),
+        Images: parsedImage,
         Discount:
           brand.cashback?.toString() || brand.discount?.toString() || undefined,
         MinPrice: brand.minPrice,
