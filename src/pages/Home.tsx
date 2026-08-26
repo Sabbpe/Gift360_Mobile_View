@@ -923,17 +923,19 @@ function MobileHomeScreen() {
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard />
+      {/* RecommendedList hidden per requirement — code kept for later
       <RecommendedList
         onBuy={(id) => {
           openStandardPaymentSheet(id);
         }}
       />
+      */}
       <RakhiBanner />
       <PersonalPicksSection onOpenBrand={openTopBrandModal} />
-      <TopBrandsSection onOpenBrand={openTopBrandModal} />
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
+      <TopBrandsSection onOpenBrand={openTopBrandModal} />
       {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement — code kept for later
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       */}
