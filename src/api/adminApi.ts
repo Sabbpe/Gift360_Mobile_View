@@ -155,3 +155,66 @@ export const verifyAdminKey = async (key: string): Promise<boolean> => {
     return false;
   }
 };
+
+// =========================================================================
+// MIS DASHBOARD -- Gift 360 Master MIS (GMV, SuperCoin economics, MDR,
+// transaction counts, users, voucher margin/volume) plus the two admin
+// data-entry endpoints (MDR rates, VD wallet top-ups) that have no
+// automated source.
+// =========================================================================
+
+export const fetchMisMaster = async (range: DateRange = {}) => {
+  const res = await adminApiClient.get("/mis/master", { params: range });
+  return res.data;
+};
+
+export const fetchMisCustomerSaving = async (range: DateRange = {}) => {
+  const res = await adminApiClient.get("/mis/customer-saving", { params: range });
+  return res.data;
+};
+
+export const fetchMisThresholds = async () => {
+  const res = await adminApiClient.get("/mis/thresholds");
+  return res.data;
+};
+
+export const updateMisThresholds = async (thresholds: {
+  highMarginPct: number;
+  lowMarginPct: number;
+  highVolumeCount: number;
+  enteredBy?: string;
+}) => {
+  const res = await adminApiClient.post("/mis/thresholds", thresholds);
+  return res.data;
+};
+
+export const fetchMdrRates = async () => {
+  const res = await adminApiClient.get("/mis/mdr-rates");
+  return res.data;
+};
+
+export const updateMdrRates = async (rates: {
+  upiRate: number;
+  debitRate: number;
+  creditRate: number;
+  mobileWalletRate: number;
+  netbankingRate: number;
+  enteredBy?: string;
+}) => {
+  const res = await adminApiClient.post("/mis/mdr-rates", rates);
+  return res.data;
+};
+
+export const fetchVdWallet = async (range: DateRange = {}) => {
+  const res = await adminApiClient.get("/mis/vd-wallet", { params: range });
+  return res.data;
+};
+
+export const logVdWalletTopup = async (topup: {
+  topupDate: string;
+  amount: number;
+  enteredBy?: string;
+}) => {
+  const res = await adminApiClient.post("/mis/vd-wallet/topup", topup);
+  return res.data;
+};

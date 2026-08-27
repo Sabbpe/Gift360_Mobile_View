@@ -23,6 +23,14 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
 import {
   BarChart,
   Bar,
@@ -55,6 +63,14 @@ import {
   fetchCartsByBrand,
   downloadCsv,
   ADMIN_KEY_STORAGE,
+  fetchMisMaster,
+  fetchMisCustomerSaving,
+  fetchMdrRates,
+  updateMdrRates,
+  fetchVdWallet,
+  logVdWalletTopup,
+  fetchMisThresholds,
+  updateMisThresholds,
 } from "@/api/adminApi";
 import {
   Dialog,
@@ -169,6 +185,33 @@ export default function AdminDashboard() {
   const [cartsSummary, setCartsSummary] = useState<any>(null);
   const [cartsByCustomer, setCartsByCustomer] = useState<any[]>([]);
   const [cartsByBrand, setCartsByBrand] = useState<any[]>([]);
+  const [misMaster, setMisMaster] = useState<any>(null);
+  const [misCustomerSaving, setMisCustomerSaving] = useState<any>(null);
+  const [mdrRates, setMdrRates] = useState<any>(null);
+  const [vdWallet, setVdWallet] = useState<any>(null);
+  const [misThresholds, setMisThresholds] = useState<any>(null);
+  const [thresholdFormOpen, setThresholdFormOpen] = useState(false);
+  const [thresholdFormSaving, setThresholdFormSaving] = useState(false);
+  const [thresholdForm, setThresholdForm] = useState({
+    highMarginPct: "5",
+    lowMarginPct: "3",
+    highVolumeCount: "50",
+  });
+  const [mdrFormOpen, setMdrFormOpen] = useState(false);
+  const [mdrFormSaving, setMdrFormSaving] = useState(false);
+  const [mdrForm, setMdrForm] = useState({
+    upiRate: "0.52",
+    debitRate: "1.00",
+    creditRate: "2.20",
+    mobileWalletRate: "0.50",
+    netbankingRate: "0.10",
+  });
+  const [topupFormOpen, setTopupFormOpen] = useState(false);
+  const [topupFormSaving, setTopupFormSaving] = useState(false);
+  const [topupForm, setTopupForm] = useState({
+    topupDate: todayISO(),
+    amount: "",
+  });
   const [journeyOpen, setJourneyOpen] = useState(false);
   const [journeyLoading, setJourneyLoading] = useState(false);
   const [journeyData, setJourneyData] = useState<{ profile: any; timeline: any[] } | null>(null);
@@ -264,6 +307,11 @@ export default function AdminDashboard() {
         (c) => setCartsByCustomer(c.data ?? [])
       ),
       safeLoad("carts by brand", () => fetchCartsByBrand(), (c) => setCartsByBrand(c.data ?? [])),
+      safeLoad("mis master", () => fetchMisMaster({ from, to }), setMisMaster),
+      safeLoad("mis customer saving", () => fetchMisCustomerSaving({ from, to }), setMisCustomerSaving),
+      safeLoad("mdr rates", () => fetchMdrRates(), setMdrRates),
+      safeLoad("vd wallet", () => fetchVdWallet({ from, to }), setVdWallet),
+      safeLoad("mis thresholds", () => fetchMisThresholds(), setMisThresholds),
     ]);
 
     setLoading(false);
@@ -272,6 +320,70 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authed) loadAll();
   }, [authed, loadAll]);
+
+  const handleMdrSubmit = useCallback(async () => {
+    setMdrFormSaving(true);
+    try {
+      await updateMdrRates({
+        upiRate: Number(mdrForm.upiRate),
+        debitRate: Number(mdrForm.debitRate),
+        creditRate: Number(mdrForm.creditRate),
+        mobileWalletRate: Number(mdrForm.mobileWalletRate),
+        netbankingRate: Number(mdrForm.netbankingRate),
+        enteredBy: "admin",
+      });
+      setMdrFormOpen(false);
+      const fresh = await fetchMdrRates();
+      setMdrRates(fresh);
+      const freshMaster = await fetchMisMaster({ from, to });
+      setMisMaster(freshMaster);
+    } catch (err) {
+      console.error("Failed to update MDR rates:", err);
+    } finally {
+      setMdrFormSaving(false);
+    }
+  }, [mdrForm, from, to]);
+
+  const handleTopupSubmit = useCallback(async () => {
+    if (!topupForm.amount || Number(topupForm.amount) <= 0) return;
+    setTopupFormSaving(true);
+    try {
+      await logVdWalletTopup({
+        topupDate: topupForm.topupDate,
+        amount: Number(topupForm.amount),
+        enteredBy: "admin",
+      });
+      setTopupFormOpen(false);
+      setTopupForm({ topupDate: todayISO(), amount: "" });
+      const fresh = await fetchVdWallet({ from, to });
+      setVdWallet(fresh);
+    } catch (err) {
+      console.error("Failed to log VD wallet topup:", err);
+    } finally {
+      setTopupFormSaving(false);
+    }
+  }, [topupForm, from, to]);
+
+  const handleThresholdSubmit = useCallback(async () => {
+    setThresholdFormSaving(true);
+    try {
+      await updateMisThresholds({
+        highMarginPct: Number(thresholdForm.highMarginPct),
+        lowMarginPct: Number(thresholdForm.lowMarginPct),
+        highVolumeCount: Number(thresholdForm.highVolumeCount),
+        enteredBy: "admin",
+      });
+      setThresholdFormOpen(false);
+      const fresh = await fetchMisThresholds();
+      setMisThresholds(fresh);
+      const freshMaster = await fetchMisMaster({ from, to });
+      setMisMaster(freshMaster);
+    } catch (err) {
+      console.error("Failed to update MIS thresholds:", err);
+    } finally {
+      setThresholdFormSaving(false);
+    }
+  }, [thresholdForm, from, to]);
 
   const openCustomerJourney = useCallback(async (clientId: string) => {
     setJourneyOpen(true);
@@ -347,6 +459,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="geography">Geography</TabsTrigger>
             <TabsTrigger value="abandoned">Abandoned Carts</TabsTrigger>
             <TabsTrigger value="currentcarts">Current Carts</TabsTrigger>
+            <TabsTrigger value="mis">MIS</TabsTrigger>
           </TabsList>
 
           {/* ================= OVERVIEW ================= */}
@@ -1427,6 +1540,472 @@ export default function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ================= MIS ================= */}
+          <TabsContent value="mis">
+            {!misMaster ? (
+              <div className="text-sm text-[#6B7280]">Loading MIS data…</div>
+            ) : (
+              <>
+                {/* ---- GMV: YTD / MTD / FTD, per the literal template shape ---- */}
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle className="text-sm">GMV</CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-0 overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead></TableHead>
+                          <TableHead className="text-right">YTD</TableHead>
+                          <TableHead className="text-right">MTD</TableHead>
+                          <TableHead className="text-right">FTD</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="text-[#6B7280]">Count</TableCell>
+                          <TableCell className="text-right">{Number(misMaster.gmv?.ytd?.count || 0).toLocaleString("en-IN")}</TableCell>
+                          <TableCell className="text-right">{Number(misMaster.gmv?.mtd?.count || 0).toLocaleString("en-IN")}</TableCell>
+                          <TableCell className="text-right">{Number(misMaster.gmv?.ftd?.count || 0).toLocaleString("en-IN")}</TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell className="text-[#6B7280]">Value</TableCell>
+                          <TableCell className="text-right">{fmtINR(Number(misMaster.gmv?.ytd?.value || 0))}</TableCell>
+                          <TableCell className="text-right">{fmtINR(Number(misMaster.gmv?.mtd?.value || 0))}</TableCell>
+                          <TableCell className="text-right">{fmtINR(Number(misMaster.gmv?.ftd?.value || 0))}</TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                <div className="grid grid-cols-2 gap-3 mb-4">
+                  <StatCard label="Platform Fee" value={fmtINR(Number(misMaster.platformFee || 0))} />
+                  <StatCard label="Abuse Users" value={Number(misMaster.abuseUserCount || 0)} />
+                </div>
+
+                {/* ---- Profit (formula unconfirmed -- flagged visibly, not hidden) ---- */}
+                <Card className="mb-4 border-amber-300">
+                  <CardHeader>
+                    <CardTitle className="text-sm">Profit</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="text-xs text-[#6B7280] mb-1">Value</div>
+                        <div className="text-xl font-bold text-[#111827]">
+                          {fmtINR(Number(misMaster.profit?.value || 0))}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs text-[#6B7280] mb-1">% of GMV (MTD)</div>
+                        <div className="text-xl font-bold text-[#111827]">
+                          {Number(misMaster.profit?.percentOfGmv || 0).toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-xs text-amber-700 mt-3 bg-amber-50 border border-amber-200 rounded p-2">
+                      ⚠ {misMaster.profit?.formulaNote}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* ---- SuperCoin Economics ---- */}
+                <Card className="mb-4">
+                  <CardHeader>
+                    <CardTitle className="text-sm">SuperCoin Economics</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
+                      <StatCard label="Coins Earned" value={Number(misMaster.customerEarn?.coinsEarned || 0)} />
+                      <StatCard label="Coins Burnt" value={Number(misMaster.customerEarn?.coinsBurnt || 0)} />
+                      <StatCard label="VD (voucher margin)" value={fmtINR(Number(misMaster.sabbpeEarning?.vd || 0))} />
+                      <StatCard label="SabbPe Earning (FK SC)" value={fmtINR(Number(misMaster.sabbpeEarning?.fkSc || 0))} />
+                      <StatCard label="FK Rewards" value={fmtINR(Number(misMaster.sabbpeEarning?.fkRewards || 0))} />
+                      <StatCard label="SabbPe Burn" value={`${fmtINR(Number(misMaster.sabbpeBurn?.fkBurnValue || 0))} · 25%`} />
+                      <StatCard label="SabbPe Earn FK (leakage)" value={`${fmtINR(Number(misMaster.sabbpeEarnFk?.fkEarnValue || 0))} · 80%`} />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* ---- Transaction Count & Users ---- */}
+                <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-4">
+                  <StatCard label="Txn Count (period)" value={Number(misMaster.transactionCount?.mtd_count || 0)} />
+                  <StatCard label="Approved" value={Number(misMaster.transactionCount?.approved || 0)} />
+                  <StatCard label="Declined" value={Number(misMaster.transactionCount?.declined || 0)} />
+                  <StatCard label="Pending" value={Number(misMaster.transactionCount?.pending || 0)} />
+                  <StatCard label="Unique Users" value={Number(misMaster.users?.unique_users || 0)} />
+                  <StatCard label="Repeat Users" value={Number(misMaster.users?.repeat_users || 0)} />
+                </div>
+
+                {/* ---- MDR ---- */}
+                <Card className="mb-4">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm">MDR (auto-derived volume, admin-set rates)</CardTitle>
+                    <Button size="sm" variant="outline" onClick={() => setMdrFormOpen((o) => !o)}>
+                      {mdrFormOpen ? "Cancel" : "Update Rates"}
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {mdrFormOpen && (
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 mb-4 p-3 bg-[#F8FAFC] rounded border">
+                        {(
+                          [
+                            ["upiRate", "UPI %"],
+                            ["debitRate", "Debit %"],
+                            ["creditRate", "Credit %"],
+                            ["mobileWalletRate", "Mobile Wallet %"],
+                            ["netbankingRate", "Netbanking %"],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <div key={key}>
+                            <Label className="text-xs">{label}</Label>
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={(mdrForm as any)[key]}
+                              onChange={(e) =>
+                                setMdrForm((f) => ({ ...f, [key]: e.target.value }))
+                              }
+                            />
+                          </div>
+                        ))}
+                        <div className="col-span-2 md:col-span-5">
+                          <Button size="sm" disabled={mdrFormSaving} onClick={handleMdrSubmit}>
+                            {mdrFormSaving ? "Saving…" : "Save Rates"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {mdrRates && (
+                      <div className="text-xs text-[#6B7280] mb-3">
+                        Current rates (effective {mdrRates.effective_from}): UPI {mdrRates.upi_rate}% ·
+                        Debit {mdrRates.debit_rate}% · Credit {mdrRates.credit_rate}% · Mobile Wallet{" "}
+                        {mdrRates.mobile_wallet_rate}% · Netbanking {mdrRates.netbanking_rate}%
+                      </div>
+                    )}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Mode</TableHead>
+                          <TableHead>Txn Count</TableHead>
+                          <TableHead>Volume</TableHead>
+                          <TableHead>Rate</TableHead>
+                          <TableHead>MDR</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {misMaster.mdr?.byMode &&
+                          Object.entries(misMaster.mdr.byMode).map(([mode, v]: [string, any]) => (
+                            <TableRow key={mode}>
+                              <TableCell>{mode}</TableCell>
+                              <TableCell>{v.txnCount}</TableCell>
+                              <TableCell>{fmtINR(Number(v.volume || 0))}</TableCell>
+                              <TableCell>{v.rate !== undefined ? `${v.rate}%` : "—"}</TableCell>
+                              <TableCell>
+                                {v.mdr === "N/A" ? "N/A" : fmtINR(Number(v.mdr || 0))}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                      </TableBody>
+                      <TableFooter>
+                        <TableRow>
+                          <TableCell className="font-medium">Total</TableCell>
+                          <TableCell />
+                          <TableCell />
+                          <TableCell />
+                          <TableCell className="font-medium">
+                            {fmtINR(Number(misMaster.mdr?.total || 0))}
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    </Table>
+                    {Number(misMaster.mdr?.uncategorizedVolume || 0) > 0 && (
+                      <div className="text-xs text-amber-700 mt-2">
+                        ⚠ {fmtINR(Number(misMaster.mdr.uncategorizedVolume))} in transaction volume has an
+                        unrecognized payment mode and is excluded from the MDR total above.
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* ---- VD Wallet ---- */}
+                <Card className="mb-4">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm">ValueDesign Wallet</CardTitle>
+                    <Button size="sm" variant="outline" onClick={() => setTopupFormOpen((o) => !o)}>
+                      {topupFormOpen ? "Cancel" : "Log Top-up"}
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="mb-3">
+                      <div className="text-xs text-[#6B7280] mb-1">Current Balance</div>
+                      <div className="text-xl font-bold text-[#111827]">
+                        {vdWallet?.currentBalance != null
+                          ? fmtINR(Number(vdWallet.currentBalance))
+                          : "—"}
+                      </div>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-right">YTD</TableHead>
+                          <TableHead className="text-right">MTD</TableHead>
+                          <TableHead className="text-right">FTD</TableHead>
+                          <TableHead className="text-right">Run Rate</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        <TableRow>
+                          <TableCell className="text-right">{fmtINR(Number(vdWallet?.ytd || 0))}</TableCell>
+                          <TableCell className="text-right">{fmtINR(Number(vdWallet?.mtd || 0))}</TableCell>
+                          <TableCell className="text-right">{fmtINR(Number(vdWallet?.ftd || 0))}</TableCell>
+                          <TableCell className="text-right">
+                            {(() => {
+                              const ri = vdWallet?.runRateInputs;
+                              if (!ri?.opening_balance || !ri?.closing_balance || !ri?.day_count) return "—";
+                              const rate = (Number(ri.opening_balance) - Number(ri.closing_balance)) / Number(ri.day_count);
+                              return `${fmtINR(rate)}/day`;
+                            })()}
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                    {topupFormOpen && (
+                      <div className="flex flex-wrap items-end gap-2 mb-4 p-3 bg-[#F8FAFC] rounded border mt-4">
+                        <div>
+                          <Label className="text-xs">Top-up Date</Label>
+                          <Input
+                            type="date"
+                            value={topupForm.topupDate}
+                            onChange={(e) =>
+                              setTopupForm((f) => ({ ...f, topupDate: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Amount (₹)</Label>
+                          <Input
+                            type="number"
+                            value={topupForm.amount}
+                            onChange={(e) =>
+                              setTopupForm((f) => ({ ...f, amount: e.target.value }))
+                            }
+                          />
+                        </div>
+                        <Button size="sm" disabled={topupFormSaving} onClick={handleTopupSubmit}>
+                          {topupFormSaving ? "Saving…" : "Save Top-up"}
+                        </Button>
+                      </div>
+                    )}
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Date</TableHead>
+                          <TableHead>Amount</TableHead>
+                          <TableHead>Entered By</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {(vdWallet?.topups || []).map((t: any, i: number) => (
+                          <TableRow key={i}>
+                            <TableCell>{t.topup_date}</TableCell>
+                            <TableCell>{fmtINR(Number(t.amount))}</TableCell>
+                            <TableCell>{t.entered_by}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
+
+                {/* ---- Voucher Categorization (issued vouchers only) ---- */}
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <CardTitle className="text-sm">Voucher Categorization</CardTitle>
+                    <Button size="sm" variant="outline" onClick={() => setThresholdFormOpen((o) => !o)}>
+                      {thresholdFormOpen ? "Cancel" : "Set Thresholds"}
+                    </Button>
+                  </CardHeader>
+                  <CardContent>
+                    {thresholdFormOpen && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 p-3 bg-[#F8FAFC] rounded border">
+                        <div>
+                          <Label className="text-xs">High Margin threshold</Label>
+                          <Select
+                            value={thresholdForm.highMarginPct}
+                            onValueChange={(v) => setThresholdForm((f) => ({ ...f, highMarginPct: v }))}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["3", "5", "7", "10", "15"].map((v) => (
+                                <SelectItem key={v} value={v}>{`> ${v}%`}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">Low Margin threshold</Label>
+                          <Select
+                            value={thresholdForm.lowMarginPct}
+                            onValueChange={(v) => setThresholdForm((f) => ({ ...f, lowMarginPct: v }))}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["1", "2", "3", "5"].map((v) => (
+                                <SelectItem key={v} value={v}>{`< ${v}%`}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <Label className="text-xs">High Volume threshold</Label>
+                          <Select
+                            value={thresholdForm.highVolumeCount}
+                            onValueChange={(v) => setThresholdForm((f) => ({ ...f, highVolumeCount: v }))}
+                          >
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {["10", "25", "50", "100", "200"].map((v) => (
+                                <SelectItem key={v} value={v}>{`> ${v} issued`}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="md:col-span-3">
+                          <Button size="sm" disabled={thresholdFormSaving} onClick={handleThresholdSubmit}>
+                            {thresholdFormSaving ? "Saving…" : "Save Thresholds"}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                    {misThresholds && (
+                      <div className="text-xs text-[#6B7280] mb-4">
+                        Current: High Margin &gt;{misThresholds.high_margin_pct}% · Low Margin &lt;
+                        {misThresholds.low_margin_pct}% · High Volume &gt;{misThresholds.high_volume_count} issued
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <div className="text-xs font-medium text-[#111827] mb-2">High Margin</div>
+                        <div className="text-sm text-[#6B7280]">
+                          {(misMaster.voucherCategorization?.highMargin || []).join(", ") || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-[#111827] mb-2">Low Margin</div>
+                        <div className="text-sm text-[#6B7280]">
+                          {(misMaster.voucherCategorization?.lowMargin || []).join(", ") || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-[#111827] mb-2">High Volume</div>
+                        <div className="text-sm text-[#6B7280]">
+                          {(misMaster.voucherCategorization?.highVolume || []).join(", ") || "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-xs font-medium text-[#111827] mb-2">Zero Volume</div>
+                        <div className="text-sm text-[#6B7280]">
+                          {(misMaster.voucherCategorization?.zeroVolume || []).join(", ") || "—"}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* ==================== SHEET 2: Customer Saving View ==================== */}
+                <h3 className="text-lg font-bold text-[#111827] mt-8 mb-4 pt-6 border-t">
+                  Gift 360 Customer Saving View
+                </h3>
+
+                {!misCustomerSaving ? (
+                  <div className="text-sm text-[#6B7280]">Loading…</div>
+                ) : (
+                  <>
+                    <Card className="mb-4">
+                      <CardHeader>
+                        <CardTitle className="text-sm">Purchases</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0 overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead className="text-right">YTD</TableHead>
+                              <TableHead className="text-right">MTD</TableHead>
+                              <TableHead className="text-right">FTD</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="text-right">{Number(misCustomerSaving.purchases?.ytd || 0).toLocaleString("en-IN")}</TableCell>
+                              <TableCell className="text-right">{Number(misCustomerSaving.purchases?.mtd || 0).toLocaleString("en-IN")}</TableCell>
+                              <TableCell className="text-right">{Number(misCustomerSaving.purchases?.ftd || 0).toLocaleString("en-IN")}</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="mb-4">
+                      <CardHeader>
+                        <CardTitle className="text-sm">Customer Earning</CardTitle>
+                      </CardHeader>
+                      <CardContent className="p-0 overflow-x-auto">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead></TableHead>
+                              <TableHead className="text-right">Value</TableHead>
+                              <TableHead className="text-right">%</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            <TableRow>
+                              <TableCell className="text-[#6B7280]">SabbPe Cashback</TableCell>
+                              <TableCell className="text-right">{fmtINR(Number(misCustomerSaving.customerEarning?.sabbpeCashback?.value || 0))}</TableCell>
+                              <TableCell className="text-right">{Number(misCustomerSaving.customerEarning?.sabbpeCashback?.percentOfGmv || 0).toFixed(2)}%</TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell className="text-[#6B7280]">FK SuperCoins</TableCell>
+                              <TableCell className="text-right">{Number(misCustomerSaving.customerEarning?.fkSc?.value || 0).toLocaleString("en-IN")}</TableCell>
+                              <TableCell className="text-right">{Number(misCustomerSaving.customerEarning?.fkSc?.percentOfGmv || 0).toFixed(2)}%</TableCell>
+                            </TableRow>
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="mb-4">
+                      <CardHeader>
+                        <CardTitle className="text-sm">Saving thru Gift360</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <div className="text-xs text-[#6B7280] mb-1">Value (cashback + SuperCoins earned)</div>
+                            <div className="text-xl font-bold text-[#111827]">
+                              {fmtINR(Number(misCustomerSaving.savingThruGift360?.value || 0))}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-xs text-[#6B7280] mb-1">% of actual cash paid</div>
+                            <div className="text-xl font-bold text-[#111827]">
+                              {Number(misCustomerSaving.savingThruGift360?.percent || 0).toFixed(2)}%
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-xs text-[#6B7280] mt-3">
+                          Actual cash paid (from payment gateway): {fmtINR(Number(misCustomerSaving.savingThruGift360?.actualPaid || 0))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </>
+                )}
+              </>
+            )}
           </TabsContent>
         </Tabs>
 
