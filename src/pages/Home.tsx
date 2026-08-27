@@ -604,17 +604,11 @@ function OccasionPicksSections({
 }) {
   const { data: occasions = [] } = useOccasions();
 
-  // Pinned campaigns render first (current campaign season); everything else
-  // stays alphabetical below them. New occasions still appear automatically.
-  const OCCASION_PRIORITY = ["Rakhi"];
-
-  const orderedOccasions = useMemo(() => {
-    const pinned = OCCASION_PRIORITY.filter((p) => occasions.includes(p));
-    const rest = occasions
-      .filter((o) => !OCCASION_PRIORITY.includes(o))
-      .sort((a, b) => a.localeCompare(b));
-    return [...pinned, ...rest];
-  }, [occasions]);
+  // Order is now fully controlled by the database (occasion_display_order
+  // table + get_distinct_occasions procedure) -- the API already returns
+  // occasions in the correct order, so we render them exactly as received.
+  // Reordering going forward is a plain SQL UPDATE, no deploy needed.
+  const orderedOccasions = occasions;
 
   if (!orderedOccasions.length) return null;
 
