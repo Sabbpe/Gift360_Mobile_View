@@ -45,7 +45,7 @@ import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/homeback.jpeg";
-import { cartBrandNames } from "@/data/recentlyBought";
+import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
 import { Input } from "@/components/ui/input";
@@ -439,7 +439,10 @@ function OccasionPicksSection({
     }
   };
 
-  const title = `${occasion} Picks`;
+  // Render whatever is stored in the occasions column exactly as-is --
+  // no static " Picks" suffix appended. Whatever the admin sets as the
+  // occasion string is the full header, verbatim.
+  const title = occasion;
 
   return (
     <section className="px-[21px] pt-[26px]">
