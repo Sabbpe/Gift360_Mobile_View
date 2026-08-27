@@ -146,7 +146,7 @@ useEffect(() => {
   const itemsPerPage = 48; // 8 rows × 6 columns
   const { data, isLoading, isError } = useQuery({
     queryKey: ["brands-menu-page"],
-    queryFn: fetchTopBrands,
+    queryFn: () => fetchTopBrands(),
   });
   const { data: filterMeta, isLoading: metaLoading } = useFilterMeta();
 
