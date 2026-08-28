@@ -156,7 +156,7 @@ export default function FeedbackForm({ open, onClose }: Props) {
               </QuestionBlock>
 
               {/* Q2: Gender */}
-              <QuestionBlock icon={HelpCircle} label="What is your gender?">
+              <QuestionBlock icon={HelpCircle} label="You are">
                 <div className="flex gap-2">
                   {[
                     { label: "Male", value: "male" },
