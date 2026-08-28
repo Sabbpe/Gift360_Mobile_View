@@ -639,7 +639,7 @@ function TopBrandsGrid({
       setHasError(false);
 
       try {
-        const response = await fetchTopBrands();
+        const response = await fetchTopBrands("top brands");
 
         if (isMounted) {
           setTopBrands(response);
@@ -757,13 +757,13 @@ function TopBrandsGrid({
         <div className="marquee-mask mt-[11px] overflow-hidden">
           <div
             className="flex w-max gap-3 pb-3 anim-marquee-ltr"
-            style={{ animationDuration: "200s" }}
+            style={{ animationDuration: "160s" }}
           >
             {topRowItems.map(renderBrandCard)}
           </div>
           <div
             className="mt-3 flex w-max gap-3 anim-marquee-rtl"
-            style={{ animationDuration: "220s" }}
+            style={{ animationDuration: "160s" }}
           >
             {bottomRowItems.map(renderBrandCard)}
           </div>
@@ -888,7 +888,7 @@ function MobileHomeScreen() {
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
   useEffect(() => {
-    fetchTopBrands().then(setTopBrandsFromApi).catch(() => {});
+    fetchTopBrands("top brands").then(setTopBrandsFromApi).catch(() => {});
   }, []);
 
   const recentlyBoughtBrands: MatchedBrand[] = useMemo(() => {
