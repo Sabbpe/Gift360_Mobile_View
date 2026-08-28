@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, CheckCircle, MessageSquare, Loader2, Zap, MousePointerClick, CreditCard, Star, Lightbulb, AlertTriangle, ThumbsUp, HelpCircle } from "lucide-react";
+import { X, CheckCircle, MessageSquare, Loader2, Zap, MousePointerClick, CreditCard, Star, Lightbulb, ThumbsUp, HelpCircle } from "lucide-react";
 import { submitFeedback } from "@/api/feedbackApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { trackEvent } from "@/lib/analytics";
@@ -39,9 +39,6 @@ export default function FeedbackForm({ open, onClose }: Props) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   };
 
-  const showIssueDetail =
-    answers.payment === "issues" || answers.voucherDelivery === "never_received";
-
   const handleSubmit = async () => {
     setLoading(true);
     setError(null);
@@ -52,12 +49,13 @@ export default function FeedbackForm({ open, onClose }: Props) {
         payment: answers.payment,
         overall: answers.overall,
         nps: answers.nps,
-        voucherDelivery: answers.voucherDelivery,
-        missingBrand: answers.missingBrand,
+        locationShare: answers.locationShare,
+        userLocation: answers.userLocation,
+        gender: answers.gender,
+        occupation: answers.occupation,
         brandBought: answers.brandBought,
         hasSuggestion: answers.hasSuggestion,
         suggestion: answers.suggestion,
-        issueDetail: answers.issueDetail,
         clientId: user?.clientId,
       });
       markFeedbackSubmitted();
@@ -87,8 +85,8 @@ export default function FeedbackForm({ open, onClose }: Props) {
     onClose();
   };
 
-  const requiredFields = ["speed", "usability", "payment", "overall", "nps", "voucherDelivery"];
-  if (showIssueDetail) requiredFields.push("issueDetail");
+  const requiredFields = ["speed", "usability", "payment", "overall", "nps", "locationShare", "gender"];
+  if (answers.locationShare === "yes") requiredFields.push("userLocation");
   const allAnswered = requiredFields.every((id) => answers[id] !== undefined && answers[id] !== "");
 
   return (
@@ -123,7 +121,65 @@ export default function FeedbackForm({ open, onClose }: Props) {
             </div>
           ) : (
             <>
-              {/* Q1: Speed */}
+              {/* Q1: Location sharing */}
+              <QuestionBlock icon={HelpCircle} label="Would you like to share your location so we can recommend offers available near you?">
+                <div className="flex gap-2">
+                  {[
+                    { label: "Yes", value: "yes" },
+                    { label: "No", value: "no" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setAnswer("locationShare", opt.value)}
+                      className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all border-2 ${
+                        answers.locationShare === opt.value
+                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+                {answers.locationShare === "yes" && (
+                  <div className="mt-3 pl-[42px] animate-in fade-in duration-200">
+                    <input
+                      type="text"
+                      value={answers.userLocation || ""}
+                      onChange={(e) => setAnswer("userLocation", e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-sm"
+                      placeholder="Enter your city or area"
+                    />
+                  </div>
+                )}
+              </QuestionBlock>
+
+              {/* Q2: Gender */}
+              <QuestionBlock icon={HelpCircle} label="What is your gender?">
+                <div className="flex gap-2">
+                  {[
+                    { label: "Male", value: "male" },
+                    { label: "Female", value: "female" },
+                    { label: "Other", value: "other" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => setAnswer("gender", opt.value)}
+                      className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all border-2 ${
+                        answers.gender === opt.value
+                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md"
+                          : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </QuestionBlock>
+
+              {/* Q3: Speed */}
               <QuestionBlock icon={Zap} label="How fast does the app feel?">
                 <div className="grid grid-cols-4 gap-2">
                   {[
@@ -243,20 +299,20 @@ export default function FeedbackForm({ open, onClose }: Props) {
                 </div>
               </QuestionBlock>
 
-              {/* Q6: Voucher delivery */}
-              <QuestionBlock icon={HelpCircle} label="Did you get your voucher without any problems?">
-                <div className="flex gap-2">
+              {/* Q9: Occupation */}
+              <QuestionBlock icon={HelpCircle} label="What best describes you?" optional>
+                <div className="flex flex-wrap gap-2">
                   {[
-                    { label: "Yes", value: "yes" },
-                    { label: "Delayed", value: "delayed" },
-                    { label: "Never received", value: "never_received" },
+                    { label: "Working Professional", value: "working_professional" },
+                    { label: "Student", value: "student" },
+                    { label: "Business Owner", value: "business_owner" },
                   ].map((opt) => (
                     <button
                       key={opt.value}
                       type="button"
-                      onClick={() => setAnswer("voucherDelivery", opt.value)}
+                      onClick={() => setAnswer("occupation", opt.value)}
                       className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all border-2 ${
-                        answers.voucherDelivery === opt.value
+                        answers.occupation === opt.value
                           ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md"
                           : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
                       }`}
@@ -265,62 +321,6 @@ export default function FeedbackForm({ open, onClose }: Props) {
                     </button>
                   ))}
                 </div>
-              </QuestionBlock>
-
-              {/* Conditional: Issue detail */}
-              {showIssueDetail && (
-                <div className="space-y-2 animate-in fade-in duration-200">
-                  <div className="flex items-center gap-2.5">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-red-100">
-                      <AlertTriangle className="h-4 w-4 text-red-600" />
-                    </div>
-                    <h3 className="text-sm font-semibold text-gray-900 leading-snug">What happened? *</h3>
-                  </div>
-                  <div className="pl-[42px]">
-                    <textarea
-                      value={answers.issueDetail || ""}
-                      onChange={(e) => setAnswer("issueDetail", e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all resize-none text-sm"
-                      placeholder="Tell us what went wrong so we can fix it..."
-                    />
-                  </div>
-                </div>
-              )}
-
-              {/* Q7: Missing brands */}
-              <QuestionBlock icon={HelpCircle} label="Any brands you were looking for but couldn't find on Gift360?" optional>
-                <div className="flex gap-2 pl-[42px]">
-                  {[
-                    { label: "No", value: "no" },
-                    { label: "Not sure", value: "not_sure" },
-                    { label: "Yes", value: "yes" },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => setAnswer("missingBrand", opt.value)}
-                      className={`flex-1 rounded-xl py-2.5 text-sm font-semibold transition-all border-2 ${
-                        answers.missingBrand === opt.value
-                          ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-transparent shadow-md"
-                          : "bg-white text-gray-700 border-gray-200 hover:border-purple-300"
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-                {answers.missingBrand === "yes" && (
-                  <div className="pl-[42px] animate-in fade-in duration-200">
-                    <input
-                      type="text"
-                      value={answers.brandBought || ""}
-                      onChange={(e) => setAnswer("brandBought", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all text-sm"
-                      placeholder="Which brands were you looking for?"
-                    />
-                  </div>
-                )}
               </QuestionBlock>
 
               {/* Q8: Suggestions */}

@@ -1198,7 +1198,7 @@ return (
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2 text-sm sm:text-base font-semibold">
                       <MapPin className="text-primary h-4 w-4 sm:h-5 sm:w-5" />
-                      <span>Nearby Stores</span>
+                      <span>Offers Near You</span>
                     </div>
                     {nearbyStores.length > 0 && (
                       <span className="text-xs sm:text-sm bg-primary/10 text-primary px-2.5 py-1 rounded-full font-medium">

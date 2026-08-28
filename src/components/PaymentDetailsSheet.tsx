@@ -118,8 +118,6 @@ export default function PaymentDetailsSheet({
     };
   }, [open]);
 
-  const sliderPercent = max > min ? ((amount - min) / (max - min)) * 100 : 0;
-
   const handleSheetClose = () => {
     onClose();
   };
@@ -416,61 +414,7 @@ export default function PaymentDetailsSheet({
               margin-top: 24px;
               margin-bottom: 8px;
             }
-            .payment-range {
-              -webkit-appearance: none;
-              appearance: none;
-              width: 100%;
-              height: 10px;
-              border-radius: 10px;
-              outline: none;
-              background: #DAD5FF;
-            }
-            .payment-range::-webkit-slider-runnable-track {
-              height: 10px;
-              border-radius: 10px;
-              background: transparent;
-            }
-            .payment-range::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              appearance: none;
-              width: 15px;
-              height: 15px;
-              border-radius: 50%;
-              background: #6C5CE7;
-              border: 1px solid #FFFFFF;
-              margin-top: -2.5px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.22);
-            }
-            .payment-range::-moz-range-track {
-              height: 10px;
-              border-radius: 10px;
-              background: #DAD5FF;
-            }
-            .payment-range::-moz-range-progress {
-              height: 10px;
-              border-radius: 10px;
-              background: linear-gradient(90deg, #9747FF, #5B2B99);
-            }
-            .payment-range::-moz-range-thumb {
-              width: 15px;
-              height: 15px;
-              border-radius: 50%;
-              background: #6C5CE7;
-              border: 1px solid #FFFFFF;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.22);
-            }
-            .amount-bubble::after {
-              content: "";
-              position: absolute;
-              left: 50%;
-              bottom: -6px;
-              transform: translateX(-50%);
-              width: 0;
-              height: 0;
-              border-left: 6px solid transparent;
-              border-right: 6px solid transparent;
-              border-top: 6px solid #2F80ED;
-            }
+
             .expandable {
               max-height: 0;
               overflow: hidden;
@@ -682,38 +626,32 @@ export default function PaymentDetailsSheet({
                   </div>
                 </div>
               ) : (
-                <div className="relative mt-[4px] px-[4px] pt-[14px]">
+                <div className="mt-[4px]">
                   <div
-                    className="amount-bubble pointer-events-none absolute top-[-30px] z-10 rounded-[6px] bg-[#2F80ED] px-2 py-1 text-[12px] font-normal leading-[15px] text-white shadow-[0_2px_4px_rgba(0,0,0,0.15)]"
-                    style={{
-                      left: `${Math.max(0, Math.min(100, sliderPercent))}%`,
-                      transform: "translateX(-50%)",
-                    }}
-                  >
-                    {amount.toLocaleString()}
-                  </div>
-
-                  <input
-                    type="range"
-                    min={min}
-                    max={max}
-                    step={1}
-                    value={amount}
-                    onChange={(e) => setAmount(Number(e.target.value))}
-                    className="payment-range"
-                    style={{
-                      background: `linear-gradient(90deg, #9747FF 0%, #5B2B99 ${sliderPercent}%, #DAD5FF ${sliderPercent}%, #DAD5FF 100%)`,
-                    }}
-                  />
-
-                  <div
-                    className="mt-[4px] flex justify-between text-[8px] leading-[12px] text-black"
+                    className="mb-[6px] flex items-center gap-[4px] text-[11px] font-medium leading-[16px] text-[#555]"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
-                    <span>₹{min.toLocaleString()}</span>
-                    <span>₹{max.toLocaleString()}</span>
+                    <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
+                    Enter amount between ₹{min.toLocaleString()} - ₹{max.toLocaleString()}
                   </div>
-
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={amount === 0 ? "" : amount}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9]/g, "");
+                      if (raw === "") {
+                        setAmount(0);
+                        return;
+                      }
+                      setAmount(Number(raw));
+                    }}
+                    onBlur={() => {
+                      if (amount !== 0 && (amount < min || amount > max)) setAmount(0);
+                    }}
+                    className="w-full rounded-[8px] border-2 border-[#DAD5FF] bg-white px-3 py-2 text-[12px] font-medium text-[#3E3E3E] outline-none transition-colors focus:border-[#9747FF] focus:ring-1 focus:ring-[#9747FF]"
+                    style={{ fontFamily: "Poppins, sans-serif" }}
+                  />
                   <div className="mt-[4px] text-[9px] leading-[14px] text-[#10B981] font-medium text-right">
                     +₹{Math.round(amount * discountPercent / 100)} cashback
                   </div>

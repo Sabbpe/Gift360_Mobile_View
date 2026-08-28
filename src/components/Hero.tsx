@@ -161,7 +161,7 @@ export default function Hero() {
           <div className="grid grid-cols-4 gap-2 px-6 mt-8 anim-fade-up delay-200">
           {[
             { Icon: Gift,     label: "Buy Voucher",    href: "/brands" },
-            { Icon: Send,     label: "Near by stores", href: "/nearby" },
+            { Icon: Send,     label: "Offers Near You", href: "/nearby" },
             { Icon: ScanLine, label: "Redeem",         href: "/orders" },
             { Icon: UserPlus, label: "Partner with Us",href: "/distributor" },
           ].map(({ Icon, label, href }) => (

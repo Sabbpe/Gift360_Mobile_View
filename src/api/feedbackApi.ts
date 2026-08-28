@@ -8,12 +8,13 @@ export interface FeedbackRequest {
   payment?: string;
   overall?: number;
   nps?: number;
-  voucherDelivery?: string;
-  missingBrand?: string;
+  locationShare?: string;
+  userLocation?: string;
+  gender?: string;
+  occupation?: string;
   brandBought?: string;
   hasSuggestion?: string;
   suggestion?: string;
-  issueDetail?: string;
   clientId?: string;
 }
 
