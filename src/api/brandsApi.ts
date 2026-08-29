@@ -113,3 +113,15 @@ export const getBrands = async (): Promise<Brand[]> => {
     };
   });
 };
+
+// Public checkout config -- current platform fee percent/max. No auth
+// required. Cart.tsx uses this so the displayed fee always matches exactly
+// what the backend will independently calculate and validate against
+// (GiftcardOrderService.calculatePlatformFee), even if an admin changes
+// the percent/max via the admin dashboard with no frontend redeploy.
+export const fetchPlatformFeeConfig = async (): Promise<{ feePercent: number; feeMax: number }> => {
+  const res = await brandApi.get<{ feePercent: number; feeMax: number }>(
+    "/v1/platform-fee-config"
+  );
+  return res.data;
+};

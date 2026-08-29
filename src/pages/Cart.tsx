@@ -13,6 +13,7 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check, Clock } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
+import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
@@ -229,6 +230,22 @@ function walletCapPaise(
 export default function Cart() {
   const { user, isAuthenticated } = useAuthContext();
   const guestCartCount = !isAuthenticated ? getGuestCartCount() : 0;
+
+  // Platform fee percent/max, fetched from the DB-configurable backend
+  // endpoint so an admin can change these values without any redeploy.
+  // Sensible defaults used only until the fetch resolves.
+  const [platformFeeConfig, setPlatformFeeConfig] = useState({
+    feePercent: 0.02,
+    feeMax: 20,
+  });
+  useEffect(() => {
+    fetchPlatformFeeConfig()
+      .then(setPlatformFeeConfig)
+      .catch(() => {
+        // Keep the defaults above on failure -- never block checkout
+      });
+  }, []);
+
   const {
     cart,
     isLoading: cartLoading,
@@ -1162,11 +1179,15 @@ export default function Cart() {
       ) / effectiveSupercoinMultiplier
     : 0;
 
-  // Flat platform fee applied to every order, on top of the discounted
-  // amount -- matches GiftcardOrderService.calculateExpectedNetPayable on
-  // the backend exactly (added after the floor-at-zero, so it applies even
-  // to a fully-discounted order that would otherwise show ₹0).
-  const PLATFORM_FEE = 5;
+  // Platform fee: percent of the voucher's face value (subtotal, the raw
+  // pre-discount amount), capped at a configurable max -- matches
+  // GiftcardOrderService.calculatePlatformFee on the backend exactly.
+  // Percent/max come from platformFeeConfig (fetched from the DB-backed
+  // endpoint above), so this stays in sync even if an admin changes them
+  // with no frontend redeploy.
+  const PLATFORM_FEE = Number(
+    Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
+  );
 
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
   const finalPayable =
