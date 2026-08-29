@@ -608,7 +608,12 @@ function OccasionPicksSections({
   // table + get_distinct_occasions procedure) -- the API already returns
   // occasions in the correct order, so we render them exactly as received.
   // Reordering going forward is a plain SQL UPDATE, no deploy needed.
-  const orderedOccasions = occasions;
+  // "top brands" is excluded here because it already has its own dedicated
+  // component (TopBrandsGrid) with a marquee layout -- rendering it again
+  // here would duplicate that section.
+  const orderedOccasions = occasions.filter(
+    (occasion) => occasion.trim().toLowerCase() !== "top brands"
+  );
 
   if (!orderedOccasions.length) return null;
 
