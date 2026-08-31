@@ -10,6 +10,7 @@ export interface ContactLeadRequest {
   email?: string;
   companyName?: string;
   phoneNumber?: string;
+  contactNo?: string;
   organizationName?: string;
   city?: string;
   state?: string;

@@ -7,7 +7,7 @@ import CategorySection from '@/components/CategorySection';
 import Header from '@/components/Header';
 import PaymentDetailsSheet from '@/components/PaymentDetailsSheet';
 import MobileBottomNav from '@/components/MobileBottomNav';
-import homebackImg from "@/assets/homeback.jpeg";
+import homebackImg from "@/assets/HomeBack.png";
 
 export default function Categories() {
   const [, setLocation] = useLocation();

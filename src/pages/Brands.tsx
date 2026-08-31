@@ -18,7 +18,7 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded, isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
-import homebackImg from "@/assets/homeback.jpeg";
+import homebackImg from "@/assets/HomeBack.png";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -593,7 +593,7 @@ const sortedDisplayBrands = useMemo(() => {
       >
         {discountNum > 0 && (
           <span
-            className="absolute -top-0.5 -left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none"
+            className="absolute -top-0.5 -left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold !text-white leading-none shadow-md pointer-events-none"
           >
             {discountNum}%
           </span>
@@ -1063,7 +1063,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
             <div className="flex-1 min-w-0">
               {/* Results Count */}
               {sortedDisplayBrands.length > 0 && (
-                <div className="mb-6">
+                <div className="mb-6 -ml-2">
                   <p className="text-sm font-medium text-[#374151]">
                     Showing <span className="font-semibold text-[#111827]">{sortedDisplayBrands.length}</span> brands
                     {superCoinsOnly && (
@@ -1086,7 +1086,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                 </div>
               )}
 
-              <section className="mb-3">
+              <section className="mb-3 -ml-2">
                 <div className="flex items-center justify-between mb-3">
                   <h2 className="brand-title">Brands</h2>
                   <div className="flex items-center gap-2">
@@ -1114,7 +1114,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                     </button>
                   </div>
                 </div>
-                <div className="brands-container">
+                <div className="brands-container -ml-2">
                   {[row1Brands, row2Brands, row3Brands].map((row, i) => (
                     <div key={i} className="mb-3 last:mb-0">
                       <div className="brand-row" ref={el => rowRefs.current[i] = el}>

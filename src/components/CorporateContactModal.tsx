@@ -2,7 +2,7 @@
 // Corporate-specific contact modal with business registration
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { X, CheckCircle, Building2, MapPin, Map, FileText, CreditCard, MessageSquare, Loader2 } from 'lucide-react';
+import { X, CheckCircle, Building2, MapPin, Map, FileText, CreditCard, MessageSquare, Loader2, Phone } from 'lucide-react';
 import { submitContactLead } from '@/api/contactApi';
 
 interface CorporateContactModalProps {
@@ -23,6 +23,7 @@ export default function CorporateContactModal({
     state: '',
     pan: '',
     gst: '',
+    contactNo: '',
     message: ''
   });
 
@@ -40,6 +41,7 @@ export default function CorporateContactModal({
         state: formData.state,
         pan: formData.pan,
         gst: formData.gst,
+        contactNo: formData.contactNo,
         message: formData.message
       });
 
@@ -62,6 +64,7 @@ export default function CorporateContactModal({
       state: '',
       pan: '',
       gst: '',
+      contactNo: '',
       message: ''
     });
     onClose();
@@ -159,6 +162,17 @@ export default function CorporateContactModal({
                 onChange={(e) => setFormData({ ...formData, gst: e.target.value.toUpperCase() })}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white uppercase"
                 placeholder="Enter GST"
+                maxLength={15}
+              />
+
+              {/* Contact No. */}
+              <input
+                type="tel"
+                required
+                value={formData.contactNo}
+                onChange={(e) => setFormData({ ...formData, contactNo: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white"
+                placeholder="Enter Contact Number"
                 maxLength={15}
               />
 

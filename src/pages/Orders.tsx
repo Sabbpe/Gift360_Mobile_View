@@ -16,7 +16,7 @@ import {
   Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import homebackImg from "@/assets/homeback.jpeg";
+import homebackImg from "@/assets/HomeBack.png";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";

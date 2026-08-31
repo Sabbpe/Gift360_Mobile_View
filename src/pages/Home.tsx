@@ -44,7 +44,7 @@ import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
-import homebackImg from "@/assets/homeback.jpeg";
+import homebackImg from "@/assets/HomeBack.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import FeedbackForm from "@/components/FeedbackForm";
 import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
@@ -54,8 +54,8 @@ import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
-import giftcardbg from "@/assets/giftcardbg.png";
-import rakhiBannerImg from "@/assets/rakhibanner.png";
+import cardone from "@/assets/cardone.png";
+import rakhiBannerImg from "@/assets/card2.png";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
@@ -123,7 +123,7 @@ function BalanceCard() {
   return (
     <section className="absolute left-0 right-0 top-[86px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
       <div className="relative h-[130px] overflow-hidden rounded-[18px] shadow-[0_18px_38px_rgba(27,25,75,0.24)] animate-[float-y_4s_ease-in-out_infinite]">
-        <img src={giftcardbg} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none scale-110" />
+        <img src={cardone} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none scale-110" />
         <div className="relative h-full px-[24px] py-[14px] text-black">
           <p className="text-[13px] font-normal leading-none tracking-[-0.01em] text-black">Your CashBack points</p>
         <div className="relative mt-[12px] flex items-center gap-[14px]">
@@ -217,27 +217,10 @@ function PromoCard() {
 }
 
 function RakhiBanner() {
-  const [, setLocation] = useLocation();
-
   return (
     <section className="px-3 pt-[18px]">
       <div className="relative w-full h-[100px] rounded-[16px] overflow-hidden">
         <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-        <div className="relative h-full flex flex-col justify-center px-8 py-2 z-10">
-          <h2 className="text-[16px] font-extrabold leading-[1.1] text-[#2D1B4E]">
-            Make <span className="text-[#D946A8]">Rakhi</span>{" "}Extra Special
-          </h2>
-          <p className="mt-1 text-[8px] font-medium leading-snug text-[#5B4C69] max-w-[180px]">
-            From thoughtful gifts to exciting vouchers, make every bond stronger.
-          </p>
-          <button
-            onClick={() => setLocation("/brands")}
-            className="mt-2 inline-flex items-center gap-1 rounded-full bg-[#D946A8] px-3 py-1.5 text-[9px] font-semibold text-white shadow-md active:scale-[0.97] transition-all w-fit"
-          >
-            Explore Gifts
-            <svg className="h-2.5 w-2.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" /></svg>
-          </button>
-        </div>
       </div>
     </section>
   );
@@ -1007,7 +990,6 @@ function MobileHomeScreen() {
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${homebackImg})` }}
         />
-        <div className="fixed inset-0 z-[1] bg-black/10 pointer-events-none" />
         <div className="relative z-10">
         <div className="relative overflow-visible pb-[70px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />

@@ -5,7 +5,7 @@ import { useSendOtp } from "@/hooks/useSendOtp";
 import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import rakhiBg from "@/assets/rakhi2.png";
+import rakhiBg from "@/assets/krishnauth.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";
@@ -245,25 +245,6 @@ export default function Login() {
           </Link>
         </p>
 
-        <div className="offers">
-          <div className="offer-rakhi">
-            <svg width="100%" height="100%" viewBox="0 0 54 54" fill="none">
-              <circle cx="27" cy="27" r="22" fill="#F472B6" opacity="0.3"/>
-              <circle cx="27" cy="27" r="16" fill="#D946A8"/>
-              {[0,60,120,180,240,300].map((a,i)=>(
-                <ellipse key={i} cx="27" cy="19" rx="4" ry="7" fill="#F9A8D4" transform={`rotate(${a} 27 27)`}/>
-              ))}
-              <circle cx="27" cy="27" r="7" fill="#FDF2F8"/>
-              <circle cx="26" cy="26" r="2" fill="white" opacity="0.7"/>
-            </svg>
-          </div>
-          <div>
-            <b>Rakhi Special Offers Live</b>
-            <span>Tie the bond with love. Gift more, save more!</span>
-          </div>
-          <div className="offer-arrow"><ChevronRight size={18} /></div>
-        </div>
-
         <div className="trusted">
           <span>TRUSTED BY 400+ BRANDS</span>
           <div className="brand-track">
@@ -281,15 +262,15 @@ export default function Login() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,700;1,700&display=swap');
         .gift-page { min-height:100dvh; background:linear-gradient(180deg,#f0ebff 0%,#fdfaff 62%,#fffaff 100%); padding:0 0 24px; overflow:hidden; font-family:'DM Sans','Poppins',sans-serif; color:#25134f; position:relative; }
-        .rakhi-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:contain; object-position:top center; z-index:0; pointer-events:none; }
-        .gift-shell { width:min(100%,462px); margin:0 auto; position:relative; z-index:1; padding-top:50vh; }
+        .rakhi-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; object-position:top center; z-index:0; pointer-events:none; }
+        .gift-shell { width:min(100%,462px); margin:0 auto; position:relative; z-index:1; padding-top:42vh; }
         .stats-row { display:flex; gap:8px; width:90%; margin:0 auto 14px; }
         .stat-card { flex:1; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border-radius:16px; padding:14px 6px; text-align:center; box-shadow:0 4px 14px rgba(100,72,150,0.08); border:1px solid rgba(255,255,255,0.6); }
         .stat-value { display:block; font:700 22px 'DM Sans',sans-serif; line-height:1; }
         .stat-label { display:block; margin-top:5px; font:500 9px 'DM Sans',sans-serif; color:#625a70; }
-        .stat-orange { color:#e85d2a; }
-        .stat-green { color:#16a34a; }
-        .stat-purple { color:#6b21a8; }
+        .stat-orange { color:#2563EB; }
+        .stat-green { color:#2563EB; }
+        .stat-purple { color:#2563EB; }
         .cashback-banner { display:flex; align-items:center; width:90%; margin:0 auto 14px; padding:6px 14px; border-radius:50px; background:rgba(255,255,255,0.88); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); border:1.5px solid #f0a0c0; box-shadow:0 4px 14px rgba(100,72,150,0.08); animation:cashbackPulse 2.5s ease-in-out infinite; }
         .cashback-text { flex:1; font:600 10px 'DM Sans',sans-serif; color:#25134f; letter-spacing:0.3px; }
         .cashback-highlight { font-weight:800; color:#d946a8; }
@@ -322,8 +303,8 @@ export default function Login() {
         .otp-success { text-align:center; font-size:9px; font-weight:500; color:#16a34a; margin-top:6px; }
         .security { margin:12px 0 4px; display:flex; align-items:center; justify-content:center; gap:6px; color:#675e73; font-size:10.5px; }
         .security svg { color:#31108a; }
-        .signup { text-align:center; font-size:12px; color:#291b4c; margin:14px 0 18px; }
-        .signup button { border:0; background:none; color:#9721c3; text-decoration:underline; font-weight:700; font-size:12px; cursor:pointer; padding:0; }
+        .signup { text-align:center; font-size:13px; color:#fff; margin:14px auto 18px; font-weight:500; width:fit-content; background:rgba(37,99,235,0.85); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); padding:8px 20px; border-radius:50px; }
+        .signup button { border:0; background:none; color:#FBBF24; text-decoration:underline; font-weight:700; font-size:13px; cursor:pointer; padding:0; }
         .offers { width:82%; min-height:62px; margin:auto; border:1.5px dashed #e789d2; border-radius:22px; display:flex; align-items:center; padding:8px 10px; gap:8px; color:#34115f; background:rgba(255,249,255,0.5); }
         .offer-rakhi { width:50px; height:50px; overflow:hidden; border:1px solid #f0cbe9; border-radius:50%; flex:none; background:#fff; box-shadow:0 2px 8px rgba(176,44,198,0.12); padding:2px; }
         .offers b, .offers span { display:block; font-size:11px; line-height:1.35; }

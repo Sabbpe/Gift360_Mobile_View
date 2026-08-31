@@ -3,7 +3,7 @@ import { ArrowRight, ShoppingCart, Gift, Store, Coins, RefreshCw, BadgeDollarSig
 import flipkartSuperCoinImg from "@/assets/FlipKartSuperCoin-removebg-preview.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import partnerImg from "@/assets/coorp.png";
-import rakhihomeImg from "@/assets/rakhihome.png";
+import rakhihomeImg from "@/assets/featheroverlay.png";
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;

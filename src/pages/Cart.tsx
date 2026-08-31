@@ -20,7 +20,7 @@ import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import homebackImg from "@/assets/homeback.jpeg";
+import homebackImg from "@/assets/HomeBack.png";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
