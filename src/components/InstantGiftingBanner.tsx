@@ -278,13 +278,13 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick }: Inst
           }}
         >
           <div className="flex-shrink-0 w-full snap-start">
-            <SuperCoinSlide onExplore={onExplore} />
+            <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
             <StepFlowSlide onExplore={onExplore} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
-            <PartnerSlide onPartnerClick={onPartnerClick} />
+            <SuperCoinSlide onExplore={onExplore} />
           </div>
         </div>
 

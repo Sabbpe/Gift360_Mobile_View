@@ -998,11 +998,6 @@ function MobileHomeScreen() {
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard />
-      <RecommendedList
-        onBuy={(id) => {
-          openStandardPaymentSheet(id);
-        }}
-      />
       <RakhiBanner />
       <PersonalPicksSection
         onOpenBrand={openStandardPaymentSheet}

@@ -24,6 +24,7 @@ export default function CorporateContactModal({
     pan: '',
     gst: '',
     contactNo: '',
+    email: '',
     message: ''
   });
 
@@ -42,6 +43,7 @@ export default function CorporateContactModal({
         pan: formData.pan,
         gst: formData.gst,
         contactNo: formData.contactNo,
+        email: formData.email,
         message: formData.message
       });
 
@@ -65,6 +67,7 @@ export default function CorporateContactModal({
       pan: '',
       gst: '',
       contactNo: '',
+      email: '',
       message: ''
     });
     onClose();
@@ -163,6 +166,16 @@ export default function CorporateContactModal({
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white uppercase"
                 placeholder="Enter GST"
                 maxLength={15}
+              />
+
+              {/* Email */}
+              <input
+                type="email"
+                required
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all bg-white"
+                placeholder="Enter Email ID"
               />
 
               {/* Contact No. */}
