@@ -1,22 +1,29 @@
 import { useState, useMemo } from "react";
 import { useLocation } from "wouter";
 import { useBrands } from "@/hooks/useBrands";
+import { useFilterMeta } from "@/hooks/useFilterMeta";
 import BrandCard from "@/components/BrandCard";
 import QuickBuyModal from "@/components/QuickBuyModal";
 import type { Brand } from "@/types/brand";
 
-const CATEGORIES = ["Ecommerce","Fashion Lifestyle","Gaming","Food & Beverages","Jewellery","Entertainment","Health & Wellness","Travel"];
-
 export default function CategoriesSection() {
   const { data: brands = [], isLoading } = useBrands();
+  const { data: filterMeta } = useFilterMeta();
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [quickBuyBrand, setQuickBuyBrand] = useState<Brand | null>(null);
   const [, setLocation] = useLocation();
 
+  const CATEGORIES = useMemo(() => {
+    if (filterMeta?.categories && filterMeta.categories.length > 0) {
+      return filterMeta.categories;
+    }
+    return Array.from(new Set((brands as Brand[]).map(b => b.Category).filter(Boolean))).sort();
+  }, [filterMeta, brands]);
+
   const filteredBrands = useMemo(() => {
     const r = brands as Brand[];
     if (!activeCategory) return r;
-    return r.filter(b => (b.Category || "").toLowerCase().includes(activeCategory.toLowerCase()));
+    return r.filter(b => (b.Category || "") === activeCategory);
   }, [brands, activeCategory]);
 
   return (

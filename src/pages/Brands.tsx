@@ -564,10 +564,23 @@ const sortedDisplayBrands = useMemo(() => {
     const row2: any[] = [];
     const row3: any[] = [];
 
-    sortedDisplayBrands.forEach((brand: any, index: number) => {
-      if (index % 3 === 0) row1.push(brand);
-      else if (index % 3 === 1) row2.push(brand);
-      else row3.push(brand);
+    sortedDisplayBrands.forEach((brand: any) => {
+      const name = (brand.brandName || brand.BrandName || "").trim();
+      const firstChar = name.charAt(0).toUpperCase();
+      const code = firstChar.charCodeAt(0);
+
+      // A-G (65-71)
+      if (code >= 65 && code <= 71) {
+        row1.push(brand);
+      }
+      // H-N (72-78)
+      else if (code >= 72 && code <= 78) {
+        row2.push(brand);
+      }
+      // O-Z (79-90) or numbers (48-57) or anything else
+      else {
+        row3.push(brand);
+      }
     });
 
     return [row1, row2, row3];
