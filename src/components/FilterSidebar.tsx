@@ -27,6 +27,11 @@ interface FilterSidebarProps {
   availableDiscountRanges: DiscountRange[];
   isOpen?: boolean;
   onClose?: () => void;
+  // Lets a consumer (e.g. the Categories page, which already groups brands by
+  // category and only cares about discount-based sorting) opt out of
+  // sections that don't apply to it, without affecting other callers.
+  showCategories?: boolean;
+  showAlphabeticalSort?: boolean;
   // Mobile-specific props
   isMobile?: boolean;
   searchQuery?: string;
@@ -92,6 +97,8 @@ export default function FilterSidebar({
   availableDiscountRanges,
   isOpen = true,
   onClose,
+  showCategories = true,
+  showAlphabeticalSort = true,
   isMobile = false,
   searchQuery = "",
   onSearchChange,
@@ -347,6 +354,7 @@ const filteredBrandSuggestions = useMemo(() => {
               >
                 <div className="space-y-4">
                   {/* Sort Brands Subsection */}
+                  {showAlphabeticalSort && (
                   <div className="space-y-2">
                     <h4 className="text-sm font-semibold text-foreground">Sort Brands</h4>
                     <RadioGroup
@@ -371,6 +379,7 @@ const filteredBrandSuggestions = useMemo(() => {
                       </div>
                     </RadioGroup>
                   </div>
+                  )}
 
                   {/* Discount Subsection */}
                   <div className="space-y-2">
@@ -499,6 +508,7 @@ const filteredBrandSuggestions = useMemo(() => {
                 </div>
               </FilterSection>
               {/* Categories */}
+              {showCategories && (
               <FilterSection title="Categories" section="categories" expandedSections={expandedSections}
                 toggleSection={toggleSection}>
                 <RadioGroup
@@ -523,6 +533,7 @@ const filteredBrandSuggestions = useMemo(() => {
                   </div>
                 </RadioGroup>
               </FilterSection>
+              )}
 
             </div>
           </ScrollArea>
@@ -586,6 +597,7 @@ const filteredBrandSuggestions = useMemo(() => {
           >
             <div className="space-y-4">
               {/* Sort Brands Subsection */}
+              {showAlphabeticalSort && (
               <div className="space-y-2">
                 <h4 className="text-sm font-semibold text-foreground">Sort Brands</h4>
                 <RadioGroup
@@ -610,6 +622,7 @@ const filteredBrandSuggestions = useMemo(() => {
                   </div>
                 </RadioGroup>
               </div>
+              )}
 
               {/* Discount Subsection */}
               <div className="space-y-2">
@@ -741,6 +754,7 @@ const filteredBrandSuggestions = useMemo(() => {
           </FilterSection>
 
           {/* Categories */}
+          {showCategories && (
           <FilterSection title="Categories" section="categories" expandedSections={expandedSections}
             toggleSection={toggleSection}>
             <RadioGroup
@@ -765,6 +779,7 @@ const filteredBrandSuggestions = useMemo(() => {
               </div>
             </RadioGroup>
           </FilterSection>
+          )}
 
         </div>
       </ScrollArea>
