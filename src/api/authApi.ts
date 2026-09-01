@@ -40,7 +40,33 @@ export function decodeJwtPayload(token: string): {
   }
 }
 
-/** Verify OTP and login (backend: POST /auth/login/verify-otp). Returns token; userInfo derived from token. */
+interface ValidatedUserInfo {
+  name: string;
+  email: string;
+  mobile: string;
+  clientId: string;
+}
+
+/**
+ * The verify-otp response carries no user profile data, only a token — so the
+ * registered name has to be fetched separately via validate-token (the same
+ * endpoint the backend's JwtAuthenticationFilter uses to resolve userName).
+ * Falls back to null on any failure so login itself never breaks on this.
+ */
+async function fetchValidatedUserInfo(token: string): Promise<ValidatedUserInfo | null> {
+  try {
+    const res = await axios.post<{ valid: boolean; userInfo: ValidatedUserInfo | null }>(
+      `${API_BASE_URL}/validate-token`,
+      {},
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data.valid ? res.data.userInfo : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Verify OTP and login (backend: POST /auth/login/verify-otp). Returns token; userInfo enriched via validate-token. */
 export const loginWithOtp = async (data: LoginWithOtpRequest): Promise<LoginResponse> => {
   const response = await axios.post<{ success: boolean; token: string | null; message: string }>(
     `${API_BASE_URL}/login/verify-otp`,
@@ -48,16 +74,17 @@ export const loginWithOtp = async (data: LoginWithOtpRequest): Promise<LoginResp
   );
   const body = response.data;
   const payload = body.token ? decodeJwtPayload(body.token) : {};
+  const validated = body.token && payload.userId ? await fetchValidatedUserInfo(body.token) : null;
   return {
     token: body.token ?? null,
     message: body.message,
     userInfo:
       body.token && payload.userId
         ? {
-          name: "",
-          email: payload.email ?? "",
-          mobile: payload.phoneNumber ?? data.mobileNumber,
-          clientId: payload.userId,
+          name: validated?.name || "",
+          email: validated?.email || payload.email || "",
+          mobile: validated?.mobile || payload.phoneNumber || data.mobileNumber,
+          clientId: validated?.clientId || payload.userId,
         }
         : null,
   };

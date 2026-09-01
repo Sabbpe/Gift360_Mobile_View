@@ -5,6 +5,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { trackEvent } from "@/lib/analytics";
 
 const FEEDBACK_KEY = "gift360_feedback_submitted";
+const FEEDBACK_PROMPTED_KEY = "gift360_feedback_auto_prompted";
 
 export function hasSubmittedFeedback(): boolean {
   return localStorage.getItem(FEEDBACK_KEY) === "true";
@@ -12,6 +13,18 @@ export function hasSubmittedFeedback(): boolean {
 
 export function markFeedbackSubmitted() {
   localStorage.setItem(FEEDBACK_KEY, "true");
+}
+
+// Tracks whether the auto-prompt has ever been shown, separate from whether
+// feedback was actually submitted -- it must fire at most once ever, even if
+// the user dismisses it without submitting (they can still reach the form
+// manually afterwards via the header icon).
+export function hasBeenPromptedForFeedback(): boolean {
+  return localStorage.getItem(FEEDBACK_PROMPTED_KEY) === "true";
+}
+
+export function markFeedbackPrompted() {
+  localStorage.setItem(FEEDBACK_PROMPTED_KEY, "true");
 }
 
 type Props = {

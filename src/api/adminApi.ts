@@ -218,3 +218,29 @@ export const logVdWalletTopup = async (topup: {
   const res = await adminApiClient.post("/mis/vd-wallet/topup", topup);
   return res.data;
 };
+
+// =========================================================================
+// TICKETS -- customer support conversations
+// =========================================================================
+
+export const fetchTickets = async (
+  params: { status?: string; search?: string; page?: number; size?: number } = {}
+) => {
+  const res = await adminApiClient.get("/tickets", { params });
+  return res.data;
+};
+
+export const fetchTicketDetail = async (id: string | number) => {
+  const res = await adminApiClient.get(`/tickets/${id}`);
+  return res.data;
+};
+
+export const replyToTicket = async (id: string | number, message: string) => {
+  const res = await adminApiClient.post(`/tickets/${id}/reply`, { message });
+  return res.data;
+};
+
+export const closeTicket = async (id: string | number) => {
+  const res = await adminApiClient.post(`/tickets/${id}/close`, {});
+  return res.data;
+};

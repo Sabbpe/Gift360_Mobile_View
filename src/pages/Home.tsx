@@ -46,8 +46,7 @@ import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/HomeBack.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
-import FeedbackForm from "@/components/FeedbackForm";
-import FeedbackFloatingButton from "@/components/FeedbackFloatingButton";
+import SupportChatWidget from "@/components/SupportChatWidget";
 import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
@@ -867,7 +866,6 @@ function MobileHomeScreen() {
   const [topBrandName, setTopBrandName] = useState("");
   const [topBrandVouchers, setTopBrandVouchers] = useState<TopBrandVoucher[]>([]);
   const [topBrandModalOpen, setTopBrandModalOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [topBrandLoading, setTopBrandLoading] = useState(false);
   const [topBrandError, setTopBrandError] = useState<string | null>(null);
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
@@ -1052,8 +1050,7 @@ function MobileHomeScreen() {
           setSheetInitialAmount(undefined);
         }}
       />
-      <FeedbackFloatingButton onClick={() => setFeedbackOpen(true)} />
-      <FeedbackForm open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
+      <SupportChatWidget />
       <BottomNav />
         </div>
       </main>

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Search, Sun, Moon, MapPin, Package, ChevronDown, Bell, User } from "lucide-react";
+import { ShoppingCart, Search, Sun, Moon, MapPin, Package, ChevronDown, Bell, User, MessageSquare } from "lucide-react";
+import FeedbackForm, { hasSubmittedFeedback, hasBeenPromptedForFeedback, markFeedbackPrompted } from "./FeedbackForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCart } from "@/hooks/useCart";
@@ -14,6 +15,7 @@ import CategoryNav from "./CategoryNav";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { WalletOdometer } from "@/components/WalletOdometer";
 import OnlineIndicator from "@/components/OnlineIndicator";
+import { useToast } from "@/hooks/use-toast";
 import gift360FullLogo from "@/assets/gift360full.png";
 
 const logoImg = gift360FullLogo;
@@ -33,6 +35,7 @@ export default function Header() {
   const { data: walletData } = useFetchWallet(user?.clientId);
   const walletPoints = walletData?.totalBalance ?? 0;
   const { theme, toggleTheme } = useTheme();
+  const { toast } = useToast();
   const [location, setLocation] = useLocation();
   const [userLocation, setUserLocation] = useState<LocationData | null>(() => getSavedLocation());
   const [openLocationModal, setOpenLocationModal] = useState(false);
@@ -43,6 +46,8 @@ export default function Header() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [partnerDropdownOpen, setPartnerDropdownOpen] = useState(false);
   const [cartPulse, setCartPulse] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [feedbackNudge, setFeedbackNudge] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const suggestionsRef = useRef<HTMLDivElement>(null);
   const previousTotalItemsRef = useRef(totalItems);
@@ -85,6 +90,29 @@ export default function Header() {
 
     previousTotalItemsRef.current = totalItems;
   }, [totalItems]);
+
+  // Nudge for feedback once a logged-in user has had a bit of time to
+  // actually use the app -- a toast plus a badge dot on the Feedback icon,
+  // not the full form (that stays a deliberate click). Fires at most once
+  // ever (tracked separately from whether they submitted) and never for
+  // guests. Dismissing the toast or ignoring it still counts as "prompted"
+  // so it won't nag them again; the badge stays until they open the form.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    if (hasSubmittedFeedback() || hasBeenPromptedForFeedback()) return;
+
+    const timeoutId = window.setTimeout(() => {
+      markFeedbackPrompted();
+      setFeedbackNudge(true);
+      toast({
+        title: "We'd love your feedback!",
+        description: "Tap the feedback icon up top to share your thoughts.",
+        duration: 5000,
+      });
+    }, 15000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isAuthenticated, toast]);
 
   const filteredBrands = useMemo(() => {
     let r = brands as any[];
@@ -183,6 +211,23 @@ export default function Header() {
                   </Button>
                 </Link>
               )}
+
+              {/* Feedback */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative h-9 w-9 rounded-xl"
+                onClick={() => {
+                  setFeedbackNudge(false);
+                  setFeedbackOpen(true);
+                }}
+                aria-label="Feedback"
+              >
+                <MessageSquare size={18} />
+                {feedbackNudge && (
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-red-500 border-2 border-background" />
+                )}
+              </Button>
 
               {/* Notifications */}
               <Link href="/notifications">
@@ -317,6 +362,8 @@ export default function Header() {
           </div>
         </div>
       )}
+
+      <FeedbackForm open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   );
 }

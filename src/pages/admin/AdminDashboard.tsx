@@ -71,7 +71,12 @@ import {
   logVdWalletTopup,
   fetchMisThresholds,
   updateMisThresholds,
+  fetchTickets,
+  fetchTicketDetail,
+  replyToTicket,
+  closeTicket,
 } from "@/api/adminApi";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -217,6 +222,18 @@ export default function AdminDashboard() {
   const [journeyData, setJourneyData] = useState<{ profile: any; timeline: any[] } | null>(null);
   const [cartStaleFilter, setCartStaleFilter] = useState(0);
 
+  // ---- Tickets tab ----
+  const [tickets, setTickets] = useState<any[]>([]);
+  const [ticketsLoading, setTicketsLoading] = useState(false);
+  const [ticketStatusFilter, setTicketStatusFilter] = useState<"All" | "OPEN" | "REPLIED" | "CLOSED">("All");
+  const [ticketSearch, setTicketSearch] = useState("");
+  const [selectedTicketId, setSelectedTicketId] = useState<string | number | null>(null);
+  const [ticketDetailOpen, setTicketDetailOpen] = useState(false);
+  const [ticketDetail, setTicketDetail] = useState<any>(null);
+  const [ticketDetailLoading, setTicketDetailLoading] = useState(false);
+  const [ticketReplyText, setTicketReplyText] = useState("");
+  const [ticketActionLoading, setTicketActionLoading] = useState(false);
+
   const [orderPage, setOrderPage] = useState(0);
   const [customerPage, setCustomerPage] = useState(0);
   const [voucherStatusFilter, setVoucherStatusFilter] = useState<
@@ -320,6 +337,71 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (authed) loadAll();
   }, [authed, loadAll]);
+
+  const loadTickets = useCallback(async () => {
+    setTicketsLoading(true);
+    try {
+      const params: { status?: string; search?: string } = {};
+      if (ticketStatusFilter !== "All") params.status = ticketStatusFilter;
+      if (ticketSearch) params.search = ticketSearch;
+      const res = await fetchTickets(params);
+      setTickets(res.data ?? []);
+    } catch (err) {
+      console.error("Admin dashboard: failed to load tickets:", err);
+    } finally {
+      setTicketsLoading(false);
+    }
+  }, [ticketStatusFilter, ticketSearch]);
+
+  useEffect(() => {
+    if (authed) loadTickets();
+  }, [authed, loadTickets]);
+
+  const openTicket = useCallback(async (id: string | number) => {
+    setSelectedTicketId(id);
+    setTicketDetailOpen(true);
+    setTicketDetail(null);
+    setTicketDetailLoading(true);
+    try {
+      const detail = await fetchTicketDetail(id);
+      setTicketDetail(detail);
+    } catch (err) {
+      console.error("Failed to load ticket detail:", err);
+    } finally {
+      setTicketDetailLoading(false);
+    }
+  }, []);
+
+  const handleTicketReply = useCallback(async () => {
+    if (!selectedTicketId || !ticketReplyText.trim()) return;
+    setTicketActionLoading(true);
+    try {
+      await replyToTicket(selectedTicketId, ticketReplyText.trim());
+      setTicketReplyText("");
+      const detail = await fetchTicketDetail(selectedTicketId);
+      setTicketDetail(detail);
+      loadTickets();
+    } catch (err) {
+      console.error("Failed to send ticket reply:", err);
+    } finally {
+      setTicketActionLoading(false);
+    }
+  }, [selectedTicketId, ticketReplyText, loadTickets]);
+
+  const handleTicketClose = useCallback(async () => {
+    if (!selectedTicketId) return;
+    setTicketActionLoading(true);
+    try {
+      await closeTicket(selectedTicketId);
+      const detail = await fetchTicketDetail(selectedTicketId);
+      setTicketDetail(detail);
+      loadTickets();
+    } catch (err) {
+      console.error("Failed to close ticket:", err);
+    } finally {
+      setTicketActionLoading(false);
+    }
+  }, [selectedTicketId, loadTickets]);
 
   const handleMdrSubmit = useCallback(async () => {
     setMdrFormSaving(true);
@@ -460,6 +542,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="abandoned">Abandoned Carts</TabsTrigger>
             <TabsTrigger value="currentcarts">Current Carts</TabsTrigger>
             <TabsTrigger value="mis">MIS</TabsTrigger>
+            <TabsTrigger value="tickets">Tickets</TabsTrigger>
           </TabsList>
 
           {/* ================= OVERVIEW ================= */}
@@ -2007,6 +2090,88 @@ export default function AdminDashboard() {
               </>
             )}
           </TabsContent>
+
+          {/* ================= TICKETS ================= */}
+          <TabsContent value="tickets">
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              {(["All", "OPEN", "REPLIED", "CLOSED"] as const).map((s) => (
+                <Button
+                  key={s}
+                  size="sm"
+                  variant={ticketStatusFilter === s ? "default" : "outline"}
+                  onClick={() => setTicketStatusFilter(s)}
+                >
+                  {s === "All" ? "All" : s.charAt(0) + s.slice(1).toLowerCase()}
+                </Button>
+              ))}
+              <Input
+                placeholder="Name, email, mobile or subject…"
+                value={ticketSearch}
+                onChange={(e) => setTicketSearch(e.target.value)}
+                className="max-w-xs"
+              />
+            </div>
+
+            <Card>
+              <CardContent className="p-0 overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Contact</TableHead>
+                      <TableHead>Client ID</TableHead>
+                      <TableHead>Status</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {!ticketsLoading && tickets.length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} className="text-center text-[#6B7280] py-6">
+                          No tickets found.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {tickets.map((t, i) => {
+                      const needsReply = String(t.status).toUpperCase() === "OPEN";
+                      return (
+                        <TableRow key={t.id ?? i} className="cursor-pointer" onClick={() => openTicket(t.id)}>
+                          <TableCell>
+                            <div className="flex items-center gap-1.5">
+                              {needsReply && (
+                                <span className="relative inline-flex h-2 w-2 flex-shrink-0" title="Awaiting admin reply">
+                                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-500 opacity-75" />
+                                  <span className="relative inline-flex h-2 w-2 rounded-full bg-red-500" />
+                                </span>
+                              )}
+                              {t.name ?? "—"}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">{t.email ?? "—"}</div>
+                            <div className="text-xs text-[#6B7280]">{t.mobile ?? ""}</div>
+                          </TableCell>
+                          <TableCell className="text-xs text-[#6B7280]">{t.client_id ?? "—"}</TableCell>
+                          <TableCell>
+                            <span
+                              className={
+                                t.status === "OPEN"
+                                  ? "text-red-600 font-medium"
+                                  : t.status === "REPLIED"
+                                  ? "text-amber-600 font-medium"
+                                  : "text-green-600 font-medium"
+                              }
+                            >
+                              {t.status}
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
 
         {loading && (
@@ -2065,6 +2230,80 @@ export default function AdminDashboard() {
                   ))}
                 </div>
               </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={ticketDetailOpen} onOpenChange={setTicketDetailOpen}>
+          <DialogContent className="max-w-xl max-h-[80vh] overflow-y-auto flex flex-col">
+            <DialogHeader>
+              <DialogTitle>{ticketDetail?.subject || ticketDetail?.name || "Ticket"}</DialogTitle>
+            </DialogHeader>
+            {ticketDetailLoading && (
+              <div className="text-sm text-[#6B7280]">Loading ticket…</div>
+            )}
+            {!ticketDetailLoading && ticketDetail && (
+              <>
+                <div className="grid grid-cols-2 gap-2 text-sm mb-3">
+                  <div><span className="text-[#6B7280]">Name:</span> {ticketDetail.name ?? "—"}</div>
+                  <div><span className="text-[#6B7280]">Status:</span> {ticketDetail.status}</div>
+                  <div><span className="text-[#6B7280]">Email:</span> {ticketDetail.email ?? "—"}</div>
+                  <div><span className="text-[#6B7280]">Mobile:</span> {ticketDetail.mobile ?? "—"}</div>
+                  <div className="col-span-2"><span className="text-[#6B7280]">Client ID:</span> {ticketDetail.client_id ?? "—"}</div>
+                </div>
+
+                <div className="flex flex-col gap-2 max-h-[300px] overflow-y-auto border rounded-md p-3 bg-[#F8FAFC] mb-3">
+                  {(ticketDetail.messages ?? []).length === 0 && (
+                    <p className="text-xs text-[#6B7280]">No messages yet.</p>
+                  )}
+                  {(ticketDetail.messages ?? []).map((m: any, i: number) => (
+                    <div
+                      key={m.id ?? i}
+                      className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
+                        m.sender_type === "ADMIN"
+                          ? "self-end bg-[#7C3AED] text-white"
+                          : "self-start bg-white border"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap break-words">{m.message}</p>
+                      <p className={`mt-1 text-[10px] ${m.sender_type === "ADMIN" ? "text-white/70" : "text-[#9CA3AF]"}`}>
+                        {m.created_at ? new Date(m.created_at).toLocaleString("en-IN") : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {String(ticketDetail.status).toUpperCase() === "CLOSED" ? (
+                  <p className="text-xs text-[#6B7280] text-center">This ticket is closed.</p>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <Textarea
+                      placeholder="Type a reply…"
+                      value={ticketReplyText}
+                      onChange={(e) => setTicketReplyText(e.target.value)}
+                      rows={3}
+                      disabled={ticketActionLoading}
+                    />
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        disabled={ticketActionLoading || !ticketReplyText.trim()}
+                        onClick={handleTicketReply}
+                      >
+                        Send Reply
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={ticketActionLoading}
+                        onClick={handleTicketClose}
+                      >
+                        Close Ticket
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </DialogContent>
         </Dialog>
