@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { useLocation } from "wouter";
 import { useAuthContext } from "@/contexts/AuthContext";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import uberBg from "@/assets/uber (2).png";
@@ -39,7 +38,6 @@ function usePrefersReducedMotion(): boolean {
 type Props = { onExplore?: () => void };
 
 export default function UberSuperCoinNudge({ onExplore }: Props) {
-  const [, setLocation] = useLocation();
   const reduced = usePrefersReducedMotion();
   const { user } = useAuthContext();
 
@@ -105,19 +103,10 @@ export default function UberSuperCoinNudge({ onExplore }: Props) {
     setToggleOn((p) => !p);
   }, [demoPhase, clearTimer, user?.clientId]);
 
-  const handleCardTap = useCallback(() => {
-    if (demoPhase !== "idle") {
-      clearTimer();
-      setUserInteracted(true);
-      markDemoSeen(user?.clientId);
-    }
-    setLocation(`/brand/${UBER_BRAND_ID}`);
-  }, [demoPhase, clearTimer, user?.clientId, setLocation]);
-
   const ghostVisible = demoPhase === "ghost_tap" || demoPhase === "toggling";
 
   return (
-    <div className="relative w-full h-[185px] overflow-hidden rounded-xl" onClick={handleCardTap}>
+    <div className="relative w-full h-[185px] overflow-hidden rounded-xl">
       <style>{`
         @keyframes ghost-down { 0% { transform: translateY(-16px) scale(0.85); opacity: 0; } 30% { opacity: 1; } 100% { transform: translateY(0) scale(1); opacity: 1; } }
         @keyframes ghost-tap { 0%,100% { transform: scale(1); } 50% { transform: scale(0.85); } }
@@ -134,13 +123,13 @@ export default function UberSuperCoinNudge({ onExplore }: Props) {
       <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 100%)" }} />
 
       {/* SC guide text — beside "Uber rides" on backdrop */}
-      <div className="absolute top-[34px] left-[165px] z-10 flex items-center gap-1 pointer-events-none">
-        {["Apply SC", "SuperCoins Applied", "₹100 saved"].map((label, i) => (
-          <span key={label} className="inline-flex items-center gap-1">
-            {i > 0 && <span className="text-[9px] text-[#7C3AED]/50 font-extrabold">→</span>}
-            <span className="inline-flex items-center gap-[3px] rounded-full bg-white/80 backdrop-blur-sm px-2 py-[3px] shadow-[0_1px_4px_rgba(124,58,237,0.12)]">
-              <img src={superCoinImg} alt="" className="w-2 h-2 object-contain" />
-              <span className="text-[8px] font-extrabold text-[#7C3AED] leading-none whitespace-nowrap">{label}</span>
+      <div className="absolute top-[35px] left-[125px] z-10 flex items-center gap-0.5 pointer-events-none">
+        {["Apply SC", "Applied", "₹100 saved"].map((label, i) => (
+          <span key={label} className="inline-flex items-center gap-0.5">
+            {i > 0 && <span className="text-[7px] text-[#7C3AED]/50 font-extrabold">→</span>}
+            <span className="inline-flex items-center gap-[2px] rounded-full bg-white/80 backdrop-blur-sm px-1.5 py-[2px] shadow-[0_1px_4px_rgba(124,58,237,0.12)]">
+              <img src={superCoinImg} alt="" className="w-[7px] h-[7px] object-contain" />
+              <span className="text-[7px] font-extrabold text-[#7C3AED] leading-none whitespace-nowrap">{label}</span>
             </span>
           </span>
         ))}
