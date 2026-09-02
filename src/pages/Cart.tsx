@@ -533,7 +533,7 @@ export default function Cart() {
       clientId: user.clientId,
       items,
       subtotal,
-      fee: processingFee,
+      fee: 0,
       employeeId:
         code.trim().toUpperCase().startsWith("EMP") ||
         code.trim().toUpperCase().startsWith("EMPID")
@@ -1084,7 +1084,6 @@ export default function Cart() {
 
   const walletBalance = walletData?.totalBalance || 0;
   const subtotal = cart?.totalAmount ?? 0;
-  const processingFee = 0;
 
   // SuperCoin exclusion: check if all items are from excluded brands
   const allItemsSuperCoinExcluded = cartItems.length > 0 && cartItems.every(item => isSuperCoinExcluded(item.brandName));
@@ -1130,7 +1129,7 @@ export default function Cart() {
   const couponDiscount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const couponAdjustedAmount = Math.max(
     0,
-    subtotal + processingFee - couponDiscount
+    subtotal - couponDiscount
   );
 
   const discountsLoaded = cartItems.every(
@@ -1185,9 +1184,14 @@ export default function Cart() {
   // Percent/max come from platformFeeConfig (fetched from the DB-backed
   // endpoint above), so this stays in sync even if an admin changes them
   // with no frontend redeploy.
-  const PLATFORM_FEE = Number(
-    Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
-  );
+  // Only charged on orders that redeem SuperCoins -- pure cash orders
+  // (superCoinDeduction === 0) skip the fee entirely, matching the
+  // backend's same conditional check on coinsRedeemed.
+  const PLATFORM_FEE = superCoinDeduction > 0
+    ? Number(
+        Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
+      )
+    : 0;
 
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
   const finalPayable =
@@ -1220,7 +1224,7 @@ export default function Cart() {
     const currentCouponApiFinalAmount = coupon?.finalAmount ?? null;
     const currentCouponAdjustedAmount = Math.max(
       0,
-      subtotal + processingFee - currentCouponDiscount
+      subtotal - currentCouponDiscount
     );
     const currentSuperCoinDeduction =
       !allItemsSuperCoinExcluded && superCoinEnabled && superCoinState.eligible
@@ -1240,7 +1244,6 @@ export default function Cart() {
       walletDeduction: currentWalletDeduction,
       couponDiscount: currentCouponDiscount,
       superCoinDeduction: currentSuperCoinDeduction,
-      processingFee,
       couponApiFinalAmount: currentCouponApiFinalAmount,
       couponAdjustedAmount: currentCouponAdjustedAmount,
       finalPayable: currentFinalPayable,
@@ -2358,15 +2361,6 @@ export default function Cart() {
                         </span>
                       </div>
                     )}
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm sm:text-base cart-text-secondary">
-                        Processing Fee
-                      </span>
-                      <span className="font-medium text-sm sm:text-base cart-text-primary">
-                        ₹{processingFee.toFixed(2)}
-                      </span>
-                    </div>
 
                     <div className="flex items-center justify-between">
                       <span className="text-sm sm:text-base cart-text-secondary">

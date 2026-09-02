@@ -283,7 +283,7 @@ function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => 
               setShowSuggestions(false);
             }
           }}
-          placeholder="Search Rakhi gifts & vouchers..."
+          placeholder="Search brands & vouchers..."
           className="h-[44px] rounded-[16px] border border-[#e5e7eb] bg-white pl-10 pr-4 text-[13px] font-medium shadow-[0_4px_10px_rgba(0,0,0,0.06)]"
         />
         {showSuggestions && filteredSuggestions.length > 0 && (
