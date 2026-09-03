@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { Gift, Clock, CheckCircle2, Frown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getRewardStatus, claimReward } from "@/api/rewardApi";
+import { getRewardStatus, claimReward, QUIZ_CASHBACK_REWARD } from "@/api/rewardApi";
 
 function formatRupees(amount: number | null | undefined): string {
   return (amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -116,7 +116,7 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
   // PENDING
   return (
     <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[16px]">
-      <p className="text-[14px] font-bold text-white">You won ₹10 cashback! 🎉</p>
+      <p className="text-[14px] font-bold text-white">You won ₹{QUIZ_CASHBACK_REWARD} cashback! 🎉</p>
       <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-[#FCD34D]">
         <Clock className="h-[13px] w-[13px]" strokeWidth={2.4} />
         Claim within {countdown || "24h 00m 00s"}
@@ -129,7 +129,7 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
         className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(90deg,#f06da6_0%,#755ff0_100%)] py-3 text-[13px] font-semibold text-white active:scale-95 disabled:opacity-60"
       >
         <Gift className="h-[16px] w-[16px]" strokeWidth={2.2} />
-        {claimMutation.isPending ? "Claiming…" : "Claim ₹10 Cashback"}
+        {claimMutation.isPending ? "Claiming…" : `Claim ₹${QUIZ_CASHBACK_REWARD} Cashback`}
       </button>
     </div>
   );

@@ -1,5 +1,13 @@
 import { brandApi } from "@/lib/valuedesignApi";
 
+/**
+ * Flat cashback amount credited on a winning quiz attempt. Configurable via
+ * VITE_QUIZ_CASHBACK_REWARD in .env (defaults to ₹10).
+ */
+export const QUIZ_CASHBACK_REWARD: number = Number(
+  import.meta.env.VITE_QUIZ_CASHBACK_REWARD ?? 10
+);
+
 export type RewardStatus = "PENDING" | "CLAIMED" | "EXPIRED" | "LOST";
 
 export interface QuizRewardStatus {

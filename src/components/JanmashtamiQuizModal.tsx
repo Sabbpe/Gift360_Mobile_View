@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Clock, Frown, PartyPopper, Gift, Globe, Loader2 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { recordQuizAttempt, checkQuizEligibility } from "@/api/rewardApi";
+import { recordQuizAttempt, checkQuizEligibility, QUIZ_CASHBACK_REWARD } from "@/api/rewardApi";
 import { getRandomQuestions, LANG_LABELS, LANG_FLAGS, type QuizLang, type QuizQuestion } from "@/data/quizQuestions";
 
 const QUIZ_DURATION_MS = 60_000;
@@ -283,7 +283,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
             <span className="grid h-16 w-16 place-items-center rounded-full bg-[#ECFDF5]">
               <PartyPopper className="h-8 w-8 text-[#10B981]" strokeWidth={2} />
             </span>
-            <h3 className="mt-4 text-[17px] font-bold text-gray-900">You won ₹10 cashback!</h3>
+            <h3 className="mt-4 text-[17px] font-bold text-gray-900">You won ₹{QUIZ_CASHBACK_REWARD} cashback!</h3>
             <p className="mt-2 text-[13px] leading-relaxed text-gray-600">
               Please check the <span className="font-semibold text-[#7C3AED]">Rewards</span> section in your Profile page to claim it.
             </p>
