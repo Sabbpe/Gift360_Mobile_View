@@ -2,14 +2,14 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Clock, Frown, PartyPopper, Gift, Globe } from "lucide-react";
+import { Clock, Frown, PartyPopper, Gift, Globe, Loader2 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { recordQuizAttempt } from "@/api/rewardApi";
+import { recordQuizAttempt, checkQuizEligibility } from "@/api/rewardApi";
 import { getRandomQuestions, LANG_LABELS, LANG_FLAGS, type QuizLang, type QuizQuestion } from "@/data/quizQuestions";
 
 const QUIZ_DURATION_MS = 60_000;
 
-type Phase = "language" | "playing" | "success" | "failed" | "timeout";
+type Phase = "checking" | "ineligible" | "language" | "playing" | "success" | "failed" | "timeout";
 
 type Props = {
   open: boolean;
@@ -22,7 +22,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
   const { user } = useAuthContext();
   const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
-  const [phase, setPhase] = useState<Phase>("language");
+  const [phase, setPhase] = useState<Phase>("checking");
   const [selectedLang, setSelectedLang] = useState<QuizLang | null>(null);
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -33,7 +33,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
   const timerRef = useRef<number>(0);
 
   const resetQuiz = useCallback(() => {
-    setPhase("language");
+    setPhase("checking");
     setSelectedLang(null);
     setQuestions([]);
     setQuestionIndex(0);
@@ -45,6 +45,34 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
     if (!open) return;
     resetQuiz();
   }, [open, resetQuiz]);
+
+  // One attempt per day: check eligibility before showing the quiz.
+  useEffect(() => {
+    if (!open || phase !== "checking") return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      if (!user?.clientId) {
+        if (!cancelled) setPhase("language");
+        return;
+      }
+      try {
+        const res = await checkQuizEligibility(user.clientId);
+        if (cancelled) return;
+        setPhase(res.eligible ? "language" : "ineligible");
+      } catch {
+        // On any error (e.g. endpoint not available yet), fail open so the
+        // quiz still works; eligibility is also enforced server-side.
+        if (!cancelled) setPhase("language");
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, phase, user?.clientId]);
 
   const startQuiz = useCallback((lang: QuizLang) => {
     const picked = getRandomQuestions(lang, 5);
@@ -72,6 +100,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
         setSubmitting(false);
         setPhase(resultPhase);
         queryClient.invalidateQueries({ queryKey: ["rewardStatus", user.clientId] });
+        queryClient.invalidateQueries({ queryKey: ["quizEligibility", user.clientId] });
       }
     },
     [user?.clientId, queryClient]
@@ -127,6 +156,34 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="w-[92vw] max-w-sm rounded-2xl p-0 overflow-hidden">
+
+        {/* Checking eligibility */}
+        {phase === "checking" && (
+          <div className="flex flex-col items-center px-6 py-10 text-center">
+            <Loader2 className="h-7 w-7 animate-spin text-[#D97706]" strokeWidth={2.2} />
+            <p className="mt-3 text-[13px] font-medium text-gray-600">Checking your quiz…</p>
+          </div>
+        )}
+
+        {/* Already played today */}
+        {phase === "ineligible" && (
+          <div className="flex flex-col items-center px-6 py-8 text-center">
+            <span className="grid h-16 w-16 place-items-center rounded-full bg-[#FEF3C7]">
+              <Clock className="h-8 w-8 text-[#B45309]" strokeWidth={2} />
+            </span>
+            <h3 className="mt-4 text-[17px] font-bold text-gray-900">Already Played Today!</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-600">
+              You've already taken the quiz today. Come back tomorrow for another shot at the cashback.
+            </p>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="mt-6 w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 text-[14px] font-semibold text-white shadow-md active:scale-95"
+            >
+              Close
+            </button>
+          </div>
+        )}
 
         {/* Language Selection Phase */}
         {phase === "language" && (

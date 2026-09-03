@@ -30,3 +30,19 @@ export const claimReward = async (clientId: string, publicId: string): Promise<Q
   const response = await brandApi.post("/v1/rewards/claim", { clientId, publicId });
   return response.data.reward;
 };
+
+export interface QuizEligibilityResponse {
+  success: boolean;
+  eligible: boolean;
+  clientId: string;
+  message?: string;
+  errorCode?: string;
+}
+
+/** Checks if the user is allowed to take the quiz today (one attempt per day). */
+export const checkQuizEligibility = async (clientId: string): Promise<QuizEligibilityResponse> => {
+  const response = await brandApi.get<QuizEligibilityResponse>("/v1/rewards/eligible", {
+    params: { clientId },
+  });
+  return response.data;
+};
