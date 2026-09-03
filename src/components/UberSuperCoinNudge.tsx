@@ -137,21 +137,21 @@ export default function UberSuperCoinNudge({ onExplore, onBuyNow }: Props) {
       </div>
 
       {/* SC demo card — hero element */}
-      <div className="absolute left-4 bottom-2 z-10">
-        <div className="relative w-[140px] h-[120px] rounded-xl bg-white/95 backdrop-blur-sm border border-purple-100 shadow-[0_6px_20px_rgba(124,58,237,0.18)] overflow-hidden flex flex-col px-2.5 pt-2.5 pb-2 cursor-pointer active:scale-[0.98] transition-transform">
+      <div className="absolute left-4 bottom-3 z-10">
+        <div className="relative w-[140px] rounded-xl bg-white/95 backdrop-blur-sm border border-purple-100 shadow-[0_6px_20px_rgba(124,58,237,0.18)] overflow-visible flex flex-col px-2 pt-2 pb-1.5 cursor-pointer active:scale-[0.98] transition-transform">
           {/* Top left: 20% OFF pill */}
           <div className="absolute top-1.5 left-1.5 z-20" style={{ opacity: toggleOn ? 1 : 0, transform: toggleOn ? "scale(1)" : "scale(0)", transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
             <span className="inline-block rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] px-1.5 py-0.5 text-[7px] font-extrabold text-white shadow-sm">{DISCOUNT_PERCENT}% OFF</span>
           </div>
 
           {/* Top right: SC balance */}
-          <div className="flex items-center justify-end gap-1 mb-1">
+          <div className="flex items-center justify-end gap-1 mb-0.5">
             <img src={superCoinImg} alt="" className="w-3 h-3 object-contain" />
             <span className="text-[7px] font-bold text-gray-500">{toggleOn ? STATIC_SC_BALANCE - 100 : STATIC_SC_BALANCE} SC available</span>
           </div>
 
           {/* Brand name */}
-          <div className="flex items-center gap-1 mb-1">
+          <div className="flex items-center gap-1 mb-0.5">
             <div className="w-5 h-5 rounded-full bg-black flex items-center justify-center"><span className="text-[8px] font-bold text-white leading-none">U</span></div>
             <span className="text-[9px] font-bold text-gray-900">Uber</span>
           </div>

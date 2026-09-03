@@ -157,9 +157,6 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           }}
         >
           <div className="flex-shrink-0 w-full snap-start">
-            <PartnerSlide onPartnerClick={onPartnerClick} />
-          </div>
-          <div className="flex-shrink-0 w-full snap-start">
             <UberSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(UBER_BRAND_ID) : undefined} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
@@ -167,6 +164,9 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           </div>
           <div className="flex-shrink-0 w-full snap-start">
             <BataSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BATA_BRAND_ID) : undefined} />
+          </div>
+          <div className="flex-shrink-0 w-full snap-start">
+            <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
         </div>
 
