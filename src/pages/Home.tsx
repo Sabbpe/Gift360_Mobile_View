@@ -56,6 +56,7 @@ import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
+import { getRewardStatus } from "@/api/rewardApi";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
 import cardone from "@/assets/cardone.png";
@@ -221,6 +222,41 @@ function PromoCard({ onBuyNow }: { onBuyNow?: (brandId: string) => void }) {
 }
 
 function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
+  const { user } = useAuthContext();
+  const [cooldown, setCooldown] = useState("");
+
+  const { data: reward } = useQuery({
+    queryKey: ["rewardStatus", user?.clientId],
+    queryFn: () => getRewardStatus(user!.clientId),
+    enabled: !!user?.clientId,
+    refetchInterval: 60_000,
+  });
+
+  // A lost attempt (wrong answer / timeout) locks the quiz for 24h. The
+  // backend reuses expiresAt as the "retry allowed after" time on LOST rows,
+  // and returns status "LOST" only while that 24h cooldown is still active.
+  const inCooldown = reward?.hasReward && reward.status === "LOST" && !!reward.expiresAt;
+
+  useEffect(() => {
+    if (!inCooldown || !reward?.expiresAt) {
+      setCooldown("");
+      return;
+    }
+    const update = () => {
+      const remainingMs = new Date(reward.expiresAt!).getTime() - Date.now();
+      if (remainingMs <= 0) {
+        setCooldown("");
+        return;
+      }
+      const hours = Math.floor(remainingMs / 3_600_000);
+      const minutes = Math.floor((remainingMs % 3_600_000) / 60_000);
+      setCooldown(`${hours}h ${minutes}m`);
+    };
+    update();
+    const interval = window.setInterval(update, 60_000);
+    return () => window.clearInterval(interval);
+  }, [inCooldown, reward?.expiresAt]);
+
   return (
     <section className="px-3 pt-[18px]">
       <style>{`
@@ -239,17 +275,29 @@ function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
           <button
             type="button"
             onClick={onTryQuiz}
-            className="absolute bottom-1 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-lg"
+            disabled={inCooldown}
+            className={`absolute bottom-1 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-lg ${inCooldown ? "opacity-60 cursor-not-allowed" : ""}`}
             style={{
               background: "linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%)",
-              boxShadow: "0 4px 16px rgba(26,35,126,0.45)",
-              animation: "wave-pulse 2s ease-in-out infinite",
+              boxShadow: inCooldown ? "none" : "0 4px 16px rgba(26,35,126,0.45)",
+              animation: inCooldown ? "none" : "wave-pulse 2s ease-in-out infinite",
             }}
           >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            Try My Quiz
+            {inCooldown ? (
+              <>
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                </svg>
+                {cooldown || "Try later"}
+              </>
+            ) : (
+              <>
+                <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+                Try My Quiz
+              </>
+            )}
           </button>
         )}
       </div>
