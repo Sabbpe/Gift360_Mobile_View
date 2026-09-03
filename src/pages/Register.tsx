@@ -126,6 +126,7 @@ export default function Register() {
           const payload = decodeJwtPayload(data.token);
           setUser({ name: fullName, email, mobile, token: data.token, clientId: payload.userId ?? "" });
           toast({ title: "Welcome to Gift360!", description: "Account created successfully", duration: 3000 });
+          localStorage.setItem("showJanmashtamiPromo", "1");
           setTimeout(() => setLocation("/"), 400);
         } else {
           setError(data.message || "OTP verification failed");

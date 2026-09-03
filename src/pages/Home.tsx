@@ -34,6 +34,9 @@ import {
   Send,
   WalletCards,
   User,
+  Instagram,
+  Facebook,
+  Youtube,
 } from "lucide-react";
 import Hero from "@/components/Hero";
 import Header from "@/components/Header";
@@ -42,6 +45,8 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
+import JanmashtamiPromoModal from "@/components/JanmashtamiPromoModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/HomeBack.png";
@@ -215,11 +220,38 @@ function PromoCard({ onBuyNow }: { onBuyNow?: (brandId: string) => void }) {
   );
 }
 
-function RakhiBanner() {
+function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
   return (
     <section className="px-3 pt-[18px]">
-      <div className="relative w-full h-[100px] rounded-[16px] overflow-hidden">
+      <style>{`
+        @keyframes wave-pulse {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-3px) scale(1.02); }
+        }
+        @keyframes wave-ring {
+          0% { transform: scale(0.9); opacity: 0.6; }
+          100% { transform: scale(1.6); opacity: 0; }
+        }
+      `}</style>
+      <div className="relative w-full h-[100px] rounded-[16px] overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.12)]">
         <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+        {onTryQuiz && (
+          <button
+            type="button"
+            onClick={onTryQuiz}
+            className="absolute bottom-1 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%)",
+              boxShadow: "0 4px 16px rgba(26,35,126,0.45)",
+              animation: "wave-pulse 2s ease-in-out infinite",
+            }}
+          >
+            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            Try My Quiz
+          </button>
+        )}
       </div>
     </section>
   );
@@ -870,6 +902,17 @@ function MobileHomeScreen() {
   const [topBrandError, setTopBrandError] = useState<string | null>(null);
   const [activeTopBrandId, setActiveTopBrandId] = useState<string | null>(null);
   const [superCoinsModalOpen, setSuperCoinsModalOpen] = useState(false);
+  const [janmashtamiQuizOpen, setJanmashtamiQuizOpen] = useState(false);
+  const [janmashtamiPromoOpen, setJanmashtamiPromoOpen] = useState(false);
+
+  // Show Janmashtami promo modal once after login/register
+  useEffect(() => {
+    if (localStorage.getItem("showJanmashtamiPromo") === "1") {
+      localStorage.removeItem("showJanmashtamiPromo");
+      const t = setTimeout(() => setJanmashtamiPromoOpen(true), 600);
+      return () => clearTimeout(t);
+    }
+  }, []);
 
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
@@ -996,7 +1039,13 @@ function MobileHomeScreen() {
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard onBuyNow={openStandardPaymentSheet} />
-      <RakhiBanner />
+      <JanmashtamiQuizModal open={janmashtamiQuizOpen} onClose={() => setJanmashtamiQuizOpen(false)} />
+      <JanmashtamiPromoModal
+        open={janmashtamiPromoOpen}
+        onClose={() => setJanmashtamiPromoOpen(false)}
+        onStartQuiz={() => { setJanmashtamiPromoOpen(false); setJanmashtamiQuizOpen(true); }}
+      />
+      <RakhiBanner onTryQuiz={() => setJanmashtamiQuizOpen(true)} />
       <PersonalPicksSection
         onOpenBrand={openStandardPaymentSheet}
       />
@@ -1015,6 +1064,39 @@ function MobileHomeScreen() {
       <section className="px-[21px] pt-[27px] pb-[10px]">
         <div className="flex items-center justify-center">
           <img src={certfLogo} alt="Certifications" className="h-10 w-auto object-contain" />
+        </div>
+      </section>
+
+      {/* SOCIAL HANDLES */}
+      <section className="px-[21px] pt-[6px] pb-[14px]">
+        <div className="flex items-center justify-center gap-5">
+          <a
+            href="https://www.instagram.com/gift360.io/"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Instagram"
+            className="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm border border-[#EDEDED] active:scale-95 transition-transform"
+          >
+            <Instagram className="h-[18px] w-[18px] text-[#E1306C]" strokeWidth={2} />
+          </a>
+          <a
+            href="https://www.facebook.com/profile.php?id=61593994256161"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Facebook"
+            className="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm border border-[#EDEDED] active:scale-95 transition-transform"
+          >
+            <Facebook className="h-[18px] w-[18px] text-[#1877F2]" strokeWidth={2} />
+          </a>
+          <a
+            href="https://www.youtube.com/@Gift360-io"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="YouTube"
+            className="grid h-9 w-9 place-items-center rounded-full bg-white shadow-sm border border-[#EDEDED] active:scale-95 transition-transform"
+          >
+            <Youtube className="h-[18px] w-[18px] text-[#FF0000]" strokeWidth={2} />
+          </a>
         </div>
       </section>
 

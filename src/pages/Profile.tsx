@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { useEffect, useState } from "react";
+import RewardsTab from "@/components/RewardsTab";
 
 const DISPLAY_NAME_KEY = "displayName";
 
@@ -81,20 +82,46 @@ function InputField({ label, value }: { label: string; value: string }) {
 
 function ProfileForm({
   profile,
+  clientId,
+  initialTab,
   isLoggingOut,
   onLogout,
   onUsernameSave,
   onContactUs,
 }: {
   profile: { username: string; email: string; phone: string; balance: number; superCoinBalance: number; isSuperCoinUser: boolean };
+  clientId: string | undefined;
+  initialTab: "profile" | "rewards";
   isLoggingOut: boolean;
   onLogout: () => void;
   onUsernameSave: (name: string) => void;
   onContactUs: () => void;
 }) {
+  const [activeTab, setActiveTab] = useState<"profile" | "rewards">(initialTab);
+
   return (
     <section className="-mt-[1px] min-h-[calc(100vh-238px)] rounded-t-[34px] bg-[linear-gradient(180deg,#7357f1_0%,#5040a0_72%,#3b327d_100%)] px-[20px] pb-[18px] pt-[32px] shadow-[0_-10px_24px_rgba(69,55,154,0.16)]">
-      <div className="space-y-[20px]">
+      <div className="flex gap-2 rounded-[10px] bg-white/10 p-[4px]">
+        {(["profile", "rewards"] as const).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={`flex-1 rounded-[7px] py-[8px] text-[13px] font-semibold capitalize transition-colors ${
+              activeTab === tab ? "bg-white text-[#7C3AED]" : "text-white/70"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+
+      {activeTab === "rewards" ? (
+        <div className="mt-[20px]">
+          <RewardsTab clientId={clientId} />
+        </div>
+      ) : (
+      <div className="mt-[20px] space-y-[20px]">
         <EditableField label="Username" value={profile.username} onSave={onUsernameSave} />
         <InputField label="Email" value={profile.email} />
         <InputField label="Phone Number" value={profile.phone} />
@@ -118,6 +145,7 @@ function ProfileForm({
           </label>
         )}
       </div>
+      )}
 
       {/* Support Section */}
       <div className="mt-[28px] rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[14px]">
@@ -241,6 +269,8 @@ export default function ProfilePage() {
 
       <ProfileForm
         profile={profile}
+        clientId={user?.clientId}
+        initialTab={new URLSearchParams(window.location.search).get("tab") === "rewards" ? "rewards" : "profile"}
         isLoggingOut={false}
         onLogout={handleLogout}
         onUsernameSave={handleUsernameSave}
