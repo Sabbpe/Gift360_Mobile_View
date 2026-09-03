@@ -205,12 +205,12 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
   );
 }
 
-function PromoCard() {
+function PromoCard({ onBuyNow }: { onBuyNow?: (brandId: string) => void }) {
   const [, setLocation] = useLocation();
 
   return (
     <section className="px-[21px] pt-[18px]">
-      <InstantGiftingBanner onExplore={() => setLocation("/brands")} onPartnerClick={() => setLocation("/distributor")} />
+      <InstantGiftingBanner onExplore={() => setLocation("/brands")} onPartnerClick={() => setLocation("/distributor")} onBuyNow={onBuyNow} />
     </section>
   );
 }
@@ -995,7 +995,7 @@ function MobileHomeScreen() {
         </div>
       <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
-      <PromoCard />
+      <PromoCard onBuyNow={openStandardPaymentSheet} />
       <RakhiBanner />
       <PersonalPicksSection
         onOpenBrand={openStandardPaymentSheet}

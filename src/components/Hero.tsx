@@ -216,7 +216,7 @@ export default function Hero() {
         </div>
 
         <div className="anim-fade-up delay-300">
-          <InstantGiftingBanner onExplore={() => setLocation('/brands')} onPartnerClick={() => setLocation('/distributor')} />
+          <InstantGiftingBanner onExplore={() => setLocation('/brands')} onPartnerClick={() => setLocation('/distributor')} onBuyNow={(brandId) => { setSheetBrandId(brandId); setSheetOpen(true); }} />
         </div>
 
         {/* Recommended */}

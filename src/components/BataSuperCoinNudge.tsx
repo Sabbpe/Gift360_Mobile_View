@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Coins } from "lucide-react";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import bataBg from "@/assets/bataa.png";
 
-const BATA_BRAND_ID = "bata-brand-id";
 const BASE_PRICE = 500;
 const DISCOUNTED_PRICE = 400;
 const DISCOUNT_PERCENT = 20;
@@ -35,9 +35,9 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-type Props = { onExplore?: () => void };
+type Props = { onExplore?: () => void; onBuyNow?: () => void };
 
-export default function BataSuperCoinNudge({ onExplore }: Props) {
+export default function BataSuperCoinNudge({ onExplore, onBuyNow }: Props) {
   const reduced = usePrefersReducedMotion();
   const { user } = useAuthContext();
 
@@ -187,11 +187,23 @@ export default function BataSuperCoinNudge({ onExplore }: Props) {
         </div>
       </div>
 
-      {/* SC nudge label */}
-      <div className="absolute right-4 bottom-3 z-10 flex items-center gap-1" style={{ animation: "nudge-pulse 2s ease-in-out infinite" }}>
-        <img src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
-        <span className="text-[7px] font-semibold text-[#E11D48] leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">Try the toggle — see {DISCOUNT_PERCENT}% off</span>
-      </div>
+      {/* SC nudge label / CTA */}
+      {toggleOn && onBuyNow ? (
+        <button
+          type="button"
+          onClick={onBuyNow}
+          className="absolute right-3 bottom-3 z-10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[8px] font-bold text-white shadow-lg active:scale-[0.95] transition-all"
+          style={{ background: "linear-gradient(135deg, #E11D48, #BE123C)", boxShadow: "0 4px 14px rgba(225,29,72,0.4)" }}
+        >
+          <Coins className="h-3 w-3" strokeWidth={2.5} />
+          Buy with SuperCoins
+        </button>
+      ) : (
+        <div className="absolute right-4 bottom-3 z-10 flex items-center gap-1" style={{ animation: "nudge-pulse 2s ease-in-out infinite" }}>
+          <img src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
+          <span className="text-[7px] font-semibold text-[#E11D48] leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">Try the toggle — see {DISCOUNT_PERCENT}% off</span>
+        </div>
+      )}
     </div>
   );
 }

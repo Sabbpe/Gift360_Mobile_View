@@ -8,9 +8,14 @@ import UberSuperCoinNudge from "@/components/UberSuperCoinNudge";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
 
+const UBER_BRAND_ID = "3e4245c1-a17c-48e4-aa41-e8657d2886e4";
+const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
+const BATA_BRAND_ID = "335f53f7-68f6-4eb0-be45-e571c1044cf9";
+
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
   onPartnerClick?: () => void;
+  onBuyNow?: (brandId: string) => void;
 };
 
 function usePrefersReducedMotion(): boolean {
@@ -74,7 +79,7 @@ function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   );
 }
 
-export default function InstantGiftingBanner({ onExplore, onPartnerClick }: InstantGiftingBannerProps) {
+export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyNow }: InstantGiftingBannerProps) {
   const reduced = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -155,13 +160,13 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick }: Inst
             <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
-            <UberSuperCoinNudge onExplore={onExplore} />
+            <UberSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(UBER_BRAND_ID) : undefined} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
-            <BlinkitSuperCoinNudge onExplore={onExplore} />
+            <BlinkitSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BLINKIT_BRAND_ID) : undefined} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
-            <BataSuperCoinNudge onExplore={onExplore} />
+            <BataSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BATA_BRAND_ID) : undefined} />
           </div>
         </div>
 

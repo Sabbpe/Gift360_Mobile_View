@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { Coins } from "lucide-react";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import blinkitBg from "@/assets/blinkit.png";
 
-const BLINKIT_BRAND_ID = "3e4245c1-a17c-48e4-aa41-e8657d2886e4";
 const BASE_PRICE = 500;
 const DISCOUNTED_PRICE = 400;
 const DISCOUNT_PERCENT = 20;
-const STATIC_SC_BALANCE = 250;
+const STATIC_SC_BALANCE = 150;
 const MAX_DEMO_PLAYS = 3;
 const DEMO_STORAGE_KEY = "sc_nudge_seen_blinkit";
 
@@ -35,9 +35,9 @@ function usePrefersReducedMotion(): boolean {
   return reduced;
 }
 
-type Props = { onExplore?: () => void };
+type Props = { onExplore?: () => void; onBuyNow?: () => void };
 
-export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
+export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
   const reduced = usePrefersReducedMotion();
   const { user } = useAuthContext();
 
@@ -126,10 +126,10 @@ export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
       <div className="absolute top-[35px] left-[125px] z-10 flex items-center gap-0.5 pointer-events-none">
         {["Apply SC", "Applied", "₹100 saved"].map((label, i) => (
           <span key={label} className="inline-flex items-center gap-0.5">
-            {i > 0 && <span className="text-[7px] text-[#F8CB46]/60 font-extrabold">→</span>}
-            <span className="inline-flex items-center gap-[2px] rounded-full bg-white/80 backdrop-blur-sm px-1.5 py-[2px] shadow-[0_1px_4px_rgba(248,203,70,0.12)]">
+            {i > 0 && <span className="text-[7px] text-[#B45309]/50 font-extrabold">→</span>}
+            <span className="inline-flex items-center gap-[2px] rounded-full bg-white/80 backdrop-blur-sm px-1.5 py-[2px] shadow-[0_1px_4px_rgba(180,83,9,0.12)]">
               <img src={superCoinImg} alt="" className="w-[7px] h-[7px] object-contain" />
-              <span className="text-[7px] font-extrabold text-[#F59E0B] leading-none whitespace-nowrap">{label}</span>
+              <span className="text-[7px] font-extrabold text-[#B45309] leading-none whitespace-nowrap">{label}</span>
             </span>
           </span>
         ))}
@@ -137,8 +137,8 @@ export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
 
       {/* SC demo card — hero element */}
       <div className="absolute left-4 bottom-2 z-10">
-        <div className="relative w-[140px] h-[120px] rounded-xl bg-white/95 backdrop-blur-sm border border-amber-100 shadow-[0_6px_20px_rgba(245,158,11,0.18)] overflow-hidden flex flex-col px-2.5 pt-2.5 pb-2 cursor-pointer active:scale-[0.98] transition-transform">
-          {/* Top left: 30% OFF pill */}
+        <div className="relative w-[140px] h-[120px] rounded-xl bg-white/95 backdrop-blur-sm border border-yellow-100 shadow-[0_6px_20px_rgba(202,138,4,0.18)] overflow-hidden flex flex-col px-2.5 pt-2.5 pb-2 cursor-pointer active:scale-[0.98] transition-transform">
+          {/* Top left: 20% OFF pill */}
           <div className="absolute top-1.5 left-1.5 z-20" style={{ opacity: toggleOn ? 1 : 0, transform: toggleOn ? "scale(1)" : "scale(0)", transition: "all 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>
             <span className="inline-block rounded-full bg-gradient-to-r from-[#10B981] to-[#059669] px-1.5 py-0.5 text-[7px] font-extrabold text-white shadow-sm">{DISCOUNT_PERCENT}% OFF</span>
           </div>
@@ -151,17 +151,17 @@ export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
 
           {/* Brand name */}
           <div className="flex items-center gap-1 mb-1">
-            <div className="w-5 h-5 rounded-full bg-[#F8CB46] flex items-center justify-center"><span className="text-[7px] font-extrabold text-[#1A1A1A] leading-none">blinkit</span></div>
+            <div className="w-5 h-5 rounded-full bg-[#F8CB46] flex items-center justify-center"><span className="text-[7px] font-extrabold text-[#1F2937] leading-none italic">blinkit</span></div>
             <span className="text-[9px] font-bold text-gray-900">Blinkit</span>
           </div>
 
           <div className="flex-1 flex flex-col items-center justify-center relative">
             <div className="relative">
               <span className="text-[14px] font-bold" style={{ color: toggleOn ? "#9CA3AF" : "#111827", transition: "color 0.3s" }}>₹{BASE_PRICE}</span>
-              <div className="absolute top-1/2 left-0 h-[1.5px] bg-red-400" style={{ width: toggleOn ? "100%" : "0%", transition: "width 0.4s ease" }} />
+              <div className="absolute top-1/2 left-0 h-[1.5px] bg-yellow-500" style={{ width: toggleOn ? "100%" : "0%", transition: "width 0.4s ease" }} />
             </div>
             <div className="h-[22px] flex items-center justify-center">
-              <span key={toggleOn ? "on" : "off"} className="text-[17px] font-extrabold text-[#F59E0B]" style={{ animation: toggleOn ? "price-in 0.35s cubic-bezier(0.34,1.56,0.64,1)" : undefined }}>
+              <span key={toggleOn ? "on" : "off"} className="text-[17px] font-extrabold text-[#B45309]" style={{ animation: toggleOn ? "price-in 0.35s cubic-bezier(0.34,1.56,0.64,1)" : undefined }}>
                 ₹{toggleOn ? DISCOUNTED_PRICE : BASE_PRICE}
               </span>
             </div>
@@ -171,14 +171,14 @@ export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
           </div>
 
           <div className="flex items-center justify-between mt-auto pt-1 border-t border-gray-100">
-            <span className="text-[7px] font-semibold text-[#F59E0B] leading-tight">Toggle ON for demo</span>
+            <span className="text-[7px] font-semibold text-[#B45309] leading-tight">Toggle ON for demo</span>
             <div className="relative" onClick={(e) => e.stopPropagation()}>
-              <button type="button" onClick={handleUserToggle} className="relative w-[32px] h-[18px] rounded-full transition-colors duration-300 focus:outline-none" style={{ background: toggleOn ? "linear-gradient(135deg,#F59E0B,#EAB308)" : "#D1D5DB" }} aria-label="Toggle SuperCoins">
+              <button type="button" onClick={handleUserToggle} className="relative w-[32px] h-[18px] rounded-full transition-colors duration-300 focus:outline-none" style={{ background: toggleOn ? "linear-gradient(135deg,#F59E0B,#D97706)" : "#D1D5DB" }} aria-label="Toggle SuperCoins">
                 <span className="absolute top-[2px] left-[2px] w-[14px] h-[14px] rounded-full bg-white shadow-sm" style={{ transform: toggleOn ? "translateX(14px)" : "translateX(0)", transition: "transform 0.3s cubic-bezier(0.34,1.56,0.64,1)" }} />
                 {ghostVisible && (
                   <div className="absolute -top-5 left-1/2 -translate-x-1/2 pointer-events-none" style={{ animation: "ghost-down 0.4s ease-out forwards" }}>
                     <div className="w-4 h-4 rounded-full bg-gray-300/70 border-2 border-gray-400/50" style={{ animation: demoPhase === "toggling" ? "ghost-tap 0.2s ease-in-out" : "none" }} />
-                    {demoPhase === "toggling" && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-amber-400/40" style={{ animation: "ripple 0.4s ease-out forwards" }} />}
+                    {demoPhase === "toggling" && <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 rounded-full border border-yellow-400/40" style={{ animation: "ripple 0.4s ease-out forwards" }} />}
                   </div>
                 )}
               </button>
@@ -187,11 +187,23 @@ export default function BlinkitSuperCoinNudge({ onExplore }: Props) {
         </div>
       </div>
 
-      {/* SC nudge label */}
-      <div className="absolute right-4 bottom-3 z-10 flex items-center gap-1" style={{ animation: "nudge-pulse 2s ease-in-out infinite" }}>
-        <img src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
-        <span className="text-[7px] font-semibold text-[#F59E0B] leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">Try the toggle — see {DISCOUNT_PERCENT}% off</span>
-      </div>
+      {/* SC nudge label / CTA */}
+      {toggleOn && onBuyNow ? (
+        <button
+          type="button"
+          onClick={onBuyNow}
+          className="absolute right-3 bottom-3 z-10 inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[8px] font-bold text-white shadow-lg active:scale-[0.95] transition-all"
+          style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)", boxShadow: "0 4px 14px rgba(217,119,6,0.4)" }}
+        >
+          <Coins className="h-3 w-3" strokeWidth={2.5} />
+          Buy with SuperCoins
+        </button>
+      ) : (
+        <div className="absolute right-4 bottom-3 z-10 flex items-center gap-1" style={{ animation: "nudge-pulse 2s ease-in-out infinite" }}>
+          <img src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
+          <span className="text-[7px] font-semibold text-[#B45309] leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">Try the toggle — see {DISCOUNT_PERCENT}% off</span>
+        </div>
+      )}
     </div>
   );
 }
