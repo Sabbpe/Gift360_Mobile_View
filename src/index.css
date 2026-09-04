@@ -248,6 +248,26 @@
 @keyframes g-fade-up-kf { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes g-skeleton-kf { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
 
+/* ── Quiz result animations ── */
+@keyframes confetti-fall {
+  0%   { opacity: 1; transform: translateY(-20px) rotate(0deg) scale(1); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; transform: translateY(320px) rotate(720deg) scale(0.4); }
+}
+@keyframes petal-fall {
+  0%   { opacity: 0; transform: translateY(-30px) rotate(0deg) translateX(0) scale(0.7); }
+  10%  { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(380px) rotate(400deg) translateX(60px) scale(1.2); }
+}
+@keyframes quiz-shake {
+  0%, 100% { transform: translateX(0); }
+  15%      { transform: translateX(-6px); }
+  30%      { transform: translateX(5px); }
+  45%      { transform: translateX(-4px); }
+  60%      { transform: translateX(3px); }
+  75%      { transform: translateX(-2px); }
+}
+
 /* Animation classes — exact reference names */
 .anim-col-up          { animation: column-up 8s linear infinite; }
 .anim-col-down        { animation: column-down 8s linear infinite; }

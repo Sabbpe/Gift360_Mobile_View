@@ -54,3 +54,42 @@ export const checkQuizEligibility = async (clientId: string): Promise<QuizEligib
   });
   return response.data;
 };
+
+export interface QuizQuestion {
+  id: number;
+  question: string;
+  options: string[];
+}
+
+/** Fetches the randomized quiz question set localized to the given language. */
+export const fetchQuizQuestions = async (lang: string): Promise<QuizQuestion[]> => {
+  const response = await brandApi.get<QuizQuestion[]>("/v1/quiz/questions", {
+    params: { lang },
+  });
+  return response.data;
+};
+
+export interface QuizGradeAnswer {
+  questionId: number;
+  selectedIndex: number;
+}
+
+export interface QuizGradeAnswerResult {
+  success: boolean;
+  correct: boolean;
+  correctIndex: number;
+}
+
+/** Grades a single answered question server-side — the answer key is never exposed. */
+export const gradeAnswer = async (
+  clientId: string,
+  questionId: number,
+  selectedIndex: number
+): Promise<QuizGradeAnswerResult> => {
+  const response = await brandApi.post<QuizGradeAnswerResult>("/v1/rewards/grade-answer", {
+    clientId,
+    questionId,
+    selectedIndex,
+  });
+  return response.data;
+};
