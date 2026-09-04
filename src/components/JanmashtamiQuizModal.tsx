@@ -7,6 +7,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { gradeAnswer, recordQuizAttempt, checkQuizEligibility, QUIZ_CASHBACK_REWARD, fetchQuizQuestions, type QuizQuestion } from "@/api/rewardApi";
 import { LANG_LABELS, LANG_FLAGS, type QuizLang } from "@/data/quizQuestions";
 import resultBackdrop from "@/assets/resultBackdrop.png";
+import krishnasadBackdrop from "@/assets/krishnasad.png";
 
 const QUIZ_DURATION_MS = 60_000;
 
@@ -473,7 +474,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
           <div
             className="relative flex flex-col items-center px-6 py-10 text-center"
             style={{
-              backgroundImage: `url(${resultBackdrop})`,
+              backgroundImage: `url(${krishnasadBackdrop})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }}
