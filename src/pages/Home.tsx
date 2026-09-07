@@ -922,15 +922,14 @@ function MobileHomeScreen() {
   const [janmashtamiQuizOpen, setJanmashtamiQuizOpen] = useState(false);
   const [janmashtamiPromoOpen, setJanmashtamiPromoOpen] = useState(false);
 
-  // Show Janmashtami promo modal once after login/register. The modal itself
-  // checks eligibility the moment it opens, so we always open it here.
-  useEffect(() => {
-    if (localStorage.getItem("showJanmashtamiPromo") === "1") {
-      localStorage.removeItem("showJanmashtamiPromo");
-      const t = setTimeout(() => setJanmashtamiPromoOpen(true), 600);
-      return () => clearTimeout(t);
-    }
-  }, []);
+  // Quiz entry disabled — promo modal no longer shown after login/register
+  // useEffect(() => {
+  //   if (localStorage.getItem("showJanmashtamiPromo") === "1") {
+  //     localStorage.removeItem("showJanmashtamiPromo");
+  //     const t = setTimeout(() => setJanmashtamiPromoOpen(true), 600);
+  //     return () => clearTimeout(t);
+  //   }
+  // }, []);
 
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
@@ -1058,12 +1057,13 @@ function MobileHomeScreen() {
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard onBuyNow={openStandardPaymentSheet} />
       <JanmashtamiQuizModal open={janmashtamiQuizOpen} onClose={() => setJanmashtamiQuizOpen(false)} />
-      <JanmashtamiPromoModal
+      {/* Quiz entry disabled — promo modal no longer shown */}
+      {/* <JanmashtamiPromoModal
         open={janmashtamiPromoOpen}
         onClose={() => setJanmashtamiPromoOpen(false)}
         onStartQuiz={() => { setJanmashtamiPromoOpen(false); setJanmashtamiQuizOpen(true); }}
-      />
-      <RakhiBanner onTryQuiz={() => setJanmashtamiQuizOpen(true)} />
+      /> */}
+      <RakhiBanner />
       <PersonalPicksSection
         onOpenBrand={openStandardPaymentSheet}
       />

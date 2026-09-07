@@ -120,7 +120,7 @@ export default function Login() {
             token: data.token, clientId: data.userInfo.clientId,
           });
           toast({ title: "Welcome back!", description: data.message || "Login successful", duration: 3000 });
-          localStorage.setItem("showJanmashtamiPromo", "1");
+          // localStorage.setItem("showJanmashtamiPromo", "1"); // Quiz entry disabled
           setTimeout(() => setLocation("/"), 400);
         } else { setError(data.message || "OTP login failed"); }
       },
