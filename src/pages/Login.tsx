@@ -5,7 +5,7 @@ import { useSendOtp } from "@/hooks/useSendOtp";
 import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import rakhiBg from "@/assets/krishnauth.png";
+import rakhiBg from "@/assets/ganeshauth.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";

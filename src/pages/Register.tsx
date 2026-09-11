@@ -6,7 +6,7 @@ import { useRegisterSendOtp } from "@/hooks/useRegisterSendOtp";
 import { useRegisterVerifyOtp } from "@/hooks/useRegisterVerifyOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { decodeJwtPayload } from "@/api/authApi";
-import rakhiBg from "@/assets/krishnauth.png";
+import rakhiBg from "@/assets/ganeshauth.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";

@@ -49,7 +49,7 @@ import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import JanmashtamiPromoModal from "@/components/JanmashtamiPromoModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
-import homebackImg from "@/assets/HomeBack.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import SupportChatWidget from "@/components/SupportChatWidget";
 import { Input } from "@/components/ui/input";
@@ -59,8 +59,8 @@ import { useBrandNames } from "@/hooks/useBrandNames";
 import { checkQuizEligibility } from "@/api/rewardApi";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
-import cardone from "@/assets/cardone.png";
-import rakhiBannerImg from "@/assets/card2.png";
+import cardone from "@/assets/ganeshwalletpoints.png";
+import rakhiBannerImg from "@/assets/ganeshbannercard.png";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
@@ -247,7 +247,7 @@ function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
           100% { transform: scale(1.6); opacity: 0; }
         }
       `}</style>
-      <div className="relative w-full h-[100px] rounded-[16px] overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.12)]">
+      <div className="relative w-full h-[140px] rounded-[16px] overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.12)]">
         <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
         {onTryQuiz && (
           <button

@@ -18,7 +18,7 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded, isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
-import homebackImg from "@/assets/HomeBack.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,

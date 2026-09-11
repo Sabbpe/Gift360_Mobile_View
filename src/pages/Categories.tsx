@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import PaymentDetailsSheet from '@/components/PaymentDetailsSheet';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { Button } from '@/components/ui/button';
-import homebackImg from "@/assets/HomeBack.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 
 interface CategoryFilterState {
   categories: string[];
