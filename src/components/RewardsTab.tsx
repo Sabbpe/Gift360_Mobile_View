@@ -65,7 +65,7 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
       <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[18px] text-center">
         <Gift className="mx-auto h-6 w-6 text-white/70" strokeWidth={1.8} />
         <p className="mt-2 text-[13px] font-medium text-white/80">
-          No rewards yet — play the Janmashtami quiz on the Home page to earn one!
+          No rewards yet
         </p>
       </div>
     );
