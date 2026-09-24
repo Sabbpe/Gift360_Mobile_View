@@ -351,7 +351,7 @@ export default function SuperCoinGuideSheet({ open, onClose }: Props) {
       text: "Toggle from Cashback to SuperCoins in your cart to see your coins and how many you can use.",
       badge: "20% of voucher value",
     },
-    { title: 'Tap "Apply SC" and save', text: "Tap 'Apply SC' and the coins are deducted from your total. That's it!", badge: "" },
+    { title: 'Tap "Apply SC" and save', text: "Tap 'Apply SC' and the coins are deducted from your total. Then tap 'Pay' to continue your voucher journey.", badge: "" },
     { title: "Check your balance anytime", text: "Want to know how many SuperCoins you have? Tap your profile icon at the top right.", badge: "" },
   ];
 
