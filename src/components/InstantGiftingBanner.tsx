@@ -3,14 +3,16 @@ import { ArrowRight, Gift, Coins, RefreshCw, BadgeDollarSign } from "lucide-reac
 import flipkartSuperCoinImg from "@/assets/FlipKartSuperCoin-removebg-preview.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import partnerImg from "@/assets/coorp.png";
-import rakhihomeImg from "@/assets/featheroverlay.png";
 import UberSuperCoinNudge from "@/components/UberSuperCoinNudge";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
+import SuperCoinBanner from "@/components/SuperCoinBanner";
+import SuperCoinGuideSheet from "@/components/SuperCoinGuideSheet";
 
 const UBER_BRAND_ID = "3e4245c1-a17c-48e4-aa41-e8657d2886e4";
 const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
 const BATA_BRAND_ID = "335f53f7-68f6-4eb0-be45-e571c1044cf9";
+const TOTAL_SLIDES = 5;
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
@@ -83,6 +85,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
   const reduced = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const [guideOpen, setGuideOpen] = useState(false);
   const intervalRef = useRef<number>(0);
   const userPausedRef = useRef(false);
 
@@ -99,15 +102,15 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
 
   const startAutoplay = useCallback(() => {
     window.clearInterval(intervalRef.current);
-    if (reduced || userPausedRef.current) return;
+    if (reduced || userPausedRef.current || guideOpen) return;
     intervalRef.current = window.setInterval(() => {
       setSelectedIndex((prev) => {
-        const next = (prev + 1) % 4;
+        const next = (prev + 1) % TOTAL_SLIDES;
         scrollTo(next);
         return next;
       });
     }, 3000);
-  }, [reduced, scrollTo]);
+  }, [reduced, scrollTo, guideOpen]);
 
   const stopAutoplay = useCallback(() => {
     window.clearInterval(intervalRef.current);
@@ -141,7 +144,6 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           75% { filter: drop-shadow(0 0 12px rgba(255,200,0,0.7)) drop-shadow(0 0 24px rgba(255,180,0,0.4)); transform: scale(1.05); }
         }
       `}</style>
-      <img src={rakhihomeImg} alt="" className="absolute -top-3 -left-3 h-[72px] w-[72px] object-contain opacity-80 pointer-events-none z-0" />
       <div
         className="w-full overflow-hidden rounded-[20px] border border-[#EDEDED] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] bg-white"
         onTouchStart={stopAutoplay}
@@ -166,12 +168,15 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
             <BataSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BATA_BRAND_ID) : undefined} />
           </div>
           <div className="flex-shrink-0 w-full snap-start">
+            <SuperCoinBanner onOpenGuide={() => setGuideOpen(true)} />
+          </div>
+          <div className="flex-shrink-0 w-full snap-start">
             <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
         </div>
 
         <div className="flex items-center justify-center gap-2 py-2.5">
-          {[0, 1, 2, 3].map((i) => (
+          {Array.from({ length: TOTAL_SLIDES }, (_, i) => i).map((i) => (
             <button
               key={i}
               onClick={() => goToSlide(i)}
@@ -182,6 +187,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           ))}
         </div>
       </div>
+      <SuperCoinGuideSheet open={guideOpen} onClose={() => setGuideOpen(false)} />
     </section>
   );
 }

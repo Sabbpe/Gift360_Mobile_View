@@ -167,10 +167,11 @@ export default function Categories() {
     <>
       <Header />
       <main className="min-h-screen w-full pb-24 relative">
-        <div
+        {/* <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${homebackImg})` }}
-        />
+        /> */}
+        <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
         <div className="relative z-10">
       <header
         className="flex items-center justify-between px-4 py-3"

@@ -789,10 +789,11 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
   return (
     <div className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Home backdrop */}
-      <div
+      {/* <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${homebackImg})` }}
-      />
+      /> */}
+      <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
       <FloatingCoins />
 
       <div className="relative z-10 flex flex-col flex-1">

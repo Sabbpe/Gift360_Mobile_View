@@ -807,10 +807,11 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div
+      {/* <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
         style={{ backgroundImage: `url(${homebackImg})` }}
-      />
+      /> */}
+      <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <FloatingCoins count={6} />
