@@ -133,7 +133,7 @@ export default function BrandBuySheet({
           <div className="mt-4">
             <h5 className="text-sm font-semibold">Select Amount</h5>
             <div className="mt-2 flex items-center justify-center">
-              <div className="text-lg font-bold">â‚¹{amount.toLocaleString()}</div>
+              <div className="text-lg font-bold">₹{amount.toLocaleString()}</div>
             </div>
 
             <div className="relative mt-3">
@@ -154,12 +154,12 @@ export default function BrandBuySheet({
                 className="absolute -top-8 w-max transform -translate-x-1/2 rounded-md bg-[#7C3AED] px-2 py-1 text-xs text-white"
                 style={{ left: `${Math.max(0, Math.min(100, ((amount - min) / Math.max(1, max - min)) * 100))}%` }}
               >
-                â‚¹{amount.toLocaleString()}
+                ₹{amount.toLocaleString()}
               </div>
             </div>
             <div className="flex justify-between text-xs text-gray-400 mt-1">
-              <span>â‚¹{min.toLocaleString()}</span>
-              <span>â‚¹{max.toLocaleString()}</span>
+              <span>₹{min.toLocaleString()}</span>
+              <span>₹{max.toLocaleString()}</span>
             </div>
           </div>
 
@@ -196,7 +196,7 @@ export default function BrandBuySheet({
           {/* Total */}
           <div className="mt-4">
             <div className="text-sm text-gray-500">Total</div>
-            <div className="text-2xl font-bold">â‚¹{total.toLocaleString()}</div>
+            <div className="text-2xl font-bold">₹{total.toLocaleString()}</div>
           </div>
 
           {/* Tabs */}
@@ -241,7 +241,7 @@ export default function BrandBuySheet({
         <div className="absolute left-0 right-0 bottom-0 z-50 p-4 border-t border-gray-100 bg-white">
           <div className="mx-auto max-w-3xl flex items-center justify-between gap-3">
             <div>
-              <div className="text-lg font-bold">â‚¹{total.toLocaleString()}</div>
+              <div className="text-lg font-bold">₹{total.toLocaleString()}</div>
               <div className="text-xs text-gray-500">Instant delivery via email</div>
             </div>
             <button

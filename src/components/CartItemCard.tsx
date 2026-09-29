@@ -119,7 +119,7 @@ export default function CartItemCard({
       {/* Right: Total Price + Remove */}
       <div className="flex flex-col items-end justify-between h-full">
         <div className="text-right">
-          <p className="text-lg font-bold text-purple-600">â‚¹{lineTotal.toLocaleString()}</p>
+          <p className="text-lg font-bold text-purple-600">₹{lineTotal.toLocaleString()}</p>
           <p className="text-xs text-gray-500">Total</p>
         </div>
 

@@ -560,12 +560,12 @@ export default function PaymentDetailsSheet({
                 <div className="mt-[4px]">
                   <div className="flex flex-wrap gap-[6px]">
                     <button className="h-[34px] rounded-[8px] border-2 border-[#9747FF] bg-[#9747FF] px-3 text-[12px] font-semibold leading-[18px] text-white shadow-lg">
-                      â‚¹{min.toLocaleString()}
+                      ₹{min.toLocaleString()}
                     </button>
                   </div>
                   <div className="mt-[2px]">
                     <span className="relative inline-block rounded text-[15px] font-medium leading-[22px] text-[#10B981]">
-                      +â‚¹{Math.round(min * discountPercent / 100)} cashback
+                      +₹{Math.round(min * discountPercent / 100)} cashback
                     </span>
                   </div>
                 </div>
@@ -585,7 +585,7 @@ export default function PaymentDetailsSheet({
                               : "border-[#DAD5FF] bg-white text-[#3E3E3E] hover:border-[#9747FF]"
                           }`}
                         >
-                          â‚¹{denom.toLocaleString()}
+                          ₹{denom.toLocaleString()}
                         </button>
                       );
                     })}
@@ -612,7 +612,7 @@ export default function PaymentDetailsSheet({
                           style={{ borderRadius: 4, fontFamily: "Poppins, sans-serif" }}
                           className="relative inline-block text-[15px] leading-[22px] text-[#10B981] font-medium"
                         >
-                          +â‚¹{cb} cashback
+                          +₹{cb} cashback
                           <motion.div
                             initial={{ scaleX: 0 }}
                             animate={{ scaleX: 1 }}
@@ -632,7 +632,7 @@ export default function PaymentDetailsSheet({
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
-                    Enter amount between â‚¹{min.toLocaleString()} - â‚¹{max.toLocaleString()}
+                    Enter amount between ₹{min.toLocaleString()} - ₹{max.toLocaleString()}
                   </div>
                   <input
                     type="text"
@@ -653,7 +653,7 @@ export default function PaymentDetailsSheet({
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   />
                   <div className="mt-[4px] text-[9px] leading-[14px] text-[#10B981] font-medium text-right">
-                    +â‚¹{Math.round(amount * discountPercent / 100)} cashback
+                    +₹{Math.round(amount * discountPercent / 100)} cashback
                   </div>
                 </div>
               )}
@@ -704,13 +704,13 @@ export default function PaymentDetailsSheet({
                   className="mt-[8px] text-center text-[15px] leading-[22px] text-black"
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
-                  Total: â‚¹{amount.toLocaleString()} x {quantity} ={" "}
+                  Total: ₹{amount.toLocaleString()} x {quantity} ={" "}
                   <span className="font-semibold text-[#9747FF]">
-                    â‚¹{(amount * quantity).toLocaleString()}
+                    ₹{(amount * quantity).toLocaleString()}
                   </span>
                   {discountPercent > 0 && (
                     <span className="ml-1 text-[#10B981]">
-                      + â‚¹{Math.round(amount * quantity * discountPercent / 100).toLocaleString()} cashback
+                      + ₹{Math.round(amount * quantity * discountPercent / 100).toLocaleString()} cashback
                     </span>
                   )}
                 </div>

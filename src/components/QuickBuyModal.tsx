@@ -76,8 +76,8 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
 
     const num = Number(v);
     if (isNaN(num)) return setError("Enter a valid number");
-    if (num < minPrice) return setError(`Minimum amount is â‚¹${minPrice}`);
-    if (num > maxPrice) return setError(`Maximum amount is â‚¹${maxPrice}`);
+    if (num < minPrice) return setError(`Minimum amount is ₹${minPrice}`);
+    if (num > maxPrice) return setError(`Maximum amount is ₹${maxPrice}`);
     setError("");
   };
 
@@ -102,7 +102,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
       toast({
         title: "Invalid amount",
         description: isVariableType
-          ? `Enter an amount between â‚¹${minPrice} and â‚¹${maxPrice}`
+          ? `Enter an amount between ₹${minPrice} and ₹${maxPrice}`
           : "Select a valid denomination to continue.",
         variant: "destructive",
       });
@@ -124,7 +124,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
     toast({
       title: user?.clientId ? "Added to Cart" : "Added to Cart (Guest)",
       description: user?.clientId
-        ? `${quantity}x ${brand.BrandName} voucher(s) of â‚¹${amount} each added to cart`
+        ? `${quantity}x ${brand.BrandName} voucher(s) of ₹${amount} each added to cart`
         : `${quantity}x ${brand.BrandName} voucher(s) saved. Login to checkout.`,
     });
 
@@ -139,7 +139,7 @@ const handlePayNow = async () => {
     toast({
       title: "Invalid amount",
       description: isVariableType
-        ? `Enter an amount between â‚¹${minPrice} and â‚¹${maxPrice}`
+        ? `Enter an amount between ₹${minPrice} and ₹${maxPrice}`
         : "Select a valid denomination to continue.",
       variant: "destructive",
     });
@@ -379,7 +379,7 @@ const isProcessing =
                     {brandDetails?.DenominationList && brandDetails?.DenominationList.length > 0 ? (
                       brandDetails?.DenominationList.map((denomination, index) => (
                         <option key={`${denomination}-${index}`} value={denomination}>
-                          â‚¹{denomination.toLocaleString()}
+                          ₹{denomination.toLocaleString()}
                         </option>
                       ))
                     ) : (
@@ -398,7 +398,7 @@ const isProcessing =
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    â‚¹
+                    ₹
                   </span>
                   <input
                     type="number"
@@ -468,7 +468,7 @@ const isProcessing =
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Amount</span>
                   <span className="text-2xl font-bold text-primary">
-                    â‚¹{(Number(amount) * quantity).toLocaleString()}
+                    ₹{(Number(amount) * quantity).toLocaleString()}
                   </span>
                 </div>
               </div>
