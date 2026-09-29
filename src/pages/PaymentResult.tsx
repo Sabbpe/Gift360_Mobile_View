@@ -725,7 +725,7 @@ export default function PaymentResult() {
                       <>
                         <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500 flex-shrink-0" />
                         <span className="text-sm text-green-700 dark:text-green-400 font-medium">
-                          Vouchers sent to your email
+                          Vouchers are being processed — you can track them on your Orders page
                         </span>
                       </>
                     ) : fetchCouponsMutation.isError ? (
