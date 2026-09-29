@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useRoute } from "wouter";
 import { ArrowLeft, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
@@ -10,7 +10,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 
 const FALLBACK = FALLBACK_IMAGE;
 const SELECTED_TOP_BRAND_DETAILS_KEY = "selected_top_brand_details";
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 type TabKey = "about" | "howToUse" | "terms";
 
@@ -190,7 +190,7 @@ export default function BrandPaymentPage() {
 
         <section className="mt-4 rounded-2xl bg-white p-4 shadow-[0px_6px_16px_rgba(0,0,0,0.12)]">
           <p className="text-sm font-semibold text-[#111827]">Selected Amount</p>
-          <p className="mt-1 text-2xl font-bold text-[#111827]">₹{safeAmount.toLocaleString()}</p>
+          <p className="mt-1 text-2xl font-bold text-[#111827]">â‚¹{safeAmount.toLocaleString()}</p>
 
           <input
             type="range"
@@ -202,8 +202,8 @@ export default function BrandPaymentPage() {
             className="mt-4 h-2 w-full cursor-pointer appearance-none rounded-full bg-gradient-to-r from-[#7C3AED] to-[#C4B5FD] [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#7C3AED] [&::-webkit-slider-thumb]:shadow-md [&::-moz-range-thumb]:h-5 [&::-moz-range-thumb]:w-5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#7C3AED]"
           />
           <div className="mt-2 flex justify-between text-xs text-[#6B7280]">
-            <span>₹{minAmount.toLocaleString()}</span>
-            <span>₹{maxAmount.toLocaleString()}</span>
+            <span>â‚¹{minAmount.toLocaleString()}</span>
+            <span>â‚¹{maxAmount.toLocaleString()}</span>
           </div>
         </section>
 
@@ -234,7 +234,7 @@ export default function BrandPaymentPage() {
               Maximum {MAX_QUANTITY_PER_ITEM} of the same gift card per order.
             </p>
           )}
-          <p className="mt-3 text-base font-bold text-[#111827]">Total: ₹{total.toLocaleString()}</p>
+          <p className="mt-3 text-base font-bold text-[#111827]">Total: â‚¹{total.toLocaleString()}</p>
         </section>
 
         <section className="mt-4 rounded-2xl bg-white p-4 shadow-[0px_6px_16px_rgba(0,0,0,0.12)]">
@@ -290,7 +290,7 @@ export default function BrandPaymentPage() {
       <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-[#E5E7EB] bg-white px-4 py-3">
         <div className="mx-auto flex w-full max-w-md items-center justify-between gap-3">
           <div>
-            <p className="text-lg font-bold text-[#111827]">₹{total.toLocaleString()}</p>
+            <p className="text-lg font-bold text-[#111827]">â‚¹{total.toLocaleString()}</p>
             <p className="text-xs text-[#6B7280]">Instant delivery via email</p>
           </div>
           <button

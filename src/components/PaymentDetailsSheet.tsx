@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
@@ -15,7 +15,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getImageUrl } from "@/utils/imageUrl";
 
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 type Props = {
   brandId?: string | null;
@@ -560,12 +560,12 @@ export default function PaymentDetailsSheet({
                 <div className="mt-[4px]">
                   <div className="flex flex-wrap gap-[6px]">
                     <button className="h-[34px] rounded-[8px] border-2 border-[#9747FF] bg-[#9747FF] px-3 text-[12px] font-semibold leading-[18px] text-white shadow-lg">
-                      ₹{min.toLocaleString()}
+                      â‚¹{min.toLocaleString()}
                     </button>
                   </div>
                   <div className="mt-[2px]">
                     <span className="relative inline-block rounded text-[15px] font-medium leading-[22px] text-[#10B981]">
-                      +₹{Math.round(min * discountPercent / 100)} cashback
+                      +â‚¹{Math.round(min * discountPercent / 100)} cashback
                     </span>
                   </div>
                 </div>
@@ -585,7 +585,7 @@ export default function PaymentDetailsSheet({
                               : "border-[#DAD5FF] bg-white text-[#3E3E3E] hover:border-[#9747FF]"
                           }`}
                         >
-                          ₹{denom.toLocaleString()}
+                          â‚¹{denom.toLocaleString()}
                         </button>
                       );
                     })}
@@ -612,7 +612,7 @@ export default function PaymentDetailsSheet({
                           style={{ borderRadius: 4, fontFamily: "Poppins, sans-serif" }}
                           className="relative inline-block text-[15px] leading-[22px] text-[#10B981] font-medium"
                         >
-                          +₹{cb} cashback
+                          +â‚¹{cb} cashback
                           <motion.div
                             initial={{ scaleX: 0 }}
                             animate={{ scaleX: 1 }}
@@ -632,7 +632,7 @@ export default function PaymentDetailsSheet({
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
-                    Enter amount between ₹{min.toLocaleString()} - ₹{max.toLocaleString()}
+                    Enter amount between â‚¹{min.toLocaleString()} - â‚¹{max.toLocaleString()}
                   </div>
                   <input
                     type="text"
@@ -653,7 +653,7 @@ export default function PaymentDetailsSheet({
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   />
                   <div className="mt-[4px] text-[9px] leading-[14px] text-[#10B981] font-medium text-right">
-                    +₹{Math.round(amount * discountPercent / 100)} cashback
+                    +â‚¹{Math.round(amount * discountPercent / 100)} cashback
                   </div>
                 </div>
               )}
@@ -704,13 +704,13 @@ export default function PaymentDetailsSheet({
                   className="mt-[8px] text-center text-[15px] leading-[22px] text-black"
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
-                  Total: ₹{amount.toLocaleString()} x {quantity} ={" "}
+                  Total: â‚¹{amount.toLocaleString()} x {quantity} ={" "}
                   <span className="font-semibold text-[#9747FF]">
-                    ₹{(amount * quantity).toLocaleString()}
+                    â‚¹{(amount * quantity).toLocaleString()}
                   </span>
                   {discountPercent > 0 && (
                     <span className="ml-1 text-[#10B981]">
-                      + ₹{Math.round(amount * quantity * discountPercent / 100).toLocaleString()} cashback
+                      + â‚¹{Math.round(amount * quantity * discountPercent / 100).toLocaleString()} cashback
                     </span>
                   )}
                 </div>

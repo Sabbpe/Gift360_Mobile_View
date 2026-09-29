@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+﻿import { useState, useEffect, useRef } from "react";
 import { X, Plus, Minus, ShoppingCart, ChevronDown, Loader2 } from "lucide-react";
 import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
@@ -9,7 +9,7 @@ import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 interface QuickBuyModalProps {
   brand: Brand;
@@ -37,7 +37,7 @@ const backendPaymentMutation = useBackendPaymentInitiation();
 const validateOrderMutation = useValidateOrder();
 
 const { data: brandDetails, isLoading } = useBrandDetails(brand.BrandId, {
-  enabled: isOpen, // ✅ Only fetch when modal is open
+  enabled: isOpen, // âœ… Only fetch when modal is open
 });
 
 const minPrice = brandDetails?.minPrice || 0;
@@ -76,8 +76,8 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
 
     const num = Number(v);
     if (isNaN(num)) return setError("Enter a valid number");
-    if (num < minPrice) return setError(`Minimum amount is ₹${minPrice}`);
-    if (num > maxPrice) return setError(`Maximum amount is ₹${maxPrice}`);
+    if (num < minPrice) return setError(`Minimum amount is â‚¹${minPrice}`);
+    if (num > maxPrice) return setError(`Maximum amount is â‚¹${maxPrice}`);
     setError("");
   };
 
@@ -102,7 +102,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
       toast({
         title: "Invalid amount",
         description: isVariableType
-          ? `Enter an amount between ₹${minPrice} and ₹${maxPrice}`
+          ? `Enter an amount between â‚¹${minPrice} and â‚¹${maxPrice}`
           : "Select a valid denomination to continue.",
         variant: "destructive",
       });
@@ -124,7 +124,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
     toast({
       title: user?.clientId ? "Added to Cart" : "Added to Cart (Guest)",
       description: user?.clientId
-        ? `${quantity}x ${brand.BrandName} voucher(s) of ₹${amount} each added to cart`
+        ? `${quantity}x ${brand.BrandName} voucher(s) of â‚¹${amount} each added to cart`
         : `${quantity}x ${brand.BrandName} voucher(s) saved. Login to checkout.`,
     });
 
@@ -139,7 +139,7 @@ const handlePayNow = async () => {
     toast({
       title: "Invalid amount",
       description: isVariableType
-        ? `Enter an amount between ₹${minPrice} and ₹${maxPrice}`
+        ? `Enter an amount between â‚¹${minPrice} and â‚¹${maxPrice}`
         : "Select a valid denomination to continue.",
       variant: "destructive",
     });
@@ -189,8 +189,8 @@ const orderRequest = {
     totalAmount: totalAmount,
     currency: "INR",
     status: "PENDING",
-    walletUsed: false,     // ✅ ADD THIS
-    walletAmount: 0.0,     // ✅ ADD THIS
+    walletUsed: false,     // âœ… ADD THIS
+    walletAmount: 0.0,     // âœ… ADD THIS
   },
   items: [
     {
@@ -379,7 +379,7 @@ const isProcessing =
                     {brandDetails?.DenominationList && brandDetails?.DenominationList.length > 0 ? (
                       brandDetails?.DenominationList.map((denomination, index) => (
                         <option key={`${denomination}-${index}`} value={denomination}>
-                          ₹{denomination.toLocaleString()}
+                          â‚¹{denomination.toLocaleString()}
                         </option>
                       ))
                     ) : (
@@ -398,7 +398,7 @@ const isProcessing =
                 </label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
-                    ₹
+                    â‚¹
                   </span>
                   <input
                     type="number"
@@ -428,7 +428,7 @@ const isProcessing =
                 Quantity
                 {brand?.Discount && Number(brand.Discount) > 0 && (
                   <span className="ml-auto flex items-center gap-1 bg-purple-600 text-white px-2 py-1 rounded-md text-xs font-bold">
-                    ⭐ {Number(brand.Discount).toFixed(1)}% Cashback
+                    â­ {Number(brand.Discount).toFixed(1)}% Cashback
                   </span>
                 )}
               </label>
@@ -468,7 +468,7 @@ const isProcessing =
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">Total Amount</span>
                   <span className="text-2xl font-bold text-primary">
-                    ₹{(Number(amount) * quantity).toLocaleString()}
+                    â‚¹{(Number(amount) * quantity).toLocaleString()}
                   </span>
                 </div>
               </div>

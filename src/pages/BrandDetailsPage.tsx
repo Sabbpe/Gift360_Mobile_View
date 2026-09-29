@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useMemo, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import {
   ArrowLeft,
@@ -37,7 +37,7 @@ import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 
 const FALLBACK = FALLBACK_IMAGE;
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 async function validateImage(url: string): Promise<string> {
   try {
@@ -53,12 +53,12 @@ async function validateImage(url: string): Promise<string> {
   }
 }
 
-// ✅ Helper: Snap amount to nearest 100
+// âœ… Helper: Snap amount to nearest 100
 function snapAmount(value: number): number {
   return Math.round(value / 100) * 100;
 }
 
-// ✅ Helper: Map slider position (0-100) to amount with non-linear easing
+// âœ… Helper: Map slider position (0-100) to amount with non-linear easing
 function mapSliderToAmount(sliderPercent: number, min: number, max: number): number {
   // Apply easing: slower at start, faster at end
   const easedPercent = Math.pow(sliderPercent / 100, 1.8);
@@ -66,7 +66,7 @@ function mapSliderToAmount(sliderPercent: number, min: number, max: number): num
   return snapAmount(rawAmount);
 }
 
-// ✅ Helper: Reverse map amount to slider position (0-100)
+// âœ… Helper: Reverse map amount to slider position (0-100)
 function mapAmountToSlider(amount: number, min: number, max: number): number {
   const normalizedAmount = (amount - min) / (max - min);
   // Reverse the easing
@@ -230,7 +230,7 @@ const cashbackCalculation = useMemo(() => {
     return { 
       points: 0, 
       percentage: 0, 
-      totalAmount: 0  // ✅ Add this!
+      totalAmount: 0  // âœ… Add this!
     };
   }
   
@@ -425,8 +425,8 @@ useEffect(() => {
 
     const num = Number(v);
     if (isNaN(num)) return setError("Enter a valid number");
-    if (num < minPrice) return setError(`Minimum amount is ₹${minPrice}`);
-    if (num > maxPrice) return setError(`Maximum amount is ₹${maxPrice}`);
+    if (num < minPrice) return setError(`Minimum amount is â‚¹${minPrice}`);
+    if (num > maxPrice) return setError(`Maximum amount is â‚¹${maxPrice}`);
 
     setError("");
   };
@@ -471,7 +471,7 @@ const handleAmountButtonClick = (denomination: number) => {
     toast({
       title: isAuthenticated ? "Added to Cart" : "Added to Cart (Guest)",
       description: isAuthenticated
-        ? `${quantity}x ${brand.BrandName} voucher(s) of ₹${amount} each added to cart`
+        ? `${quantity}x ${brand.BrandName} voucher(s) of â‚¹${amount} each added to cart`
         : `${quantity}x ${brand.BrandName} voucher(s) saved. Login to checkout.`,
     });
 
@@ -771,7 +771,7 @@ return (
           {guardRailExceeded
             ? "Limit Exceeded"
             : isValidAmount()
-            ? `Add ₹${(Number(amount) * quantity).toLocaleString()}`
+            ? `Add â‚¹${(Number(amount) * quantity).toLocaleString()}`
             : "Add to Cart"}
         </button>
       </div>
@@ -855,7 +855,7 @@ return (
                 )}
                 {isVariableType && (
                   <p className="text-sm text-muted-foreground mb-4">
-                    ₹{minPrice.toLocaleString()} - ₹{maxPrice.toLocaleString()}
+                    â‚¹{minPrice.toLocaleString()} - â‚¹{maxPrice.toLocaleString()}
                   </p>
                 )}
 
@@ -891,7 +891,7 @@ return (
               }
             `}
           >
-            ₹{denomination.toLocaleString()}
+            â‚¹{denomination.toLocaleString()}
           </button>
         ))
       ) : (
@@ -909,7 +909,7 @@ return (
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground text-sm sm:text-base">
-                        ₹
+                        â‚¹
                       </span>
                       <input
                         type="number"
@@ -946,8 +946,8 @@ return (
                         }}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                        <span>₹{minPrice.toLocaleString()}</span>
-                        <span>₹{maxPrice.toLocaleString()}</span>
+                        <span>â‚¹{minPrice.toLocaleString()}</span>
+                        <span>â‚¹{maxPrice.toLocaleString()}</span>
                       </div>
                     </div>
                     
@@ -1054,7 +1054,7 @@ return (
           animate={{ scale: 1, opacity: 1 }}
           className="text-3xl sm:text-4xl font-black text-gray-900 dark:text-white"
         >
-          ₹{cashbackCalculation.totalAmount.toLocaleString()}
+          â‚¹{cashbackCalculation.totalAmount.toLocaleString()}
         </motion.div>
       </div>
 
@@ -1376,7 +1376,7 @@ return (
                 )}
                 {isVariableType && (
                   <p className="text-sm text-muted-foreground mb-6">
-                    Enter an amount between ₹{minPrice.toLocaleString()} and ₹{maxPrice.toLocaleString()}
+                    Enter an amount between â‚¹{minPrice.toLocaleString()} and â‚¹{maxPrice.toLocaleString()}
                   </p>
                 )}
 
@@ -1411,7 +1411,7 @@ return (
               }
             `}
           >
-            ₹{denomination.toLocaleString()}
+            â‚¹{denomination.toLocaleString()}
           </button>
         ))
       ) : (
@@ -1429,7 +1429,7 @@ return (
                     </label>
                     <div className="relative">
                       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground">
-                        ₹
+                        â‚¹
                       </span>
                       <input
                         type="number"
@@ -1466,8 +1466,8 @@ return (
                         }}
                       />
                       <div className="flex justify-between text-xs text-muted-foreground mt-2">
-                        <span>₹{minPrice.toLocaleString()}</span>
-                        <span>₹{maxPrice.toLocaleString()}</span>
+                        <span>â‚¹{minPrice.toLocaleString()}</span>
+                        <span>â‚¹{maxPrice.toLocaleString()}</span>
                       </div>
                     </div>
                     
@@ -1574,7 +1574,7 @@ return (
           animate={{ scale: 1, opacity: 1 }}
           className="text-4xl font-black text-gray-900 dark:text-white"
         >
-          ₹{cashbackCalculation.totalAmount.toLocaleString()}
+          â‚¹{cashbackCalculation.totalAmount.toLocaleString()}
         </motion.div>
       </div>
 

@@ -1,9 +1,9 @@
-import { Minus, Plus, Trash2 } from "lucide-react";
+﻿import { Minus, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const FALLBACK = FALLBACK_IMAGE;
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 interface CartItemCardProps {
   itemId: string;
@@ -119,7 +119,7 @@ export default function CartItemCard({
       {/* Right: Total Price + Remove */}
       <div className="flex flex-col items-end justify-between h-full">
         <div className="text-right">
-          <p className="text-lg font-bold text-purple-600">₹{lineTotal.toLocaleString()}</p>
+          <p className="text-lg font-bold text-purple-600">â‚¹{lineTotal.toLocaleString()}</p>
           <p className="text-xs text-gray-500">Total</p>
         </div>
 
