@@ -718,7 +718,7 @@ export default function PaymentResult() {
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
                         <span className="text-sm text-muted-foreground">
-                          Generating vouchers...
+                          Issuing your voucher — this usually takes 2–5 minutes.
                         </span>
                       </>
                     ) : couponsFetched ? (

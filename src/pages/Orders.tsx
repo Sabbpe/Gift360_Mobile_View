@@ -420,7 +420,8 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
             </div>
           ) : (
             <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[9px] text-amber-800 font-medium">
-              ⏳ Generating...
+              ⏳ Voucher is being issued by the brand — most orders complete in 2–5 minutes.
+              Tap "View Vouchers" again or refresh to check.
             </div>
           )}
         </div>
