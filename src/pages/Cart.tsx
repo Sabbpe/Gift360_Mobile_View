@@ -20,7 +20,7 @@ import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import homebackImg from "@/assets/ganeshbackdrop.png";
+import homebackImg from "@/assets/Gandhi Backdrop.png";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
@@ -313,6 +313,9 @@ export default function Cart() {
       });
   }, []);
   const [superCoinHoldContext, setSuperCoinHoldContext] = useState<SuperCoinHoldContext | null>(null);
+  // User-chosen coin count for the hold (1..min(balance, 20% cap in coins)).
+  // 0 = not yet resolved; the clamp effect below defaults it to the max.
+  const [selectedSCCoins, setSelectedSCCoins] = useState(0);
   const superCoinHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
   const paymentInFlightRef = useRef(false);
   const [showSuperCoinRemoveDialog, setShowSuperCoinRemoveDialog] = useState(false);
@@ -1170,6 +1173,17 @@ export default function Cart() {
   const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
   const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
 
+  // Slider bounds: 1 coin minimum, upper bound = min(balance, cap).
+  // Defaults to the max until the user drags (preserves apply-max behavior).
+  const maxSCCoins = Math.max(0, Math.min(superCoinState.balance, maxSuperCoinRedeemable));
+  useEffect(() => {
+    if (maxSCCoins < 1) {
+      setSelectedSCCoins(0);
+      return;
+    }
+    setSelectedSCCoins((prev) => (prev < 1 ? maxSCCoins : Math.min(prev, maxSCCoins)));
+  }, [maxSCCoins]);
+
   const superCoinDeduction = !allItemsSuperCoinExcluded && superCoinAuthorized && superCoinState.eligible
     ? Math.min(
         superCoinHoldContext?.amount ?? superCoinState.balance,
@@ -1924,11 +1938,14 @@ export default function Cart() {
 
       <main className="relative flex-1 overflow-hidden">
         {/* Home backdrop */}
-        {/* <div
+        <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${homebackImg})` }}
-        /> */}
-        <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
+        />
+        <div
+          className="fixed inset-0 z-0"
+          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
+        />
 
         <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 sm:pt-8 sm:pb-10">
@@ -2173,15 +2190,60 @@ export default function Cart() {
                           />
 
                           {!superCoinAuthorized ? (
-                            <Button
-                              className="w-full cart-gradient-fill h-11"
-                              disabled={superCoinState.balance <= 0}
-                              onClick={() => {
-                                void openSuperCoinFlow();
-                              }}
-                            >
-                              Apply SuperCoins
-                            </Button>
+                            <>
+                              {maxSCCoins >= 1 && (
+                                <div className="space-y-2 rounded-lg border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.06)] px-3 py-3">
+                                  <div className="flex items-center justify-between gap-3">
+                                    <span className="text-sm font-medium text-[#7C3AED] flex items-center gap-1.5">
+                                      <img src={superCoinIcon} alt="" className="h-4 w-4 inline" />
+                                      Coins to use
+                                    </span>
+                                    <span className="text-sm font-bold text-[#7C3AED]">
+                                      {selectedSCCoins} SC
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min={1}
+                                    max={maxSCCoins}
+                                    step={1}
+                                    value={Math.min(Math.max(selectedSCCoins, 1), maxSCCoins)}
+                                    onChange={(e) => setSelectedSCCoins(Number(e.target.value))}
+                                    aria-label="SuperCoins to use"
+                                    className="sc-coin-slider h-2 w-full cursor-pointer appearance-none rounded-full outline-none"
+                                    style={{
+                                      background: `linear-gradient(to right, #9747FF 0%, #9747FF ${
+                                        maxSCCoins > 1
+                                          ? ((Math.min(Math.max(selectedSCCoins, 1), maxSCCoins) - 1) / (maxSCCoins - 1)) * 100
+                                          : 100
+                                      }%, rgba(151,71,255,0.2) ${
+                                        maxSCCoins > 1
+                                          ? ((Math.min(Math.max(selectedSCCoins, 1), maxSCCoins) - 1) / (maxSCCoins - 1)) * 100
+                                          : 100
+                                      }%, rgba(151,71,255,0.2) 100%)`,
+                                    }}
+                                  />
+                                  <div className="flex items-center justify-between gap-2 text-xs">
+                                    <span className="font-medium text-[#7C3AED]">
+                                      Save ₹
+                                      {(selectedSCCoins / effectiveSupercoinMultiplier).toFixed(2)}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      Max {maxSCCoins} SC · {superCoinCapPercent}% of voucher value
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
+                              <Button
+                                className="w-full cart-gradient-fill h-11"
+                                disabled={superCoinState.balance <= 0 || maxSCCoins < 1 || selectedSCCoins < 1}
+                                onClick={() => {
+                                  void openSuperCoinFlow();
+                                }}
+                              >
+                                Apply SuperCoins
+                              </Button>
+                            </>
                           ) : (
                             <div className="space-y-2">
                               <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
@@ -2614,6 +2676,7 @@ export default function Cart() {
           displayName={user?.name || "Gift360 Checkout"}
           preloadedBalance={superCoinState.balance}
           maxRedeemable={maxSuperCoinRedeemable}
+          initialCoinAmount={selectedSCCoins}
         />
       )}
     </div>

@@ -6,8 +6,8 @@ import { Clock, PartyPopper, Gift, Globe, Loader2 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { gradeAnswer, recordQuizAttempt, checkQuizEligibility, QUIZ_CASHBACK_REWARD, fetchQuizQuestions, type QuizQuestion } from "@/api/rewardApi";
 import { LANG_LABELS, LANG_FLAGS, type QuizLang } from "@/data/quizQuestions";
-import resultBackdrop from "@/assets/resultBackdrop.png";
-import krishnasadBackdrop from "@/assets/krishnasad.png";
+import resultBackdrop from "@/assets/quizsuccess.png";
+import krishnasadBackdrop from "@/assets/quizsad.png";
 
 const QUIZ_DURATION_MS = 60_000;
 
@@ -255,15 +255,12 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
 
     setRevealedCorrectIndex(correctIndex);
 
-    // Show feedback, then advance or finish.
+    // Show feedback, then advance or finish. A wrong answer no longer ends
+    // the quiz — the user always plays all questions and only the final
+    // result (any wrong = lose) is recorded.
     window.setTimeout(() => {
       if (isLast) {
-        recordAttempt(allCorrectRef.current && isCorrect);
-        return;
-      }
-      // Wrong answer ends the quiz immediately (matches original behaviour).
-      if (!isCorrect) {
-        recordAttempt(false);
+        recordAttempt(allCorrectRef.current);
         return;
       }
       setQuestionIndex((i) => i + 1);

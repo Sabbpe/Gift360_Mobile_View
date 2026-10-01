@@ -40,6 +40,7 @@ type SuperCoinOTPModalProps = {
   displayName: string;
   preloadedBalance: number;
   maxRedeemable: number;
+  initialCoinAmount?: number;
 };
 
 export default function SuperCoinOTPModal({
@@ -53,6 +54,7 @@ export default function SuperCoinOTPModal({
   displayName,
   preloadedBalance,
   maxRedeemable,
+  initialCoinAmount,
 }: SuperCoinOTPModalProps) {
   const [step, setStep] = useState<Step>("loading_balance");
   const [balance, setBalance] = useState(preloadedBalance);
@@ -77,10 +79,25 @@ export default function SuperCoinOTPModal({
     return { display: `${mins}:${secs}`, minutes: mins, seconds: secs, expired: remaining <= 0 };
   }, []);
 
+  // Prefer the cart slider's selection; fall back to min(balance, cap).
+  // Always clamped to 1..maxRedeemable (0 only when nothing is redeemable).
+  const resolveCoinAmount = useCallback(
+    (bal: number) => {
+      if (maxRedeemable < 1 || bal < 1) return 0;
+      const fallback = Math.min(bal, maxRedeemable);
+      const preferred =
+        initialCoinAmount != null && initialCoinAmount >= 1
+          ? initialCoinAmount
+          : fallback;
+      return Math.min(Math.max(preferred, 1), maxRedeemable, bal);
+    },
+    [initialCoinAmount, maxRedeemable]
+  );
+
   const resetState = useCallback(() => {
     setStep("loading_balance");
     setBalance(preloadedBalance);
-    setCoinAmount(Math.min(preloadedBalance, maxRedeemable));
+    setCoinAmount(resolveCoinAmount(preloadedBalance));
     setOtp("");
     setPrefilledOtp("");
     setMerchantTransactionId("");
@@ -89,7 +106,7 @@ export default function SuperCoinOTPModal({
     setTransactionTime(null);
     setCountdown({ display: "15:00", minutes: "15", seconds: "00", expired: false });
     setHoldExpiryMs(null);
-  }, [preloadedBalance, maxRedeemable]);
+  }, [preloadedBalance, resolveCoinAmount]);
 
   useEffect(() => {
     if (step !== "otp_sent" || !transactionTime) return;
@@ -146,7 +163,7 @@ export default function SuperCoinOTPModal({
         if (cancelled) return;
         const bal = extractSuperCoinBalance(response);
         setBalance(bal);
-        setCoinAmount(Math.min(bal, maxRedeemable));
+        setCoinAmount(resolveCoinAmount(bal));
         setStep("ready");
       } catch (e) {
         if (cancelled) return;
@@ -159,7 +176,7 @@ export default function SuperCoinOTPModal({
     return () => {
       cancelled = true;
     };
-  }, [open, step, identity]);
+  }, [open, step, identity, resolveCoinAmount]);
 
   const handleApplyCoins = useCallback(async () => {
     if (!merchantWalletId) {

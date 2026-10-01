@@ -201,6 +201,44 @@
   color: #fff;
 }
 
+/* ── Cart SuperCoin amount slider ── */
+.sc-coin-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+}
+.sc-coin-slider::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+.sc-coin-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #9747FF;
+  border: 2px solid #fff;
+  margin-top: -5px;
+  box-shadow: 0 1px 4px rgba(151, 71, 255, 0.45);
+  cursor: pointer;
+}
+.sc-coin-slider::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: transparent;
+}
+.sc-coin-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #9747FF;
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(151, 71, 255, 0.45);
+  cursor: pointer;
+}
+
 /* ── Phone shell ── */
 .phone-frame {
   width: min(390px, 100vw - 24px);

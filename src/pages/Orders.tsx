@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+﻿import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,7 +16,7 @@ import {
   Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import homebackImg from "@/assets/ganeshbackdrop.png";
+import homebackImg from "@/assets/Gandhi Backdrop.png";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -25,7 +25,7 @@ import { getCardItems } from "@/api/giftingApi";
 const FALLBACK = FALLBACK_IMAGE;
 const REDEEMED_KEY = "g360_redeemed_vouchers";
 
-// ── Map API order ─────────────────────────────────────────────────────────────
+// â”€â”€ Map API order â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const mapOrder = (order: any) => {
   const mappedItems = Array.isArray(order?.items)
     ? order.items.map((item: any) => {
@@ -50,7 +50,7 @@ const mapOrder = (order: any) => {
   };
 };
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const getImageUrl = (meta: any): string => {
   return getImageUrlUtil(meta) || FALLBACK;
 };
@@ -119,14 +119,14 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
   return results;
 };
 
-// Balance check — Shubhang to build: GET /api/v1/voucher/balance-check?cardNo={cardNo}
+// Balance check â€” Shubhang to build: GET /api/v1/voucher/balance-check?cardNo={cardNo}
 // Returns: { balance: string, status: "ACTIVE"|"USED" }
 const checkVoucherBalance = async (cardNo: string) => {
   const res = await giftcardApiClient.get(`/v1/voucher/balance-check?cardNo=${encodeURIComponent(cardNo)}`);
   return res.data as { balance: string; status: string };
 };
 
-// ── Redeem Sheet ──────────────────────────────────────────────────────────────
+// â”€â”€ Redeem Sheet â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RedeemSheet({
   vouchers, brandName, redeemSteps, onClose, onConfirmed,
 }: {
@@ -178,7 +178,7 @@ function RedeemSheet({
             <>
               <h3 className="text-base font-extrabold mb-4">{brandName}</h3>
 
-              {/* Voucher codes — gated by scratch/gift state */}
+              {/* Voucher codes â€” gated by scratch/gift state */}
               <div className="space-y-3 mb-5">
                 {vouchers.map((v, i) => {
                   const bal = balances[v.cardNumber];
@@ -190,19 +190,19 @@ function RedeemSheet({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#888888" }}>Voucher {vouchers.length > 1 ? i + 1 : ""}</p>
                         {isLocked ? (
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🎁 Gifted</span>
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">ðŸŽ Gifted</span>
                         ) : bal !== undefined ? (
                           <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isUsed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
-                            {isUsed ? "✓ USED" : `Balance: ₹${bal}`}
+                            {isUsed ? "âœ“ USED" : `Balance: â‚¹${bal}`}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-primary/10 text-primary">₹{v.amount}</span>
+                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-primary/10 text-primary">â‚¹{v.amount}</span>
                         )}
                       </div>
                       {isLocked ? (
                         <div className="bg-muted rounded-xl p-4 flex items-center gap-2">
                           <Lock size={14} style={{ color: "#888888" }} />
-                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>This voucher was gifted — the code was sent only to the recipient.</p>
+                          <p className="text-xs font-semibold" style={{ color: "#888888" }}>This voucher was gifted â€” the code was sent only to the recipient.</p>
                         </div>
                       ) : !isRevealed ? (
                         <div className="bg-muted rounded-xl p-4 flex items-center gap-2">
@@ -213,7 +213,7 @@ function RedeemSheet({
                         <>
                           <div className="bg-muted rounded-xl p-3">
                             <div className="flex items-center gap-1.5 mb-1"><CreditCard size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>Card Number</p></div>
-                            <p className="font-mono font-black text-lg tracking-widest text-foreground break-all">{v.cardNumber || "—"}</p>
+                            <p className="font-mono font-black text-lg tracking-widest text-foreground break-all">{v.cardNumber || "â€”"}</p>
                           </div>
                           {v.cardPin && (
                             <div className="bg-muted rounded-xl p-3">
@@ -332,7 +332,7 @@ function useCardItemsForOrder(order: any, clientId: string): Record<string, any[
   return cardItemsByOrderItem;
 }
 
-// ── Voucher Card (PAID, not redeemed) ─────────────────────────────────────────
+// â”€â”€ Voucher Card (PAID, not redeemed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
 }) {
@@ -372,7 +372,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
               onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
           </div>
           <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
-          <p className="font-normal text-[10px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
+          <p className="font-normal text-[10px] text-black mt-0.5">â‚¹{paidAmount.toFixed(0)}</p>
           {/* Only show Redeem once at least one card has actually been
               revealed - opening "Mark as Redeemed" / redeem instructions
               before the customer has even seen a real code is premature and
@@ -420,7 +420,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
             </div>
           ) : (
             <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[9px] text-amber-800 font-medium">
-              ⏳ Generating...
+              â³ Generating...
             </div>
           )}
         </div>
@@ -435,7 +435,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   );
 }
 
-// ── SuperCoin Voucher Card ───────────────────────────────────────────────────
+// â”€â”€ SuperCoin Voucher Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
 }) {
@@ -531,7 +531,7 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
   );
 }
 
-// ── Pending Card ──────────────────────────────────────────────────────────────
+// â”€â”€ Pending Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function PendingCard({ order }: { order: any }) {
   const item = order.items?.[0];
   const meta = item?.meta || {};
@@ -563,7 +563,7 @@ function PendingCard({ order }: { order: any }) {
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
             <p className="font-semibold text-sm leading-5 text-black truncate">{brandName}</p>
-            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
+            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">â‚¹{amount.toFixed(0)}</p>
             <div className="flex items-center gap-1 mt-0.5">
               <Badge variant="outline" className="text-[9px] py-0 flex items-center gap-1"
                 style={{
@@ -597,7 +597,7 @@ function PendingCard({ order }: { order: any }) {
   );
 }
 
-// ── Redeemed Card ─────────────────────────────────────────────────────────────
+// â”€â”€ Redeemed Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RedeemedCard({ item }: { item: any }) {
   const vouchers: VoucherView[] = item.vouchers || [];
   const dateStr = item.redeemedAt ? format(new Date(item.redeemedAt), "MM/yyyy - hh:mma") : "";
@@ -618,14 +618,14 @@ function RedeemedCard({ item }: { item: any }) {
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
             <p className="font-semibold text-sm leading-5 text-black truncate">{item.brandName}</p>
-            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{item.amount?.toLocaleString("en-IN")}</p>
+            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">â‚¹{item.amount?.toLocaleString("en-IN")}</p>
             <span className="inline-block mt-0.5 bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0 rounded-full">REDEEMED</span>
           </div>
           {vouchers.length > 0 && (
             <div className="space-y-0.5">
               {vouchers.map((v, i) => (
                 <p key={i} className="font-mono text-[9px] font-medium truncate" style={{ color: "#888888" }}>
-                  {v.cardNumber || "—"}
+                  {v.cardNumber || "â€”"}
                 </p>
               ))}
             </div>
@@ -639,7 +639,7 @@ function RedeemedCard({ item }: { item: any }) {
   );
 }
 
-// ── Redeemed voucher card ──────────────────────────────────────────────────────
+// â”€â”€ Redeemed voucher card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function RedeemedVoucherCard({ entry, expanded, onToggle }: {
   entry: any; expanded: boolean; onToggle: () => void;
 }) {
@@ -661,7 +661,7 @@ function RedeemedVoucherCard({ entry, expanded, onToggle }: {
       </div>
       <div className="px-3 py-3">
         <p className="text-xs font-extrabold truncate" style={{ color: "#1a1a1a" }}>{entry.brandName}</p>
-        <p className="text-[11px] font-semibold" style={{ color: "#7b5cff" }}>₹{entry.amount}</p>
+        <p className="text-[11px] font-semibold" style={{ color: "#7b5cff" }}>â‚¹{entry.amount}</p>
         <p className="text-[10px] font-medium mt-1" style={{ color: "#888888" }}>
           Redeemed {entry.redeemedAt ? format(new Date(entry.redeemedAt), "dd MMM") : ""}
         </p>
@@ -670,7 +670,7 @@ function RedeemedVoucherCard({ entry, expanded, onToggle }: {
   );
 }
 
-// ── Empty state ───────────────────────────────────────────────────────────────
+// â”€â”€ Empty state â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 function EmptyState({ icon: Icon, title, subtitle, action }: {
   icon: any; title: string; subtitle: string; action?: React.ReactNode;
 }) {
@@ -687,7 +687,7 @@ function EmptyState({ icon: Icon, title, subtitle, action }: {
   );
 }
 
-// ── Main ──────────────────────────────────────────────────────────────────────
+// â”€â”€ Main â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 type OrderTab = "vouchers" | "pending" | "redeemed";
 type VoucherSubTab = "cash" | "supercoin";
 
@@ -723,7 +723,7 @@ export default function Orders() {
 
   useEffect(() => { if (isAuthenticated) fetchOrders(); }, [isAuthenticated, fetchOrders]);
 
-  // Check if we just came from payment — auto-expand latest paid order
+  // Check if we just came from payment â€” auto-expand latest paid order
   useEffect(() => {
     const allOrders = [...cashOrders, ...superCoinOrders];
     if (!allOrders.length) return;
@@ -807,11 +807,14 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      {/* <div
+      <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${homebackImg})` }}
-      /> */}
-      <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
+        style={{ backgroundColor: "#f3f5f9", backgroundImage: `url(${homebackImg})` }}
+      />
+      <div
+        className="fixed inset-0 z-0"
+        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
+      />
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <FloatingCoins count={6} />
@@ -873,7 +876,7 @@ export default function Orders() {
             </div>
           )}
 
-          {/* ── Vouchers Tab ── */}
+          {/* â”€â”€ Vouchers Tab â”€â”€ */}
           {!loading && !error && orderTab === "vouchers" && (
             <>
               {/* Sub-tabs: Cash / SuperCoin */}
@@ -936,7 +939,7 @@ export default function Orders() {
             </>
           )}
 
-          {/* ── Pending Tab ── */}
+          {/* â”€â”€ Pending Tab â”€â”€ */}
           {!loading && !error && orderTab === "pending" && (
             <>
               {pendingOrders.length === 0 ? (
@@ -970,7 +973,7 @@ export default function Orders() {
             </>
           )}
 
-          {/* ── Redeemed Tab ── */}
+          {/* â”€â”€ Redeemed Tab â”€â”€ */}
           {!loading && !error && orderTab === "redeemed" && (
             <>
               {redeemed.length === 0 ? (
