@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+﻿import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
@@ -15,7 +15,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getImageUrl } from "@/utils/imageUrl";
 
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 type Props = {
   brandId?: string | null;

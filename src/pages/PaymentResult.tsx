@@ -718,14 +718,14 @@ export default function PaymentResult() {
                       <>
                         <Loader2 className="h-4 w-4 animate-spin text-primary flex-shrink-0" />
                         <span className="text-sm text-muted-foreground">
-                          Generating vouchers...
+                          Issuing your voucher — this usually takes 2–5 minutes.
                         </span>
                       </>
                     ) : couponsFetched ? (
                       <>
                         <CheckCircle2 className="h-4 w-4 text-green-600 dark:text-green-500 flex-shrink-0" />
                         <span className="text-sm text-green-700 dark:text-green-400 font-medium">
-                          Vouchers sent to your email
+                          Vouchers are being processed — you can track them on your Orders page
                         </span>
                       </>
                     ) : fetchCouponsMutation.isError ? (

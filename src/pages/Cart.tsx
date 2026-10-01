@@ -58,7 +58,7 @@ const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
 const SUPERCOIN_ACTIVE_HOLD_KEY = "superCoinActiveHold";
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 type SuperCoinCountdownState = {
   display: string;

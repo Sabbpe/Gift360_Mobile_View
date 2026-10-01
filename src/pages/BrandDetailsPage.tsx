@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+﻿import { useState, useEffect, useMemo, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import {
   ArrowLeft,
@@ -37,7 +37,7 @@ import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 
 const FALLBACK = FALLBACK_IMAGE;
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 async function validateImage(url: string): Promise<string> {
   try {
@@ -53,12 +53,12 @@ async function validateImage(url: string): Promise<string> {
   }
 }
 
-// ✅ Helper: Snap amount to nearest 100
+// âœ… Helper: Snap amount to nearest 100
 function snapAmount(value: number): number {
   return Math.round(value / 100) * 100;
 }
 
-// ✅ Helper: Map slider position (0-100) to amount with non-linear easing
+// âœ… Helper: Map slider position (0-100) to amount with non-linear easing
 function mapSliderToAmount(sliderPercent: number, min: number, max: number): number {
   // Apply easing: slower at start, faster at end
   const easedPercent = Math.pow(sliderPercent / 100, 1.8);
@@ -66,7 +66,7 @@ function mapSliderToAmount(sliderPercent: number, min: number, max: number): num
   return snapAmount(rawAmount);
 }
 
-// ✅ Helper: Reverse map amount to slider position (0-100)
+// âœ… Helper: Reverse map amount to slider position (0-100)
 function mapAmountToSlider(amount: number, min: number, max: number): number {
   const normalizedAmount = (amount - min) / (max - min);
   // Reverse the easing
@@ -230,7 +230,7 @@ const cashbackCalculation = useMemo(() => {
     return { 
       points: 0, 
       percentage: 0, 
-      totalAmount: 0  // ✅ Add this!
+      totalAmount: 0  // âœ… Add this!
     };
   }
   

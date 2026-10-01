@@ -123,9 +123,9 @@ useEffect(() => {
   // Get category from URL if present
   const [currentLocation] = useLocation();
   const searchParams = useSearchParams();
-  console.log('ðŸŒ Full URL:', window.location.href);
-  console.log('ðŸŒ Wouter location:', currentLocation);
-  console.log('ðŸŒ Search params:', window.location.search);
+  console.log('🌐 Full URL:', window.location.href);
+  console.log('🌐 Wouter location:', currentLocation);
+  console.log('🌐 Search params:', window.location.search);
   const urlParams = new URLSearchParams(searchParams);
   const categoryFromUrl = urlParams.get('categories');
   const tabFromUrl = urlParams.get('tab') as "about" | "how" | "terms" | null;
@@ -143,7 +143,7 @@ useEffect(() => {
     sortOrder: "none",
   });
 
-  const itemsPerPage = 48; // 8 rows Ã— 6 columns
+  const itemsPerPage = 48; // 8 rows × 6 columns
   const { data, isLoading, isError } = useQuery({
     queryKey: ["brands-menu-page"],
     queryFn: () => fetchTopBrands(),
@@ -185,7 +185,7 @@ const filteredBrandSuggestions = useMemo(() => {
     });
   }
 
-  // âœ… Sort alphabetically, moving number-starting names to the end
+  // ✅ Sort alphabetically, moving number-starting names to the end
   return results.sort((a: Brand, b: Brand) => {
     const nameA = (a.BrandName || a.brandName || "").trim();
     const nameB = (b.BrandName || b.brandName || "").trim();
@@ -493,7 +493,7 @@ const sortedDisplayBrands = useMemo(() => {
     
     case "none":
     default:
-      // âœ… DEFAULT: Always sort alphabetically A-Z with numbers at end
+      // ✅ DEFAULT: Always sort alphabetically A-Z with numbers at end
       return brands.sort(sortAlphabetically);
   }
 }, [brandsAfterDiscountFilter, filters.sortOrder]);
@@ -711,7 +711,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
     if (categoryParam) {
       setCurrentPage(0);
     }
-  }, [searchParams]);  // âœ… Watch window.location.search instead
+  }, [searchParams]);  // ✅ Watch window.location.search instead
 
   // ADD THIS USEEFFECT after the category filter useEffect (around line 175)
   useEffect(() => {

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 
-// Kill switch for SuperCoin conversion now lives in features.config.ts â€”
+// Kill switch for SuperCoin conversion now lives in features.config.ts —
 // it's the single source of truth shared with Hero.tsx (and anywhere else
 // that can open the SuperCoins modal). Do not redeclare a local copy here.
 import { superCoinConversionConfig } from "@/config/features.config";
@@ -134,7 +134,7 @@ function BalanceCard() {
         <div className="relative mt-[12px] flex items-center gap-[14px]">
           <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-black">
             <span className="text-[22px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
-            {visible ? `â‚¹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "â‚¹ â€¢â€¢â€¢â€¢â€¢â€¢â€¢"}
+            {visible ? `₹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹ •••••••"}
           </p>
           <button onClick={() => setVisible((value) => !value)} className="mt-[4px] active:scale-95" aria-label="Toggle balance">
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
@@ -1037,7 +1037,7 @@ function MobileHomeScreen() {
     setBuySheetOpen(true);
   };
 
-  // (feedback auto-trigger removed â€” feedback is only reachable via the floating button)
+  // (feedback auto-trigger removed — feedback is only reachable via the floating button)
 
   return (
     <>
@@ -1072,7 +1072,7 @@ function MobileHomeScreen() {
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
-      {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement â€” code kept for later
+      {/* Rakhi Special Picks (WhatsHotSection) hidden per requirement — code kept for later
       <WhatsHotSection brands={recentlyBoughtBrands} onOpenBrand={openTopBrandModal} />
       */}
       <TopBrandsGrid

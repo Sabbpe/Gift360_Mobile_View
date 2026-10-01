@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+﻿import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -12,7 +12,7 @@ function getImage(b: BrandDetailsParsed | null) {
   return getImageUrl(b) || FALLBACK_IMAGE;
 }
 
-const MAX_QUANTITY_PER_ITEM = 3;
+const MAX_QUANTITY_PER_ITEM = 10;
 
 export default function BrandBuySheet({
   brandId,
