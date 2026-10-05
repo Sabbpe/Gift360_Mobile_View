@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link, useLocation } from "wouter";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -16,7 +16,7 @@ import {
   Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import homebackImg from "@/assets/Gandhi Backdrop.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -808,14 +808,11 @@ export default function Orders() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <div
+      {/* <div
         className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundColor: "#f3f5f9", backgroundImage: `url(${homebackImg})` }}
-      />
-      <div
-        className="fixed inset-0 z-0"
-        style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
-      />
+        style={{ backgroundImage: `url(${homebackImg})` }}
+      /> */}
+      <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <FloatingCoins count={6} />

@@ -6,8 +6,8 @@ import { Clock, PartyPopper, Gift, Globe, Loader2 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { gradeAnswer, recordQuizAttempt, checkQuizEligibility, QUIZ_CASHBACK_REWARD, fetchQuizQuestions, type QuizQuestion } from "@/api/rewardApi";
 import { LANG_LABELS, LANG_FLAGS, type QuizLang } from "@/data/quizQuestions";
-import resultBackdrop from "@/assets/quizsuccess.png";
-import krishnasadBackdrop from "@/assets/quizsad.png";
+import resultBackdrop from "@/assets/resultBackdrop.png";
+import krishnasadBackdrop from "@/assets/krishnasad.png";
 
 const QUIZ_DURATION_MS = 60_000;
 
@@ -96,9 +96,6 @@ type Props = {
 
 const LANGUAGES: QuizLang[] = ["en", "hi", "mr", "te", "ta", "kn"];
 
-// Questions open directly in English — no language-picker step.
-const DEFAULT_LANG: QuizLang = "en";
-
 export default function JanmashtamiQuizModal({ open, onClose }: Props) {
   const { user } = useAuthContext();
   const [, setLocation] = useLocation();
@@ -134,6 +131,34 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
     resetQuiz();
   }, [open, resetQuiz]);
 
+  // One attempt per day: check eligibility before showing the quiz.
+  useEffect(() => {
+    if (!open || phase !== "checking") return;
+
+    let cancelled = false;
+
+    const run = async () => {
+      if (!user?.clientId) {
+        if (!cancelled) setPhase("language");
+        return;
+      }
+      try {
+        const res = await checkQuizEligibility(user.clientId);
+        if (cancelled) return;
+        setPhase(res.eligible ? "language" : "ineligible");
+      } catch {
+        // On any error (e.g. endpoint not available yet), fail open so the
+        // quiz still works; eligibility is also enforced server-side.
+        if (!cancelled) setPhase("language");
+      }
+    };
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [open, phase, user?.clientId]);
+
   const startQuiz = useCallback(async (lang: QuizLang) => {
     setSelectedLang(lang);
     setLoadingQuestions(true);
@@ -157,36 +182,6 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
       setLoadingQuestions(false);
     }
   }, []);
-
-  // One attempt per day: check eligibility, then jump straight into the
-  // questions (no language-picker step).
-  useEffect(() => {
-    if (!open || phase !== "checking") return;
-
-    let cancelled = false;
-
-    const run = async () => {
-      if (!user?.clientId) {
-        if (!cancelled) startQuiz(DEFAULT_LANG);
-        return;
-      }
-      try {
-        const res = await checkQuizEligibility(user.clientId);
-        if (cancelled) return;
-        if (res.eligible) startQuiz(DEFAULT_LANG);
-        else setPhase("ineligible");
-      } catch {
-        // On any error (e.g. endpoint not available yet), fail open so the
-        // quiz still works; eligibility is also enforced server-side.
-        if (!cancelled) startQuiz(DEFAULT_LANG);
-      }
-    };
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, [open, phase, user?.clientId, startQuiz]);
 
   // Records the final win/loss with the backend once all questions are done.
   const recordAttempt = useCallback(
@@ -260,12 +255,15 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
 
     setRevealedCorrectIndex(correctIndex);
 
-    // Show feedback, then advance or finish. A wrong answer no longer ends
-    // the quiz — the user always plays all questions and only the final
-    // result (any wrong = lose) is recorded.
+    // Show feedback, then advance or finish.
     window.setTimeout(() => {
       if (isLast) {
-        recordAttempt(allCorrectRef.current);
+        recordAttempt(allCorrectRef.current && isCorrect);
+        return;
+      }
+      // Wrong answer ends the quiz immediately (matches original behaviour).
+      if (!isCorrect) {
+        recordAttempt(false);
         return;
       }
       setQuestionIndex((i) => i + 1);
@@ -301,9 +299,7 @@ export default function JanmashtamiQuizModal({ open, onClose }: Props) {
         {phase === "checking" && (
           <div className="flex flex-col items-center px-6 py-10 text-center">
             <Loader2 className="h-7 w-7 animate-spin text-[#D97706]" strokeWidth={2.2} />
-            <p className="mt-3 text-[13px] font-medium text-gray-600">
-              {loadingQuestions ? "Loading questions…" : "Checking your quiz…"}
-            </p>
+            <p className="mt-3 text-[13px] font-medium text-gray-600">Checking your quiz…</p>
           </div>
         )}
 

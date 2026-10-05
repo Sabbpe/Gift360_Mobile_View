@@ -7,7 +7,7 @@ import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import gift360Logo from "@/assets/gift360full.png";
-import loginBg from "@/assets/Gandhi Jayanti_ Truth in Simplicity.png";
+import loginBg from "@/assets/LoginBackground.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";
@@ -121,7 +121,6 @@ export default function Login() {
             token: data.token, clientId: data.userInfo.clientId,
           });
           toast({ title: "Welcome back!", description: data.message || "Login successful", duration: 3000 });
-          localStorage.setItem("showJanmashtamiPromo", "1");
           setTimeout(() => setLocation("/"), 400);
         } else { setError(data.message || "OTP login failed"); }
       },
@@ -146,20 +145,21 @@ export default function Login() {
         }}
       />
 
-      {/* Bottom scrim so content stays readable over the artwork */}
-      <div
-        className="absolute inset-x-0 bottom-0 h-[58%]"
-        style={{
-          background:
-            "linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 45%, rgba(255,255,255,0.93) 100%)",
-        }}
-      />
-
       {/* Content */}
-      <div className="relative z-10 flex flex-col h-full px-5 pt-5 pb-4">
+      <div className="relative z-10 flex flex-col h-full px-5 pt-6 pb-4">
         {/* Logo */}
-        <div className="flex justify-center">
-          <img src={gift360Logo} alt="Gift360" className="w-[130px] h-auto object-contain" />
+        <div className="flex justify-center mb-2">
+          <img src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
+        </div>
+
+        {/* Heading */}
+        <div className="text-center mb-1">
+          <h1 className="text-[17px] font-semibold text-black leading-tight">
+            India #1 Destination for <span className="text-[#7C3AED]">Gifting</span>
+          </h1>
+          <p className="text-[10px] text-[#1E1E1E] mt-1 px-4">
+            Access 400+ brands Vouchers. Delivered instantly, and gift feeling
+          </p>
         </div>
 
         {/* Spacer */}

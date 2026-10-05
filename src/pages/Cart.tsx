@@ -20,7 +20,7 @@ import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import homebackImg from "@/assets/Gandhi Backdrop.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
@@ -1938,14 +1938,11 @@ export default function Cart() {
 
       <main className="relative flex-1 overflow-hidden">
         {/* Home backdrop */}
-        <div
+        {/* <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${homebackImg})` }}
-        />
-        <div
-          className="fixed inset-0 z-0"
-          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
-        />
+        /> */}
+        <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
 
         <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-8 sm:pt-8 sm:pb-10">

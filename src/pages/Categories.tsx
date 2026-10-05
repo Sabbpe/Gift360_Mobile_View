@@ -1,4 +1,4 @@
-﻿import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { useLocation } from "wouter";
 import { useFilterMeta } from '@/hooks/useFilterMeta';
@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import PaymentDetailsSheet from '@/components/PaymentDetailsSheet';
 import MobileBottomNav from '@/components/MobileBottomNav';
 import { Button } from '@/components/ui/button';
-import homebackImg from "@/assets/Gandhi Backdrop.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 
 interface CategoryFilterState {
   categories: string[];
@@ -167,14 +167,11 @@ export default function Categories() {
     <>
       <Header />
       <main className="min-h-screen w-full pb-24 relative">
-        <div
+        {/* <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundColor: "#f3f5f9", backgroundImage: `url(${homebackImg})` }}
-        />
-        <div
-          className="fixed inset-0 z-0"
-          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
-        />
+          style={{ backgroundImage: `url(${homebackImg})` }}
+        /> */}
+        <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
         <div className="relative z-10">
       <header
         className="flex items-center justify-between px-4 py-3"

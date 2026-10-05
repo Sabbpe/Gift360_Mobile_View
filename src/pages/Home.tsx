@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
@@ -49,7 +49,7 @@ import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import JanmashtamiPromoModal from "@/components/JanmashtamiPromoModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
-import homebackImg from "@/assets/Gandhi Backdrop.png";
+import homebackImg from "@/assets/ganeshbackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import SupportChatWidget from "@/components/SupportChatWidget";
 import { Input } from "@/components/ui/input";
@@ -57,10 +57,10 @@ import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
-import { checkQuizEligibility } from "@/api/rewardApi";
+// import { checkQuizEligibility } from "@/api/rewardApi";
 import gWord from "@/assets/G word.png";
-import giftCARD from "@/assets/GandhiGiftCard.png";
-import rakhiBannerImg from "@/assets/Gandhiquiz.png";
+import giftCARD from "@/assets/GiftCARD.jpeg";
+// import rakhiBannerImg from "@/assets/ganeshbannercard.png";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
@@ -221,55 +221,55 @@ function PromoCard({ onBuyNow }: { onBuyNow?: (brandId: string) => void }) {
   );
 }
 
-function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
-  const { user } = useAuthContext();
-
-  const { data: eligibility } = useQuery({
-    queryKey: ["quizEligibility", user?.clientId],
-    queryFn: () => checkQuizEligibility(user!.clientId),
-    enabled: !!user?.clientId,
-    refetchInterval: 60_000,
-  });
-
-  const alreadyPlayed = eligibility?.eligible === false;
-
-  return (
-    <section className="px-3 pt-[18px]">
-      <style>{`
-        @keyframes wave-pulse {
-          0%, 100% { transform: translateY(0) scale(1); }
-          50% { transform: translateY(-3px) scale(1.02); }
-        }
-        @keyframes wave-ring {
-          0% { transform: scale(0.9); opacity: 0.6; }
-          100% { transform: scale(1.6); opacity: 0; }
-        }
-      `}</style>
-      <div className="relative w-full h-[140px] rounded-[16px] overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.12)]">
-        <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
-        {onTryQuiz && (
-          <button
-            type="button"
-            onClick={onTryQuiz}
-            disabled={alreadyPlayed}
-            className={`absolute bottom-1 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-lg ${alreadyPlayed ? "cursor-not-allowed" : ""}`}
-            style={{
-              background: "linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%)",
-              boxShadow: alreadyPlayed ? "none" : "0 4px 16px rgba(26,35,126,0.45)",
-              animation: alreadyPlayed ? "none" : "wave-pulse 2s ease-in-out infinite",
-              opacity: alreadyPlayed ? 0.45 : 1,
-            }}
-          >
-            <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-            {alreadyPlayed ? "Already Played" : "Try My Quiz"}
-          </button>
-        )}
-      </div>
-    </section>
-  );
-}
+// function RakhiBanner({ onTryQuiz }: { onTryQuiz?: () => void }) {
+//   const { user } = useAuthContext();
+//
+//   const { data: eligibility } = useQuery({
+//     queryKey: ["quizEligibility", user?.clientId],
+//     queryFn: () => checkQuizEligibility(user!.clientId),
+//     enabled: !!user?.clientId,
+//     refetchInterval: 60_000,
+//   });
+//
+//   const alreadyPlayed = eligibility?.eligible === false;
+//
+//   return (
+//     <section className="px-3 pt-[18px]">
+//       <style>{`
+//         @keyframes wave-pulse {
+//           0%, 100% { transform: translateY(0) scale(1); }
+//           50% { transform: translateY(-3px) scale(1.02); }
+//         }
+//         @keyframes wave-ring {
+//           0% { transform: scale(0.9); opacity: 0.6; }
+//           100% { transform: scale(1.6); opacity: 0; }
+//         }
+//       `}</style>
+//       <div className="relative w-full h-[140px] rounded-[16px] overflow-hidden shadow-[4px_4px_12px_rgba(0,0,0,0.12)]">
+//         <img src={rakhiBannerImg} alt="" className="absolute inset-0 h-full w-full object-cover object-center" />
+//         {onTryQuiz && (
+//           <button
+//             type="button"
+//             onClick={onTryQuiz}
+//             disabled={alreadyPlayed}
+//             className={`absolute bottom-1 right-3 z-10 inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-bold text-white shadow-lg ${alreadyPlayed ? "cursor-not-allowed" : ""}`}
+//             style={{
+//               background: "linear-gradient(135deg, #1a237e 0%, #283593 50%, #1565c0 100%)",
+//               boxShadow: alreadyPlayed ? "none" : "0 4px 16px rgba(26,35,126,0.45)",
+//               animation: alreadyPlayed ? "none" : "wave-pulse 2s ease-in-out infinite",
+//               opacity: alreadyPlayed ? 0.45 : 1,
+//             }}
+//           >
+//             <svg viewBox="0 0 20 20" fill="currentColor" className="h-3 w-3">
+//               <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+//             </svg>
+//             {alreadyPlayed ? "Already Played" : "Try My Quiz"}
+//           </button>
+//         )}
+//       </div>
+//     </section>
+//   );
+// }
 
 function SearchSection({ onBrandSelect }: { onBrandSelect: (brandId: string) => void }) {
   const [, setLocation] = useLocation();
@@ -920,15 +920,14 @@ function MobileHomeScreen() {
   const [janmashtamiQuizOpen, setJanmashtamiQuizOpen] = useState(false);
   const [janmashtamiPromoOpen, setJanmashtamiPromoOpen] = useState(false);
 
-  // Show Janmashtami promo modal once after login/register. The modal itself
-  // checks eligibility the moment it opens, so we always open it here.
-  useEffect(() => {
-    if (localStorage.getItem("showJanmashtamiPromo") === "1") {
-      localStorage.removeItem("showJanmashtamiPromo");
-      const t = setTimeout(() => setJanmashtamiPromoOpen(true), 600);
-      return () => clearTimeout(t);
-    }
-  }, []);
+  // Quiz entry disabled — promo modal no longer shown after login/register
+  // useEffect(() => {
+  //   if (localStorage.getItem("showJanmashtamiPromo") === "1") {
+  //     localStorage.removeItem("showJanmashtamiPromo");
+  //     const t = setTimeout(() => setJanmashtamiPromoOpen(true), 600);
+  //     return () => clearTimeout(t);
+  //   }
+  // }, []);
 
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
@@ -1043,14 +1042,11 @@ function MobileHomeScreen() {
     <>
       <Header />
       <main className="min-h-screen w-full overflow-x-hidden pb-[84px] font-body text-[#101010] md:hidden relative">
-        <div
+        {/* <div
           className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundColor: "#f3f5f9", backgroundImage: `url(${homebackImg})` }}
-        />
-        <div
-          className="fixed inset-0 z-0"
-          style={{ background: "linear-gradient(180deg, rgba(255,255,255,0.30) 0%, rgba(255,255,255,0.55) 100%)" }}
-        />
+          style={{ backgroundImage: `url(${homebackImg})` }}
+        /> */}
+        <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
         <div className="relative z-10">
         <div className="relative overflow-visible pb-[70px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
@@ -1060,12 +1056,13 @@ function MobileHomeScreen() {
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard onBuyNow={openStandardPaymentSheet} />
       <JanmashtamiQuizModal open={janmashtamiQuizOpen} onClose={() => setJanmashtamiQuizOpen(false)} />
-      <JanmashtamiPromoModal
+      {/* Quiz entry disabled — promo modal no longer shown */}
+      {/* <JanmashtamiPromoModal
         open={janmashtamiPromoOpen}
         onClose={() => setJanmashtamiPromoOpen(false)}
         onStartQuiz={() => { setJanmashtamiPromoOpen(false); setJanmashtamiQuizOpen(true); }}
-      />
-      <RakhiBanner onTryQuiz={() => setJanmashtamiQuizOpen(true)} />
+      /> */}
+      {/* <RakhiBanner /> */}
       <PersonalPicksSection
         onOpenBrand={openStandardPaymentSheet}
       />
