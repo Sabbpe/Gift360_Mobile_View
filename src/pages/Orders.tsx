@@ -59,7 +59,20 @@ interface VoucherView {
   key: string; cardNumber: string; cardPin: string; expiryDate: string; amount: string;
   orderItemId: string; isScratched: boolean; isGift: boolean; brandName: string;
   itemId?: string;
+  activationCode?: string;
+  activationUrl?: string;
 }
+
+/** QwikGift obs #3: customer-friendly failure text carried on the order item. */
+const itemFailureMessage = (item: any): string | null => {
+  const explicit = item?.failureMessage || item?.failure_message || item?.providerFailureMessage;
+  if (explicit) return explicit;
+  const status = String(item?.providerStatus || item?.provider_status || "").toUpperCase();
+  if (status === "FAILED" || status === "ACTIVATE_ERROR" || status === "CLOSED") {
+    return "This voucher could not be issued. If any amount was paid, it will be refunded.";
+  }
+  return null;
+};
 
 const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]>): VoucherView[] => {
   const results: VoucherView[] = [];
@@ -104,6 +117,8 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
             cardPin: v?.getCardPin || "",
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
+            activationCode: v?.getActivationCode || "",
+            activationUrl: v?.getActivationUrl || "",
             isScratched: matchingCardItem
               ? Boolean(matchingCardItem.isScratched)
               : Boolean(item.is_scratched),
@@ -339,6 +354,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const [showSheet, setShowSheet] = useState(false);
   const item = order.items?.[0];
   const meta = item?.meta || {};
+  const issueMessage = itemFailureMessage(item);
   const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
@@ -411,12 +427,18 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     brandName={v.brandName}
                     orderItemId={v.orderItemId}
                     itemId={v.itemId}
+                    activationCode={v.activationCode}
+                    activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
                     compact />
                 </div>
               ))}
+            </div>
+          ) : issueMessage ? (
+            <div className="p-2 bg-red-50 rounded-xl border border-red-200 text-[9px] text-red-700 font-medium">
+              {issueMessage}
             </div>
           ) : (
             <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[9px] text-amber-800 font-medium">
