@@ -9,7 +9,7 @@ import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 interface QuickBuyModalProps {
   brand: Brand;

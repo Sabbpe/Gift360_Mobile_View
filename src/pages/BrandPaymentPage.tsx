@@ -10,7 +10,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 
 const FALLBACK = FALLBACK_IMAGE;
 const SELECTED_TOP_BRAND_DETAILS_KEY = "selected_top_brand_details";
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 type TabKey = "about" | "howToUse" | "terms";
 

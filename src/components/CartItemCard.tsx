@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const FALLBACK = FALLBACK_IMAGE;
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 interface CartItemCardProps {
   itemId: string;

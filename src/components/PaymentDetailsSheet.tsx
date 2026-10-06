@@ -15,7 +15,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getImageUrl } from "@/utils/imageUrl";
 
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 type Props = {
   brandId?: string | null;
@@ -80,7 +80,7 @@ export default function PaymentDetailsSheet({
     if (!brand) return;
 
     if (typeof initialQuantity === "number" && initialQuantity > 0) {
-      setQuantity(initialQuantity);
+      setQuantity(Math.min(MAX_QUANTITY_PER_ITEM, initialQuantity));
     }
 
     if (typeof initialAmount === "number" && initialAmount > 0) {

@@ -12,7 +12,7 @@ function getImage(b: BrandDetailsParsed | null) {
   return getImageUrl(b) || FALLBACK_IMAGE;
 }
 
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 export default function BrandBuySheet({
   brandId,

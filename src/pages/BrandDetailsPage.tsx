@@ -37,7 +37,7 @@ import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 
 const FALLBACK = FALLBACK_IMAGE;
-const MAX_QUANTITY_PER_ITEM = 10;
+const MAX_QUANTITY_PER_ITEM = 3;
 
 async function validateImage(url: string): Promise<string> {
   try {
