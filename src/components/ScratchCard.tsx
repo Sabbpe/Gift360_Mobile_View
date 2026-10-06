@@ -146,9 +146,10 @@ export function ScratchCard({
 
   // ── SCRATCHED layout, compact (matches the compact card grid on Orders) ──
   if (voucherState === "SCRATCHED" && compact) {
+    const hasActivation = Boolean(activationCode || activationUrl);
     return (
       <Card
-        className="relative overflow-hidden ring-2 ring-amber-400/60 bg-[#F8F5F4] w-full h-[200px] flex flex-col"
+        className={`relative overflow-hidden ring-2 ring-amber-400/60 bg-[#F8F5F4] w-full ${hasActivation ? "h-[260px]" : "h-[200px]"} flex flex-col`}
         style={{ boxShadow: "4px 4px 6px 0px rgba(0,0,0,0.15)" }}
       >
         <CardContent className="p-3 flex-1 flex flex-col justify-between min-h-0">
@@ -193,6 +194,31 @@ export function ScratchCard({
                   : <Copy className="h-3 w-3 text-amber-300/70" />}
               </button>
             </div>
+            {activationCode ? (
+              <div className="w-full bg-[#1A3052] rounded-lg px-2 py-1.5 flex items-center justify-between gap-1">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[#EBBB64] text-[8px] font-bold leading-tight">Activation Code</p>
+                  <p className="text-white font-bold text-[9px] tracking-tighter leading-tight break-all">{activationCode}</p>
+                </div>
+                <button
+                  onClick={(e) => { e.stopPropagation(); handleCopy(activationCode, "pin"); }}
+                  className="shrink-0 p-1 rounded-md hover:bg-white/10 transition-colors"
+                >
+                  <Copy className="h-3 w-3 text-amber-300/70" />
+                </button>
+              </div>
+            ) : null}
+            {activationUrl ? (
+              <a
+                href={activationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="w-full bg-[#1A3052] rounded-lg px-2 py-1.5 block text-amber-300 underline text-[9px] leading-tight break-all"
+              >
+                Activate: {activationUrl}
+              </a>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between shrink-0">
