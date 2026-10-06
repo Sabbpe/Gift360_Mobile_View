@@ -59,8 +59,6 @@ interface VoucherView {
   key: string; cardNumber: string; cardPin: string; expiryDate: string; amount: string;
   orderItemId: string; isScratched: boolean; isGift: boolean; brandName: string;
   itemId?: string;
-  activationCode?: string;
-  activationUrl?: string;
 }
 
 /** QwikGift obs #3: customer-friendly failure text carried on the order item. */
@@ -117,8 +115,6 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
             cardPin: v?.getCardPin || "",
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
-            activationCode: v?.getActivationCode || "",
-            activationUrl: v?.getActivationUrl || "",
             isScratched: matchingCardItem
               ? Boolean(matchingCardItem.isScratched)
               : Boolean(item.is_scratched),
@@ -427,8 +423,6 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     brandName={v.brandName}
                     orderItemId={v.orderItemId}
                     itemId={v.itemId}
-                    activationCode={v.activationCode}
-                    activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}

@@ -28,9 +28,6 @@ interface ScratchCardProps {
   message?: string;
   logoUrl?: string;
   profileUrl?: string;
-  // QwikGift obs #2: activation-URL credentials (UBEFLOW etc.)
-  activationCode?: string;
-  activationUrl?: string;
 }
 
 export function ScratchCard({
@@ -49,8 +46,6 @@ export function ScratchCard({
   message,
   logoUrl,
   profileUrl,
-  activationCode,
-  activationUrl,
 }: ScratchCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
@@ -321,36 +316,6 @@ export function ScratchCard({
                     </button>
                   </div>
                 </div>
-                {activationCode ? (
-                  <div>
-                    <p className="text-[#EBBB64] font-bold text-xs mb-1">Activation Code</p>
-                    <div className="bg-[#1A3052] rounded-[20px] px-4 py-2 flex items-center justify-between gap-2">
-                      <p className="text-white font-bold text-xs tracking-widest min-w-0 break-all">
-                        {activationCode}
-                      </p>
-                      <button
-                        onClick={(e) => { e.stopPropagation(); handleCopy(activationCode, "pin"); }}
-                        className="shrink-0 p-1.5 rounded-full hover:bg-white/10 transition-colors"
-                      >
-                        <Copy className="h-3.5 w-3.5 text-amber-300/70" />
-                      </button>
-                    </div>
-                  </div>
-                ) : null}
-                {activationUrl ? (
-                  <div>
-                    <p className="text-[#EBBB64] font-bold text-xs mb-1">Activation Link</p>
-                    <a
-                      href={activationUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={(e) => e.stopPropagation()}
-                      className="block bg-[#1A3052] rounded-[20px] px-4 py-2 text-amber-300 underline text-xs break-all"
-                    >
-                      {activationUrl}
-                    </a>
-                  </div>
-                ) : null}
               </div>
 
               {/* Vertical divider */}
