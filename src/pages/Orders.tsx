@@ -33,6 +33,8 @@ const mapOrder = (order: any) => {
           ? item.gift_voucher_item_coupon_details : [];
         const coupons = groups.map((g: any) => ({
           coupon_id: g?.coupon_id || "",
+          activation_code: g?.activation_code || "",
+          activation_url: g?.activation_url || "",
           vd_raw_response: {
             brand_details: [{
               product_name: item?.meta?.brand_name || "",
@@ -59,6 +61,8 @@ interface VoucherView {
   key: string; cardNumber: string; cardPin: string; expiryDate: string; amount: string;
   orderItemId: string; isScratched: boolean; isGift: boolean; brandName: string;
   itemId?: string;
+  activationCode?: string;
+  activationUrl?: string;
 }
 
 /** QwikGift obs #3: customer-friendly failure text carried on the order item. */
@@ -115,6 +119,8 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
             cardPin: v?.getCardPin || "",
             expiryDate: v?.getExpiryDate || "",
             amount: v?.balanceTotal || "",
+            activationCode: c?.activation_code || "",
+            activationUrl: c?.activation_url || "",
             isScratched: matchingCardItem
               ? Boolean(matchingCardItem.isScratched)
               : Boolean(item.is_scratched),
@@ -423,6 +429,8 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     brandName={v.brandName}
                     orderItemId={v.orderItemId}
                     itemId={v.itemId}
+                    activationCode={v.activationCode}
+                    activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
@@ -525,6 +533,8 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
                     brandName={v.brandName}
                     orderItemId={v.orderItemId}
                     itemId={v.itemId}
+                    activationCode={v.activationCode}
+                    activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
