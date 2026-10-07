@@ -70,7 +70,14 @@ const itemFailureMessage = (item: any): string | null => {
   const explicit = item?.failureMessage || item?.failure_message || item?.providerFailureMessage;
   if (explicit) return explicit;
   const status = String(item?.providerStatus || item?.provider_status || "").toUpperCase();
+  const code = String(item?.lastEvcResponseCode || item?.last_evc_response_code || item?.providerErrorCode || "").toUpperCase();
   if (status === "FAILED" || status === "ACTIVATE_ERROR" || status === "CLOSED") {
+    if (code.includes("5315") || code.includes("DISABL")) {
+      return "This gift card is currently unavailable. If any amount was debited, it will be refunded.";
+    }
+    if (code.includes("SWEEP_EXHAUSTED") || code.includes("TRANSPORT")) {
+      return "We couldn't confirm this voucher with the brand. If any amount was paid, it will be refunded.";
+    }
     return "This voucher could not be issued. If any amount was paid, it will be refunded.";
   }
   return null;
