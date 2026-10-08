@@ -1,15 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { ArrowRight, Gift, Coins, RefreshCw, BadgeDollarSign } from "lucide-react";
 import flipkartSuperCoinImg from "@/assets/FlipKartSuperCoin-removebg-preview.png";
+import flipkartBannerImg from "@/assets/FlipkartBanner.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import partnerImg from "@/assets/coorp.png";
-import UberSuperCoinNudge from "@/components/UberSuperCoinNudge";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
 import SuperCoinBanner from "@/components/SuperCoinBanner";
 import SuperCoinGuideSheet from "@/components/SuperCoinGuideSheet";
 
-const UBER_BRAND_ID = "3e4245c1-a17c-48e4-aa41-e8657d2886e4";
 const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
 const BATA_BRAND_ID = "335f53f7-68f6-4eb0-be45-e571c1044cf9";
 const TOTAL_SLIDES = 5;
@@ -159,7 +158,13 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           }}
         >
           <div className="flex-shrink-0 w-full snap-start">
-            <UberSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(UBER_BRAND_ID) : undefined} />
+            <div className="relative w-full h-[185px] flex items-center justify-center px-3 py-3">
+              <img
+                src={flipkartBannerImg}
+                alt="Flipkart Big Billion Days"
+                className="max-h-full max-w-full object-contain drop-shadow-md"
+              />
+            </div>
           </div>
           <div className="flex-shrink-0 w-full snap-start">
             <BlinkitSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BLINKIT_BRAND_ID) : undefined} />

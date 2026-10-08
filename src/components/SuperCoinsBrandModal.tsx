@@ -12,6 +12,7 @@ import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, { type SuperCoinHoldContext } from "@/components/SuperCoinOTPModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import scScrollableNewImg from "@/assets/ScScrollableNew.png";
 import type { OrderRequest } from "@/types/cart";
 
 type Props = {
@@ -21,11 +22,13 @@ type Props = {
 };
 
 const FALLBACK = FALLBACK_IMAGE;
-export const SUPERCOIN_FEATURED_BRAND_ID = "e6f0e8e0-784a-4877-9c95-826d53cbdf84";
+const SUPERCOIN_EARN_PERCENT = 5;
+const SUPERCOIN_EARN_CAP = 100;
+export const SUPERCOIN_FEATURED_BRAND_ID = "c1ae829e-0e78-4dfe-8432-c4c1ac9360e1";
 export const SUPERCOIN_PIZZAHUT_BRAND_ID = "f0bcff25-e555-11f0-a1f2-4201c0a81e02";
 
 export const SUPERCOIN_BRANDS = [
-  { id: SUPERCOIN_FEATURED_BRAND_ID, label: "Flipkart B2B" },
+  { id: SUPERCOIN_FEATURED_BRAND_ID, label: "SuperCoin E-Gift Voucher", hidden: false },
   { id: SUPERCOIN_PIZZAHUT_BRAND_ID, label: "Pizza Hut", hidden: true },
 ] as const;
 
@@ -84,12 +87,14 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
     min;
   const isFixedType = brand?.BrandType?.toLowerCase() === "fixed";
   const discountPercent = Number(brand?.Discount) || 0;
-  const sliderPercent = max > min ? ((amount - min) / (max - min)) * 100 : 0;
 
   const totalVoucherValue = amount * quantity;
   const superCoinsRequired = calculateSuperCoinsRequired(totalVoucherValue);
-  const superCoinsEarned = Math.round(totalVoucherValue * 0.01 * 100) / 100;
-  const hasEnoughCoins = canAffordVoucher(superCoinState.balance, totalVoucherValue);
+  const superCoinsEarnPotential = Math.round(
+    Math.min(totalVoucherValue * (SUPERCOIN_EARN_PERCENT / 100), SUPERCOIN_EARN_CAP) * 100
+  ) / 100;
+  const isAmountValid = amount >= min && amount <= max;
+  const hasEnoughCoins = isAmountValid && canAffordVoucher(superCoinState.balance, totalVoucherValue);
 
   const calcCountdown = useCallback((txTime: string) => {
     const startMs = new Date(txTime).getTime();
@@ -197,7 +202,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
 
   // Step 1: Create order -> open OTP modal (initHold + authorizeHold happen inside OTP modal)
   const openSuperCoinFlow = useCallback(async () => {
-    if (!superCoinIdentity || !user?.clientId || !brand) return;
+    if (!superCoinIdentity || !user?.clientId || !brand || !isAmountValid) return;
 
     try {
       const today = new Date();
@@ -247,7 +252,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
         variant: "destructive",
       });
     }
-  }, [superCoinIdentity, user?.clientId, brand, totalVoucherValue, quantity, amount, imageSrc, createOrderMutation, toast]);
+  }, [superCoinIdentity, user?.clientId, brand, isAmountValid, totalVoucherValue, quantity, amount, imageSrc, createOrderMutation, toast]);
 
   // Step 3: After OTP authorized (initHold + authorizeHold done) -> call burn-and-order
   const handleBurnComplete = useCallback(async (_context: SuperCoinHoldContext) => {
@@ -294,10 +299,10 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       Promise.all([balancePromise, orderPromise]).then(([balRes, details]) => {
         const freshBalance = balRes ? extractSuperCoinBalance(balRes) : null;
         const redeemed = details?.coinsRedeemed ?? burnResult?.coinsRedeemed ?? 0;
-        setOrderDetailsCoinsEarned(details?.coinsEarned ?? burnResult?.coinsEarned ?? superCoinsEarned);
+        setOrderDetailsCoinsEarned(details?.coinsEarned ?? burnResult?.coinsEarned ?? null);
         setBurnResultData({
           coinsRedeemed: redeemed,
-          coinsEarned: details?.coinsEarned ?? burnResult?.coinsEarned ?? superCoinsEarned,
+          coinsEarned: details?.coinsEarned ?? burnResult?.coinsEarned,
           balance: freshBalance,
         });
       }).finally(() => {
@@ -367,61 +372,6 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             .sc-amount-box {
               margin: 10px auto 0;
               width: 100%;
-            }
-            .sc-payment-range {
-              -webkit-appearance: none;
-              appearance: none;
-              width: 100%;
-              height: 10px;
-              border-radius: 10px;
-              outline: none;
-              background: #DAD5FF;
-            }
-            .sc-payment-range::-webkit-slider-runnable-track {
-              height: 10px;
-              border-radius: 10px;
-              background: transparent;
-            }
-            .sc-payment-range::-webkit-slider-thumb {
-              -webkit-appearance: none;
-              appearance: none;
-              width: 15px;
-              height: 15px;
-              border-radius: 50%;
-              background: #6C5CE7;
-              border: 1px solid #FFFFFF;
-              margin-top: -2.5px;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.22);
-            }
-            .sc-payment-range::-moz-range-track {
-              height: 10px;
-              border-radius: 10px;
-              background: #DAD5FF;
-            }
-            .sc-payment-range::-moz-range-progress {
-              height: 10px;
-              border-radius: 10px;
-              background: linear-gradient(90deg, #9747FF, #5B2B99);
-            }
-            .sc-payment-range::-moz-range-thumb {
-              width: 15px;
-              height: 15px;
-              border-radius: 50%;
-              background: #6C5CE7;
-              border: 1px solid #FFFFFF;
-              box-shadow: 0 1px 3px rgba(0,0,0,0.22);
-            }
-            .sc-amount-bubble::after {
-              content: "";
-              position: absolute;
-              left: 50%;
-              bottom: -6px;
-              transform: translateX(-50%);
-              width: 0;
-              height: 0;
-              border-left: 6px solid transparent;
-              border-right: 6px solid transparent;
-              border-top: 6px solid #2F80ED;
             }
           `}</style>
 
@@ -682,31 +632,44 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </div>
                     </div>
                   ) : (
-                    <div className="relative mt-[4px] px-[4px] pt-[14px]">
-                      <div
-                        className="sc-amount-bubble pointer-events-none absolute top-[-30px] z-10 rounded-[6px] bg-[#2F80ED] px-2 py-1 text-[12px] font-normal leading-[15px] text-white shadow-[0_2px_4px_rgba(0,0,0,0.15)]"
-                        style={{
-                          left: `${Math.max(0, Math.min(100, sliderPercent))}%`,
-                          transform: "translateX(-50%)",
-                        }}
-                      >
-                        {formatCurrency(amount)}
+                    <div className="mt-[4px]">
+                      <div className="mb-[6px] flex items-center gap-[4px] text-[11px] font-medium leading-[16px] text-[#555]">
+                        <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
+                        Enter amount between {formatCurrency(min)} - {formatCurrency(max)}
                       </div>
                       <input
-                        type="range"
-                        min={min}
-                        max={max}
-                        step={1}
-                        value={amount}
-                        onChange={(e) => setAmount(Number(e.target.value))}
-                        className="sc-payment-range"
-                        style={{
-                          background: `linear-gradient(90deg, #9747FF 0%, #5B2B99 ${sliderPercent}%, #DAD5FF ${sliderPercent}%, #DAD5FF 100%)`,
+                        type="text"
+                        inputMode="numeric"
+                        value={amount === 0 ? "" : amount}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/[^0-9]/g, "");
+                          setAmount(raw === "" ? 0 : Number(raw));
                         }}
+                        onBlur={() => {
+                          if (!isAmountValid) setAmount(0);
+                        }}
+                        aria-label="Voucher amount"
+                        aria-invalid={amount !== 0 && !isAmountValid}
+                        placeholder={`${min} - ${max}`}
+                        className={`w-full rounded-[8px] border-2 bg-white px-3 py-2 text-[12px] font-medium text-[#3E3E3E] outline-none transition-colors focus:ring-1 ${
+                          amount !== 0 && !isAmountValid
+                            ? "border-red-400 focus:border-red-400 focus:ring-red-400"
+                            : "border-[#DAD5FF] focus:border-[#9747FF] focus:ring-[#9747FF]"
+                        }`}
                       />
+                      {amount !== 0 && !isAmountValid && (
+                        <p className="mt-1 text-[10px] text-red-500">
+                          Enter an amount from {formatCurrency(min)} to {formatCurrency(max)}.
+                        </p>
+                      )}
+                      {isAmountValid && discountPercent > 0 && (
+                        <p className="mt-[4px] text-right text-[9px] font-medium text-[#10B981]">
+                          +{formatCurrency(Math.round(amount * discountPercent / 100))} cashback
+                        </p>
+                      )}
                       <div className="mt-[4px] flex justify-between text-[8px] leading-[12px] text-black">
-                        <span>{formatCurrency(min)}</span>
-                        <span>{formatCurrency(max)}</span>
+                        <span>Min {formatCurrency(min)}</span>
+                        <span>Max {formatCurrency(max)}</span>
                       </div>
                     </div>
                   )}
@@ -750,6 +713,20 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   </div>
                 </div>
 
+                <a
+                  href="https://www.flipkart.com/free-super-coin-at-store?param=9988770"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Grab Free SuperCoins — earn up to 1,500 coins"
+                  className="mt-3 block overflow-hidden rounded-[12px] shadow-[0_4px_14px_rgba(37,99,235,0.18)] transition-transform active:scale-[0.99]"
+                >
+                  <img
+                    src={scScrollableNewImg}
+                    alt="Grab Free SuperCoins. Earn up to 1,500 coins. Start earning now."
+                    className="block h-auto w-full object-contain"
+                  />
+                </a>
+
                 {/* SuperCoin burn info + CTA */}
                 {superCoinIdentity && !superCoinAuthorized && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
@@ -768,17 +745,21 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </span>
                     </div>
 
-                    {!hasEnoughCoins && (
+                    {!isAmountValid ? (
+                      <p className="mb-3 text-[10px] text-red-500">
+                        Enter a valid voucher amount to continue.
+                      </p>
+                    ) : !hasEnoughCoins ? (
                       <p className="text-[10px] text-red-500 mb-3">
                         Minimum {superCoinsRequired.toLocaleString("en-IN")} SuperCoins required
                       </p>
-                    )}
+                    ) : null}
 
-                    {superCoinsEarned > 0 && (
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[11px] font-medium text-[#667085] flex items-center gap-1">
-                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
-                          Earn {superCoinsEarned.toFixed(2)} SuperCoins
+                    {superCoinsEarnPotential > 0 && (
+                      <div className="mb-3 flex items-center justify-between">
+                        <span className="flex items-center gap-1 text-[11px] font-medium text-[#667085]">
+                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+                          Earn up to {superCoinsEarnPotential.toFixed(2)} SC
                         </span>
                       </div>
                     )}
@@ -834,10 +815,10 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                         Hold expired. Please apply again.
                       </p>
                     )}
-                    {superCoinsEarned > 0 && (
-                      <p className="mt-1 text-[11px] font-medium text-[#7C3AED] flex items-center gap-1">
-                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
-                        Earn {superCoinsEarned.toFixed(2)} SuperCoins
+                    {superCoinsEarnPotential > 0 && (
+                      <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#7C3AED]">
+                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+                        Earn up to {superCoinsEarnPotential.toFixed(2)} SC
                       </p>
                     )}
                     <button

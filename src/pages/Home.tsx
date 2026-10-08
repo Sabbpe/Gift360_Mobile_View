@@ -10,12 +10,8 @@ import { superCoinConversionConfig } from "@/config/features.config";
 const SUPERCOIN_CONVERSION_PAUSED = superCoinConversionConfig.paused;
 const SUPERCOIN_PAUSED_MESSAGE = superCoinConversionConfig.pausedMessage;
 
-// The dedicated "convert SuperCoins" home button now routes into the same
-// checkout flow used for any normal brand purchase (cashback-vs-SuperCoins
-// choice, the real 20/80 split, the platform fee) rather than the old,
-// separate burn-and-order mechanism -- with this one brand pre-selected.
-// EGCGBFKBS001/burn-and-order stay in the codebase, just unused from here.
-const FLIPKART_B2C_BRAND_ID = "73e3d992-d87e-43e4-aed3-e87cfe6952f5";
+// Convert Coins uses the dedicated SuperCoins burn flow in
+// SuperCoinsBrandModal; it does not route through cart or payment checkout.
 import {
   Loader2,
   ChevronLeft,
@@ -167,7 +163,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
   ];
 
   return (
-    <section className="px-[21px] pt-[18px]">
+    <section className="px-[21px] pt-0">
       <style>{`
         @keyframes new-feature-pulse {
           0%, 100% { opacity: 1; transform: scale(1) translateY(0); box-shadow: 0 0 4px rgba(124,58,237,0.3); }
@@ -183,7 +179,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
           100% { left: 200%; }
         }
       `}</style>
-      <div className="grid grid-cols-4 gap-[17px] pt-[18px]">
+      <div className="grid grid-cols-4 gap-[17px] pt-[4px]">
         {actions.map(({ label, Icon, href, onClick, isNew }) => (
           <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
             {isNew && (
@@ -1026,14 +1022,7 @@ function MobileHomeScreen() {
       });
       return;
     }
-    // Routes into the normal purchase sheet with Flipkart's B2C card
-    // pre-selected -- same flow as handleTopBrandVoucherSelect below, which
-    // already adds to cart and navigates to /cart, where the real
-    // cashback-vs-SuperCoins choice takes over. Replaces the old
-    // burn-and-order/SuperCoinsModal path (kept dormant, not removed).
-    setSheetBrandId(FLIPKART_B2C_BRAND_ID);
-    setSheetInitialAmount(undefined);
-    setBuySheetOpen(true);
+    setSuperCoinsModalOpen(true);
   };
 
   // (feedback auto-trigger removed — feedback is only reachable via the floating button)
