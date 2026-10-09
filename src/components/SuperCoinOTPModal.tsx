@@ -204,6 +204,10 @@ export default function SuperCoinOTPModal({
         displayName,
         stampExpiry: Date.now() + 15 * 60 * 1000,
       });
+      const resolvedTransactionId = (response as any)?.merchantTransactionId
+        || response?.transactionId
+        || txnId;
+      setMerchantTransactionId(resolvedTransactionId);
 
       if (response?.otp) {
         setPrefilledOtp(response.otp);
