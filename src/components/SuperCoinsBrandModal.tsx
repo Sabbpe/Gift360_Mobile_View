@@ -359,7 +359,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       <div className="absolute inset-0 bg-black/45 backdrop-blur-[6px]" onClick={handleClose} />
 
       <div className="absolute inset-x-0 bottom-[63px] flex justify-center px-3">
-        <section className="relative flex h-[85vh] max-h-[720px] min-h-[600px] w-full max-w-[390px] flex-col overflow-hidden rounded-t-[38px] bg-[#F3F5F9] shadow-[0_-18px_50px_rgba(0,0,0,0.28)]">
+        <section className="relative flex h-[600px] w-full max-w-[390px] flex-col overflow-hidden rounded-t-[38px] bg-[#F3F5F9] shadow-[0_-18px_50px_rgba(0,0,0,0.28)]">
           <style>{`
             .sc-sheet-content {
               flex: 1;
