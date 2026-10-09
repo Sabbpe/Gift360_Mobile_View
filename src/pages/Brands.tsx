@@ -269,8 +269,13 @@ const filteredBrandSuggestions = useMemo(() => {
     (filters.priceRange !== "all" ? 1 : 0) +
     filters.discountRanges.length;
 
-  // Determine which data to use: search results or filtered results
+  // Determine which data to use: live search, submitted search or filtered results
   const displayBrands = useMemo(() => {
+    if (searchQuery.trim()) {
+      // Same array as the search helper dropdown - grid always matches suggestions
+      return filteredBrandSuggestions;
+    }
+
     if (submittedSearchQuery.trim()) {
       return Array.isArray(searchResults) ? searchResults : [];
     }
@@ -280,7 +285,7 @@ const filteredBrandSuggestions = useMemo(() => {
     }
 
     return safeBrands;
-  }, [submittedSearchQuery, searchResults, activeFiltersCount, filteredData, safeBrands]);
+  }, [searchQuery, filteredBrandSuggestions, submittedSearchQuery, searchResults, activeFiltersCount, filteredData, safeBrands]);
 
   const eligibleDisplayBrands = useMemo(() => {
     if (!superCoinsOnly) {
@@ -624,6 +629,7 @@ const sortedDisplayBrands = useMemo(() => {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    setCurrentPage(0);
   };
 
   const handleSearchToggle = () => {
@@ -1085,12 +1091,12 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                         SuperCoins eligible only
                       </span>
                     )}
-                    {submittedSearchQuery.trim() && (
+                    {(searchQuery.trim() || submittedSearchQuery.trim()) && (
                       <span className="ml-2 text-[hsl(var(--primary))]">
-                        (searching for "{submittedSearchQuery}")
+                        (searching for "{searchQuery.trim() || submittedSearchQuery}")
                       </span>
                     )}
-                    {!submittedSearchQuery.trim() && activeFiltersCount > 0 && (
+                    {!searchQuery.trim() && !submittedSearchQuery.trim() && activeFiltersCount > 0 && (
                       <span className="ml-2 text-[hsl(var(--primary))]">
                         ({activeFiltersCount} filter
                         {activeFiltersCount !== 1 ? "s" : ""} active)
@@ -1149,8 +1155,8 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                   <p className="text-white/60 mb-4">
                     {superCoinsOnly
                       ? "No SuperCoins eligible brands matched your current search or filters."
-                      : submittedSearchQuery.trim()
-                        ? `No results found for "${submittedSearchQuery}"`
+                      : (searchQuery.trim() || submittedSearchQuery.trim())
+                        ? `No results found for "${searchQuery.trim() || submittedSearchQuery}"`
                         : "Try adjusting your filters or search term"}
                   </p>
                   <button
@@ -1168,7 +1174,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                     }}
                     className="h-10 px-5 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all"
                   >
-                    Clear all {submittedSearchQuery.trim() ? "search and filters" : "filters"}
+                    Clear all {searchQuery.trim() || submittedSearchQuery.trim() ? "search and filters" : "filters"}
                   </button>
                 </div>
               )}
