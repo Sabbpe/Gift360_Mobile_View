@@ -296,7 +296,7 @@ export default function SuperCoinOTPModal({
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleClose(); }}>
       <DialogContent
-        className="sm:max-w-md max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-md max-h-[90vh] overflow-y-auto top-[42%]"
         onInteractOutside={(e) => {
           e.preventDefault();
         }}
