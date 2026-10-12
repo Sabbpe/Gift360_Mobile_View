@@ -53,6 +53,15 @@ const mapOrder = (order: any) => {
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+// A voucher is considered "issued" when at least one order item carries a
+// coupon group (mapOrder collapses gift_voucher_item_coupon_details -> coupons),
+// or the item's provider status reached COMPLETE.
+const hasIssuedVoucher = (order: any): boolean =>
+  (order?.items || []).some((it: any) =>
+    (it?.coupons?.length ?? 0) > 0 ||
+    String(it?.providerStatus || it?.provider_status || "").toUpperCase() === "COMPLETE"
+  );
+
 const getImageUrl = (meta: any): string => {
   return getImageUrlUtil(meta) || FALLBACK;
 };
@@ -789,27 +798,26 @@ export default function Orders() {
     setSuccessOrder(entry);
   };
 
-  // Split current tab's orders into buckets
+  // Split current tab's orders into buckets.
+  // Vouchers tab : PAID orders that have an issued voucher (and not redeemed).
+  // Pending tab  : PAID orders whose voucher has NOT been issued yet.
   const allOrders = [...cashOrders, ...superCoinOrders];
-  const paidOrders = allOrders.filter(o =>
-    o.status?.toUpperCase() === "PAID" &&
-    !redeemedIds.has(o.order_id) &&
-    !redeemedIds.has(o.order_number)
-  );
+
   const pendingOrders = allOrders.filter(o =>
-    ["PENDING", "FAILED", "CANCELLED", "TAMPERED"].includes(o.status?.toUpperCase())
+    o.status?.toUpperCase() === "PAID" && !hasIssuedVoucher(o)
   );
 
   const vouchersPaidOrders = orderTab === "vouchers"
     ? (voucherSubTab === "cash" ? cashOrders : superCoinOrders).filter(o =>
         o.status?.toUpperCase() === "PAID" &&
+        hasIssuedVoucher(o) &&
         !redeemedIds.has(o.order_id) &&
         !redeemedIds.has(o.order_number)
       )
     : [];
 
-  const cashPaidCount = cashOrders.filter(o => o.status?.toUpperCase() === "PAID" && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
-  const scPaidCount = superCoinOrders.filter(o => o.status?.toUpperCase() === "PAID" && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
+  const cashPaidCount = cashOrders.filter(o => o.status?.toUpperCase() === "PAID" && hasIssuedVoucher(o) && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
+  const scPaidCount = superCoinOrders.filter(o => o.status?.toUpperCase() === "PAID" && hasIssuedVoucher(o) && !redeemedIds.has(o.order_id) && !redeemedIds.has(o.order_number)).length;
 
   const orderTabs: { id: OrderTab; label: string; Icon: any }[] = [
     { id: "vouchers", label: "Vouchers", Icon: Tag },
@@ -975,7 +983,7 @@ export default function Orders() {
             <>
               {pendingOrders.length === 0 ? (
                 <EmptyState icon={Clock} title="No Pending Orders"
-                  subtitle="Orders waiting for payment confirmation will appear here" />
+                  subtitle="Paid orders whose vouchers haven't been issued yet will appear here" />
               ) : (
                 <div className="grid grid-cols-3 gap-2">
                   {pendingOrders.map(order => {
