@@ -2,6 +2,7 @@ import type { BrandSearchResult, BrandSearchApiResponse } from "@/types/brandSea
 import type { Brand, BrandImages } from "@/types/brand";
 import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { brandApi } from "@/lib/valuedesignApi";
+import { isHiddenCatalogBrand } from "@/lib/hidden-catalog-brands";
 import { AxiosError } from "axios";
 
 export type TopBrandVoucher = {
@@ -47,12 +48,14 @@ export const searchBrands = async (query: string): Promise<BrandSearchResult[]> 
     console.log("🔥🔥 Response status:", res.status);
     console.log("🔥🔥 Number of results:", res.data?.length || 0);
 
-    return res.data.map((b): BrandSearchResult => ({
-      brandId: b.brandId,
-      brandName: b.brandName,
-      category: b.category,
-      image: b.image,
-    }));
+    return res.data
+      .filter((b) => !isHiddenCatalogBrand(b.brandId, b.brandName))
+      .map((b): BrandSearchResult => ({
+        brandId: b.brandId,
+        brandName: b.brandName,
+        category: b.category,
+        image: b.image,
+      }));
   } catch (error) {
     console.error("🔥🔥 SEARCH API ERROR:", error);
     if (error instanceof AxiosError) {
