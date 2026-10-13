@@ -8,7 +8,7 @@ import { brandApi } from "@/lib/valuedesignApi";
 import { Button } from "@/components/ui/button";
 import {
   Tag, Clock, CreditCard, RefreshCw, ShoppingBag,
-  XCircle, RotateCcw, ArrowLeft,
+  XCircle, Eye, ArrowLeft,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { format } from "date-fns";
@@ -34,9 +34,9 @@ const getOrderStatus = (order: any): string => String(order?.status || "").toUpp
 
 // ── Order row ─────────────────────────────────────────────────────────────────
 function OrderRow({
-  order, onPayNow,
+  order, onViewNow,
 }: {
-  order: any; onPayNow: (orderNumber: string) => void;
+  order: any; onViewNow: (orderNumber: string) => void;
 }) {
   const items: any[] = Array.isArray(order?.items) ? order.items : [];
   const meta = items[0]?.meta || {};
@@ -47,12 +47,6 @@ function OrderRow({
   const isSuperCoin =
     coinsRedeemed > 0 ||
     String(order?.payment_method || order?.type || "").toUpperCase() === "SUPERCOIN";
-  // Full SuperCoin burn orders can never be paid through the cash gateway —
-  // the backend rejects initiate-payment for them unconditionally, so Pay Now
-  // is hidden. Partial-coin orders (coins + cash) come from the NORMAL fetch
-  // and keep Pay Now; only pure coin conversions are excluded.
-  const isFullSuperCoin =
-    String(order?.payment_method || order?.__fetchType || "").toUpperCase() === "SUPERCOIN";
   const extraItems = items.length - 1;
   const status = getOrderStatus(order);
   const dateStr = order?.created_at
@@ -61,7 +55,7 @@ function OrderRow({
 
   const badge =
     status === "PENDING"
-      ? { label: "Payment Pending", bg: "#fff7ed", color: "#c2410c", border: "#fdba74" }
+      ? { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fdba74" }
       : hasIssuedVoucher(order)
         ? { label: "Vouchers Issued", bg: "#ecfdf5", color: "#047857", border: "#6ee7b7" }
         : { label: "Voucher Pending", bg: "#fefce8", color: "#a16207", border: "#fde047" };
@@ -116,21 +110,16 @@ function OrderRow({
               <span className="text-[9px] truncate" style={{ color: "#5E5E5E" }}>{dateStr}</span>
             )}
           </div>
-          {status === "PENDING" && order?.order_number &&
-            (isFullSuperCoin ? (
-              <span className="shrink-0 text-[9px] font-semibold" style={{ color: "#888888" }}>
-                Pay with SuperCoins
-              </span>
-            ) : (
-              <button
-                onClick={() => onPayNow(order.order_number)}
-                className="shrink-0 h-[28px] px-3 rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
-                style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
-              >
-                <RotateCcw size={12} />
-                Pay Now
-              </button>
-            ))}
+          {status === "PENDING" && order?.order_number && (
+            <button
+              onClick={() => onViewNow(order.order_number)}
+              className="shrink-0 h-[28px] px-3 rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
+              style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
+            >
+              <Eye size={12} />
+              View Now
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -226,16 +215,15 @@ export default function MyOrders() {
     [orders]
   );
 
-  const handlePayNow = (orderNumber: string) => {
-    // Route into the order-specific checkout (cart-like) page where the user
-    // can re-apply wallet / SuperCoins before paying — not straight to the gateway.
+  const handleViewNow = (orderNumber: string) => {
+    // Show a read-only cart-style summary for this order.
     setLocation(`/my-orders/${orderNumber}/checkout`);
   };
 
   const tabs: { id: OrdersTab; label: string; Icon: any; count: number }[] = [
     { id: "vouchers", label: "Success", Icon: Tag, count: successOrders.length },
     { id: "voucher-pending", label: "Failed", Icon: Clock, count: voucherPendingOrders.length },
-    { id: "payment-pending", label: "Payment Pending", Icon: CreditCard, count: paymentPendingOrders.length },
+    { id: "payment-pending", label: "Pending", Icon: CreditCard, count: paymentPendingOrders.length },
   ];
 
   const visibleOrders =
@@ -342,9 +330,8 @@ export default function MyOrders() {
             <>
               {tab === "payment-pending" && paymentPendingOrders.length > 0 && (
                 <div className="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] font-medium text-amber-800">
-                  These orders were created but the payment wasn't completed. Tap{" "}
-                  <span className="font-bold">Pay Now</span> to complete your purchase — your vouchers
-                  will be issued after payment.
+                  These orders are awaiting payment. Tap{" "}
+                  <span className="font-bold">View Now</span> to review the order details.
                 </div>
               )}
 
@@ -367,7 +354,7 @@ export default function MyOrders() {
                       <OrderRow
                         key={key}
                         order={order}
-                        onPayNow={handlePayNow}
+                        onViewNow={handleViewNow}
                       />
                     );
                   })}

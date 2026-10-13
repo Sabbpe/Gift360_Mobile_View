@@ -167,6 +167,12 @@ export default function OrderCheckout() {
   // ── Load the single order ────────────────────────────────────────────────
   const [orderItems, setOrderItems] = useState<CheckoutItem[]>([]);
   const [subtotal, setSubtotal] = useState(0);
+  const [orderRewards, setOrderRewards] = useState({
+    walletAmount: 0,
+    couponDiscount: 0,
+    coinsRedeemed: 0,
+    netAmountPaid: null as number | null,
+  });
   const [initialWalletUsed, setInitialWalletUsed] = useState(false);
   const [previousSuperCoinTxnId, setPreviousSuperCoinTxnId] = useState<string | null>(null);
   const [orderLoading, setOrderLoading] = useState(true);
@@ -179,11 +185,6 @@ export default function OrderCheckout() {
     setOrderError(false);
     try {
       const details = await fetchOrderDetails(orderNumber);
-      if (String(details?.status || "").toUpperCase() !== "PENDING") {
-        setOrderError(true);
-        setOrderLoading(false);
-        return;
-      }
       const rawItems = Array.isArray(details?.items) ? details.items : [];
       const mapped: CheckoutItem[] = rawItems.map((it: any, idx: number) => {
         const meta = parseOrderMeta(it?.meta);
@@ -203,6 +204,12 @@ export default function OrderCheckout() {
           mapped.reduce((s, i) => s + i.lineTotal, 0)
       );
       setInitialWalletUsed(Boolean(details?.walletUsed));
+      setOrderRewards({
+        walletAmount: Number(details?.walletAmount) || 0,
+        couponDiscount: Number(details?.couponDiscount) || 0,
+        coinsRedeemed: Number(details?.coinsRedeemed) || 0,
+        netAmountPaid: details?.netAmountPaid == null ? null : Number(details.netAmountPaid),
+      });
       setPreviousSuperCoinTxnId(details?.scMerchantTxnId || null);
     } catch {
       setOrderError(true);
@@ -367,27 +374,6 @@ export default function OrderCheckout() {
       sessionStorage.removeItem(SUPERCOIN_ACTIVE_HOLD_KEY);
     } catch {}
   };
-
-  // Rehydrate a live hold for THIS order only (so a still-valid hold survives
-  // a page reload; an expired one is discarded and can be re-applied).
-  useEffect(() => {
-    if (!orderNumber) return;
-    const holdData = getSuperCoinHoldForOrder(orderNumber);
-    if (!holdData) return;
-    const expiryMs =
-      holdData.stampExpiry ??
-      (holdData.transactionTime ? new Date(holdData.transactionTime).getTime() + 15 * 60 * 1000 : 0);
-    if (expiryMs <= 0 || Date.now() >= expiryMs) {
-      clearSuperCoinHoldForOrder(orderNumber);
-      return;
-    }
-    superCoinHoldContextRef.current = holdData;
-    setSuperCoinHoldContext(holdData);
-    setSuperCoinAuthorized(true);
-    setSuperCoinHoldExpiryMs(expiryMs);
-    setTransactionTime(holdData.transactionTime ?? null);
-    setRewardMode("superCoins");
-  }, [orderNumber]);
 
   const calcCountdown = useCallback((txTime: string) => {
     const startMs = new Date(txTime).getTime();
@@ -582,27 +568,6 @@ export default function OrderCheckout() {
     }
   };
 
-  // Mirrors Cart's rewardMode effect: the two reward modes are mutually
-  // exclusive. Selecting SuperCoins force-disables the wallet (so both can
-  // never deduct at once); selecting Cashback tears down any live SuperCoin
-  // hold and resets the authorized state.
-  useEffect(() => {
-    if (rewardMode === "superCoins") {
-      setUseWalletBalance(false);
-    } else {
-      if (superCoinHoldContextRef.current) {
-        void cancelSuperCoinHoldIfNeeded(orderNumber);
-      }
-      setSuperCoinAuthorized(false);
-      superCoinHoldContextRef.current = null;
-      setSuperCoinHoldContext(null);
-      setSuperCoinHoldExpiryMs(null);
-      setSuperCoinOTPModalOpen(false);
-      setSuperCoinState((prev) => ({ ...prev, enabled: false }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [rewardMode]);
-
   const requestSwitchToCashback = useCallback(() => {
     if (superCoinAuthorized) {
       setShowSuperCoinRemoveDialog(true);
@@ -650,34 +615,6 @@ export default function OrderCheckout() {
 
     setSuperCoinOTPModalOpen(true);
   }, [superCoinIdentity, orderNumber, previousSuperCoinTxnId, superCoinMerchantWalletId, toast]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!superCoinIdentity || paymentInFlightRef.current) return;
-      const holdContext = superCoinHoldContextRef.current || superCoinHoldContext;
-      if (!holdContext) return;
-      const payload = JSON.stringify({
-        identity: superCoinIdentity,
-        merchantTransactionId: holdContext.merchantTransactionId,
-        merchantWalletId: holdContext.merchantWalletId,
-      });
-      let token: string | undefined;
-      try {
-        token = JSON.parse(localStorage.getItem("authUser") || "{}").token;
-      } catch {}
-      void fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/v1/supercoin/unhold`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: payload,
-        keepalive: true,
-      });
-    };
-    window.addEventListener("beforeunload", handleBeforeUnload);
-    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
-  }, [superCoinIdentity]);
 
   // ── Pay orchestration (mirrors Cart minus order creation) ────────────────
   const isProcessing = validateOrderMutation.isPending || backendPaymentMutation.isPending;
@@ -825,9 +762,9 @@ export default function OrderCheckout() {
 
           {!orderLoading && orderError && (
             <div className="text-center py-16">
-              <p className="font-bold mb-1">Can't checkout this order</p>
+              <p className="font-bold mb-1">Can't view this order</p>
               <p className="text-sm mb-4" style={{ color: "#888888" }}>
-                This order is not pending payment, or could not be loaded.
+                This order could not be loaded.
               </p>
               <Button onClick={() => setLocation("/my-orders")} className="rounded-2xl font-bold">
                 Back to Orders
@@ -840,7 +777,7 @@ export default function OrderCheckout() {
               {/* Cart Items (read-only — fixed order) */}
               <div className="lg:col-span-2 space-y-3 sm:space-y-4">
                 <h1 className="text-xl sm:text-2xl font-extrabold cart-text-primary">
-                  Complete Your Order
+                  Order Details
                 </h1>
                 <p className="text-xs sm:text-sm cart-text-secondary -mt-2">
                   Order <span className="font-mono font-semibold">{orderNumber}</span>
@@ -907,7 +844,37 @@ export default function OrderCheckout() {
 
                       <Separator className="my-3 sm:my-4" />
 
-                      {/* Rewards */}
+                      {/* Existing rewards are displayed as a read-only snapshot. */}
+                      <div className="rounded-xl border border-[rgba(151,71,255,0.2)] bg-[rgba(151,71,255,0.04)] p-3 sm:p-4 space-y-2">
+                        <p className="text-sm sm:text-base font-semibold cart-text-primary">Applied rewards</p>
+                        {orderRewards.couponDiscount > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="cart-text-secondary">Coupon discount</span>
+                            <span className="font-medium cart-text-primary">-₹{orderRewards.couponDiscount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {orderRewards.walletAmount > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="cart-text-secondary">Wallet points used</span>
+                            <span className="font-medium cart-text-primary">-₹{orderRewards.walletAmount.toFixed(2)}</span>
+                          </div>
+                        )}
+                        {orderRewards.coinsRedeemed > 0 && (
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="flex items-center gap-1.5 cart-text-secondary">
+                              SuperCoins used <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                            </span>
+                            <span className="font-medium cart-text-primary">{orderRewards.coinsRedeemed} SC</span>
+                          </div>
+                        )}
+                        {orderRewards.couponDiscount <= 0 && orderRewards.walletAmount <= 0 && orderRewards.coinsRedeemed <= 0 && (
+                          <p className="text-xs cart-text-secondary">No rewards were applied to this order.</p>
+                        )}
+                        <p className="text-xs cart-text-secondary pt-1">Rewards are shown for reference and cannot be changed here.</p>
+                      </div>
+
+                      {/* Interactive rewards stay disabled on this view-only page. */}
+                      {false && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-center">
                           <div className="relative flex items-center rounded-full bg-muted p-1">
@@ -1121,6 +1088,7 @@ export default function OrderCheckout() {
                           )}
                         </div>
                       </div>
+                      )}
 
                       <Separator className="my-3 sm:my-4" />
 
@@ -1131,68 +1099,46 @@ export default function OrderCheckout() {
                         </span>
                       </div>
 
-                      {useWalletBalance && walletDeduction > 0 && (
+                      {orderRewards.walletAmount > 0 && (
                         <div className="flex items-center justify-between text-green-600 dark:text-green-400">
                           <span className="text-sm sm:text-base flex items-center gap-1">
                             <Wallet className="h-4 w-4" />
-                            Wallet Deduction
+                            Wallet Points Used
                           </span>
-                          <span className="font-medium text-sm sm:text-base">-₹{walletDeduction.toFixed(2)}</span>
+                          <span className="font-medium text-sm sm:text-base">-₹{orderRewards.walletAmount.toFixed(2)}</span>
                         </div>
                       )}
 
-                      {superCoinDeduction > 0 && (
+                      {orderRewards.coinsRedeemed > 0 && (
                         <div className="flex items-center justify-between text-emerald-500 dark:text-emerald-400">
                           <span className="text-sm sm:text-base flex items-center gap-1.5">
-                            SuperCoins discount
+                            SuperCoins Redeemed
                             <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                           </span>
-                          <span className="font-medium text-sm sm:text-base">-₹{superCoinDeduction.toFixed(2)}</span>
+                          <span className="font-medium text-sm sm:text-base">{orderRewards.coinsRedeemed} SC</span>
                         </div>
                       )}
 
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm sm:text-base cart-text-secondary">Platform Fee</span>
-                        <span className="font-medium text-sm sm:text-base cart-text-primary">
-                          ₹{PLATFORM_FEE.toFixed(2)}
-                        </span>
-                      </div>
+                      {orderRewards.couponDiscount > 0 && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm sm:text-base cart-text-secondary">Coupon Discount</span>
+                          <span className="font-medium text-sm sm:text-base cart-text-primary">-₹{orderRewards.couponDiscount.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
 
                     <Separator />
 
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold cart-text-primary">Total to Pay</span>
+                      <span className="text-base sm:text-lg font-bold cart-text-primary">Order Net Amount</span>
                       <div className="text-right">
                         <span className="text-2xl sm:text-3xl font-extrabold text-[var(--cart-primary)]">
-                          ₹{uiTotalToPay.toFixed(2)}
+                          ₹{(orderRewards.netAmountPaid ?? Math.max(0, subtotal - orderRewards.walletAmount - orderRewards.couponDiscount - orderRewards.coinsRedeemed)).toFixed(2)}
                         </span>
-                        {estimatedEarn > 0 && rewardMode === "superCoins" && (
-                          <p className="flex items-center justify-end gap-1 text-xs font-semibold cart-text-primary mt-0.5">
-                            <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
-                            Earn {estimatedEarn.toFixed(2)} SuperCoins
-                          </p>
-                        )}
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <button
-                        type="button"
-                        className="cart-gradient-fill w-full h-12 rounded-2xl font-bold shadow-lg shadow-[rgba(108,92,231,0.25)] hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50 disabled:active:scale-100"
-                        onClick={() => handlePayNow()}
-                        disabled={isProcessing}
-                      >
-                        {backendPaymentMutation.isPending ? "Processing..." : "Pay with SabbPe"}
-                      </button>
-
-                      {isProcessing && (
-                        <p className="text-xs text-center text-muted-foreground animate-pulse flex items-center justify-center gap-1">
-                          <Loader2 className="h-3 w-3 animate-spin" />
-                          {validateOrderMutation.isPending ? "Validating order..." : "Initiating payment..."}
-                        </p>
-                      )}
-                    </div>
+                    <p className="text-center text-xs cart-text-secondary">View-only order summary</p>
                   </CardContent>
                 </Card>
               </div>
