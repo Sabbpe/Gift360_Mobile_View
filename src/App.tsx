@@ -22,6 +22,8 @@ import { AuthProvider } from "./contexts/AuthContext";
 import PaymentResult from "./pages/PaymentResult";
 import { ConfigProvider } from "./contexts/ConfigContext";
 import Orders from "./pages/Orders";
+import MyOrders from "./pages/MyOrders";
+import OrderCheckout from "./pages/OrderCheckout";
 import OrderDetails from "./pages/OrderDetails";
 import GiftVoucherChatbot from "./components/Giftvoucherchatbot";
 import Privacy from "./pages/Privacy";
@@ -97,6 +99,8 @@ function AppRoutes() {
       <Route path="/cart" component={Cart} />
       <Route path="/payment-result" component={PaymentResult} />
       <Route path="/orders" component={Orders} />
+      <Route path="/my-orders" component={MyOrders} />
+      <Route path="/my-orders/:orderNumber/checkout" component={OrderCheckout} />
       <Route path="/orders/:id" component={OrderDetails} />
       <Route path="/notifications" component={Notifications} />
       <Route path="/nearby" component={Nearby} />

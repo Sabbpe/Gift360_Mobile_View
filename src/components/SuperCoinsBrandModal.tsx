@@ -7,7 +7,7 @@ import { fetchOrderDetails } from "@/api/orderApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
-import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164 } from "@/api/supercoinApi";
+import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164, prepareSuperCoinBurnOrder } from "@/api/supercoinApi";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, { type SuperCoinHoldContext } from "@/components/SuperCoinOTPModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -92,8 +92,8 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const totalVoucherValue = amount * quantity;
   const superCoinsRequired = calculateSuperCoinsRequired(totalVoucherValue);
   const isAmountValid = amount >= min && amount <= max;
-  const isFivePercentEarnSku = selectedBrandId === SUPERCOIN_FEATURED_BRAND_ID
-    || String(brand?.BrandCode || "").trim().toUpperCase() === "EGVGBNQSC001";
+  const isFivePercentEarnSku =
+    String(brand?.BrandCode || "").trim().toUpperCase() === "EGCGBFKSCR001";
   const qualifiesForSuperCoinEarn = isFivePercentEarnSku
     && amount >= SUPERCOIN_EARN_MIN_DENOMINATION;
   const showSuperCoinEarnThreshold = isFivePercentEarnSku
@@ -251,6 +251,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       };
 
       const orderResponse = await createOrderMutation.mutateAsync(orderRequest);
+      await prepareSuperCoinBurnOrder(orderResponse.orderNumber);
       setOrderNumber(orderResponse.orderNumber);
       setSuperCoinOTPModalOpen(true);
     } catch (err: any) {

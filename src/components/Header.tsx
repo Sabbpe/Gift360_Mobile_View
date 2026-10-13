@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { Link, useLocation } from "wouter";
-import { ShoppingCart, Search, Sun, Moon, MapPin, Package, ChevronDown, Bell, User, MessageSquare } from "lucide-react";
+import { ShoppingCart, Search, Sun, Moon, MapPin, Package, ChevronDown, Bell, User, MessageSquare, ClipboardList } from "lucide-react";
 import FeedbackForm, { hasSubmittedFeedback, hasBeenPromptedForFeedback, markFeedbackPrompted } from "./FeedbackForm";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -205,7 +205,7 @@ export default function Header() {
 
               {/* Orders */}
               {isAuthenticated && (
-                <Link href="/orders" className="hidden md:inline-flex">
+                <Link href="/my-orders" className="hidden md:inline-flex">
                   <Button variant="outline" className="items-center gap-2 rounded-xl px-3 py-1.5 border-border/60 text-sm font-semibold">
                     <Package size={15} /> Orders
                   </Button>
@@ -296,7 +296,8 @@ export default function Header() {
                     ))}
                     {isAuthenticated && (
                       <>
-                        <Link href="/orders"><button className="px-4 py-3 text-left text-sm font-semibold rounded-xl hover:bg-primary/8 w-full flex items-center gap-2"><Package size={16}/>Orders</button></Link>
+                        <Link href="/my-orders"><button className="px-4 py-3 text-left text-sm font-semibold rounded-xl hover:bg-primary/8 w-full flex items-center gap-2"><ClipboardList size={16}/>Orders</button></Link>
+                        <Link href="/orders"><button className="px-4 py-3 text-left text-sm font-semibold rounded-xl hover:bg-primary/8 w-full flex items-center gap-2"><Package size={16}/>Vouchers</button></Link>
                         <Link href="/notifications"><button className="px-4 py-3 text-left text-sm font-semibold rounded-xl hover:bg-primary/8 w-full flex items-center gap-2"><Bell size={16}/>Notifications</button></Link>
                         <Link href="/profile"><button className="px-4 py-3 text-left text-sm font-semibold rounded-xl hover:bg-primary/8 w-full flex items-center gap-2"><User size={16}/>Profile</button></Link>
                       </>

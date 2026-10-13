@@ -160,7 +160,11 @@ export interface SuperCoinBurnOrderPayload {
 export const burnSuperCoinOrder = (payload: SuperCoinBurnOrderPayload) =>
   postSuperCoin<SuperCoinBurnOrderResponse>("/burn-and-order", payload);
 
-export const SUPERCOIN_BURN_RATIO = Number(import.meta.env.VITE_SUPERCOIN_BURN_RATIO) || 1.25;
+/** Mark a newly-created order for the full-voucher Convert Coins path before initHold. */
+export const prepareSuperCoinBurnOrder = (orderNumber: string) =>
+  postSuperCoin<{ orderNumber: string; paymentMethod: string }>("/burn-order/prepare", { orderNumber });
+
+export const SUPERCOIN_BURN_RATIO = Number(import.meta.env.VITE_SUPERCOIN_BURN_RATIO) || 1.0;
 
 export const calculateSuperCoinsRequired = (voucherAmount: number): number => {
   return Math.ceil(Math.round(voucherAmount * SUPERCOIN_BURN_RATIO * 100) / 100);

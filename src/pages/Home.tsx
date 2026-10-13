@@ -158,7 +158,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
     { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
-    { label: "Orders", Icon: Package, href: "/orders" },
+    { label: "Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
   ];
 
@@ -197,7 +197,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
               </span>
             )}
             <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
-              <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Orders" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
+              <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Vouchers" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
             </span>
             <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-bold leading-[9px] text-[#161616]">{label}</span>
           </button>

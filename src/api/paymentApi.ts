@@ -20,10 +20,11 @@ export interface BackendPaymentInitiationResponse {
 // The backend owns the merchant credentials and computes the net payable,
 // so the frontend never sends an amount or token to the gateway directly.
 export const initiateBackendPayment = async (
-  orderNumber: string
+  orderNumber: string,
+  freshSession = false
 ): Promise<BackendPaymentInitiationResponse> => {
   const response = await giftcardApiClient.post(
-    `/orders/${orderNumber}/initiate-payment`
+    `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`
   );
   return response.data;
 };

@@ -17,6 +17,7 @@ import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
@@ -1333,17 +1334,40 @@ export default function Cart() {
 
     try {
       const orderContext = await ensureOrder();
+      const orderDetails = await fetchOrderDetails(orderContext.orderNumber);
+      if (String(orderDetails?.status || "").toUpperCase() !== "PENDING") {
+        throw new Error("This order is no longer pending.");
+      }
+
+      // A pending order may still contain a DB reference to a previous
+      // SuperCoin hold, even after Flipkart's hold TTL expired. Release/clear
+      // it before opening the OTP flow so initHold can create a fresh hold.
+      if (orderDetails.scMerchantTxnId) {
+        await cancelSuperCoinHold({
+          identity: superCoinIdentity,
+          merchantTransactionId: orderDetails.scMerchantTxnId,
+          merchantWalletId: superCoinMerchantWalletId,
+        });
+        clearSuperCoinHoldForOrder(orderContext.orderNumber);
+        clearActiveSuperCoinHold();
+        superCoinHoldContextRef.current = null;
+        setSuperCoinHoldContext(null);
+        setSuperCoinAuthorized(false);
+        setSuperCoinHoldExpiryMs(null);
+        setTransactionTime(null);
+      }
+
       setSuperCoinOrderNumber(orderContext.orderNumber);
       setSuperCoinOTPModalOpen(true);
     } catch (error) {
       console.error("Failed to create order before SuperCoin hold", error);
       toast({
         title: "Unable to start SuperCoins",
-        description: "Please try again after the order is created.",
+        description: error instanceof Error ? error.message : "Please try again after the order is created.",
         variant: "destructive",
       });
     }
-  }, [ensureOrder, superCoinIdentity, toast]);
+  }, [ensureOrder, superCoinIdentity, superCoinMerchantWalletId, toast]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -1356,10 +1380,19 @@ export default function Cart() {
         merchantTransactionId: holdContext.merchantTransactionId,
         merchantWalletId: holdContext.merchantWalletId,
       });
-      navigator.sendBeacon(
-        `${import.meta.env.VITE_API_BASE_URL || ""}/v1/supercoin/unhold`,
-        new Blob([payload], { type: "application/json" })
-      );
+      let token: string | undefined;
+      try {
+        token = JSON.parse(localStorage.getItem("authUser") || "{}").token;
+      } catch {}
+      void fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/v1/supercoin/unhold`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: payload,
+        keepalive: true,
+      });
     };
 
     window.addEventListener("beforeunload", handleBeforeUnload);
