@@ -15,6 +15,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
 import { decrypt } from "@/utils/encryption";
 import { fetchOrderDetails } from "@/api/orderApi";
+import { resumeSession } from "@/api/sessionResumeApi";
+import { useAuthContext } from "@/contexts/AuthContext";
+import type { AuthUser } from "@/types/auth";
 import type { GiftcardOrderDetailsResponse } from "@/types/order";
 import { trackEvent } from "@/lib/analytics";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
@@ -24,6 +27,7 @@ export default function PaymentResult() {
   const searchParams = useSearch();
   const { toast } = useToast();
   const { addNotification } = useNotification();
+  const { setUser } = useAuthContext();
 
   const [loading, setLoading] = useState(true);
   const [decryptedOrderNumber, setDecryptedOrderNumber] = useState<string>("");
@@ -31,6 +35,8 @@ export default function PaymentResult() {
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [orderDetailsError, setOrderDetailsError] = useState<string | null>(null);
   const purchaseTrackedRef = useRef(false);
+  const resumeAttemptedRef = useRef(false);
+  const resumePromiseRef = useRef<Promise<void> | null>(null);
 
   const loadOrderDetails = async (orderNumber: string) => {
     if (!orderNumber) return;
@@ -134,6 +140,45 @@ export default function PaymentResult() {
     };
   }, [searchParams]);
 
+  // Restore the customer's existing session from the encrypted order reference
+  // (`txnid`) in the return URL. This does NOT depend on browser storage, so it
+  // works even when the page loads in a different/empty browser context (e.g.
+  // Google Pay's in-app browser after a UPI hand-off). Never logs the user out:
+  // any failure (400/404/409/410, or the endpoint not deployed yet) is ignored
+  // and the page stays read-only.
+  const resumeSessionForReturn = async (): Promise<void> => {
+    const txnid = (paymentData.encryptedTransactionId || "").trim().replace(/ /g, "+");
+    if (!txnid) return;
+    try {
+      const session = await resumeSession(txnid);
+      if (session?.token && session?.userInfo) {
+        const authUser: AuthUser = {
+          name: session.userInfo.name || "",
+          email: session.userInfo.email || "",
+          mobile: session.userInfo.mobile || "",
+          token: session.token,
+          clientId: session.userInfo.clientId,
+        };
+        // Persist immediately (before React state flush) so the request
+        // interceptor attaches the Bearer token on the order-details call that
+        // follows.
+        localStorage.setItem("authUser", JSON.stringify(authUser));
+        setUser(authUser);
+        console.log("[session] restored on payment return", { clientId: authUser.clientId });
+      }
+    } catch (err) {
+      console.warn("[session] resume skipped/unavailable (continuing read-only)", err);
+    }
+  };
+
+  // Kick off session restore once, as soon as the txnid is known.
+  useEffect(() => {
+    if (!paymentData.encryptedTransactionId || resumeAttemptedRef.current) return;
+    resumeAttemptedRef.current = true;
+    resumePromiseRef.current = resumeSessionForReturn();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [paymentData.encryptedTransactionId]);
+
   // Decrypt transaction ID and extract the order number (read-only).
   useEffect(() => {
     const decryptTransactionId = async () => {
@@ -193,7 +238,18 @@ export default function PaymentResult() {
       description: `Order #${decryptedOrderNumber} has been confirmed. Vouchers will appear on your Orders page once issued.`,
     });
 
-    void loadOrderDetails(decryptedOrderNumber);
+    // Ensure the session restore has completed before loading the order, so the
+    // request carries the restored Bearer token (avoids a token-less 401).
+    void (async () => {
+      if (resumePromiseRef.current) {
+        try {
+          await resumePromiseRef.current;
+        } catch {
+          /* ignore — read-only fallback */
+        }
+      }
+      await loadOrderDetails(decryptedOrderNumber);
+    })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, paymentData.status, decryptedOrderNumber]);
 
