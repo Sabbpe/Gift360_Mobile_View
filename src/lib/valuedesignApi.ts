@@ -1,5 +1,6 @@
 import axios from "axios";
-import type { AxiosError, InternalAxiosRequestConfig } from "axios";
+import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
+import { isHiddenCatalogBrand } from "@/lib/hidden-catalog-brands";
 
 // In dev with no env set, use Vite proxy: requests to /api/* go to backend (e.g. localhost:8081).
 const BRAND_API_URL =
@@ -34,6 +35,36 @@ const handleAuthError = (error: AxiosError) => {
   return Promise.reject(error);
 };
 
+// Strips SuperCoin-only vouchers from every brand LIST response (arrays only),
+// so they never reach Home, search, category or recommendation screens.
+// Detail lookups return a single object, so the Try Now modal is unaffected.
+const stripHiddenBrands = (response: AxiosResponse) => {
+  const strip = (list: any) =>
+    Array.isArray(list)
+      ? list.filter(
+          (b) =>
+            !b ||
+            typeof b !== "object" ||
+            !isHiddenCatalogBrand(
+              b.brandId || b.BrandId || b.brand_id || b.id,
+              b.brandName || b.BrandName || b.brand_name,
+              b.brandCode || b.BrandCode || b.brand_code
+            )
+        )
+      : list;
+  const d: any = response.data;
+  if (Array.isArray(d)) {
+    response.data = strip(d);
+  } else if (d && typeof d === "object") {
+    for (const key of ["data", "brands", "result"]) {
+      if (Array.isArray(d[key])) d[key] = strip(d[key]);
+    }
+    if (d.payload && Array.isArray(d.payload.result)) d.payload.result = strip(d.payload.result);
+    if (d.data && Array.isArray(d.data.result)) d.data.result = strip(d.data.result);
+  }
+  return response;
+};
+
 // BRAND API INSTANCE
 export const brandApi = axios.create({
   baseURL: BRAND_API_URL,
@@ -43,7 +74,7 @@ export const brandApi = axios.create({
 });
 
 brandApi.interceptors.request.use(addAuthToken, (error) => Promise.reject(error));
-brandApi.interceptors.response.use((response) => response, handleAuthError);
+brandApi.interceptors.response.use(stripHiddenBrands, handleAuthError);
 
 // GIFTCARD API INSTANCE
 export const giftcardApiClient = axios.create({
