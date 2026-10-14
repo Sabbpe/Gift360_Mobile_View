@@ -29,6 +29,19 @@ export const initiateBackendPayment = async (
   return response.data;
 };
 
+export const initiateRetryPayment = async (
+  orderNumber: string,
+  walletUsed: boolean,
+  walletAmount: number,
+  earnCashback: boolean
+): Promise<BackendPaymentInitiationResponse> => {
+  const response = await giftcardApiClient.post(
+    `/orders/${orderNumber}/retry-payment`,
+    { walletUsed, walletAmount, earnCashback }
+  );
+  return response.data;
+};
+
 // Initiate Payment Process - FOR NTT DATA
 export const initiatePaymentProcess = async (
   amount: number,

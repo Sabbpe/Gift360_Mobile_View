@@ -21,10 +21,9 @@ import {
 import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { trackEvent } from "@/lib/analytics";
-import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
-import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { fetchOrderDetails } from "@/api/orderApi";
+import { initiateRetryPayment } from "@/api/paymentApi";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, {
@@ -160,8 +159,7 @@ export default function OrderCheckout() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
-  const validateOrderMutation = useValidateOrder();
-  const backendPaymentMutation = useBackendPaymentInitiation();
+  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
   const { data: walletData } = useFetchWallet(user?.clientId);
 
   // ── Load the single order ────────────────────────────────────────────────
@@ -294,6 +292,12 @@ export default function OrderCheckout() {
   const [superCoinAuthorized, setSuperCoinAuthorized] = useState(false);
   const [showSuperCoinRemoveDialog, setShowSuperCoinRemoveDialog] = useState(false);
   const [superCoinCapPercent, setSuperCoinCapPercent] = useState(20);
+  useEffect(() => {
+    if (rewardMode === "superCoins") {
+      setUseWalletBalance(false);
+    }
+  }, [rewardMode]);
+
   useEffect(() => {
     fetchSuperCoinConfig()
       .then((config) => {
@@ -471,7 +475,10 @@ export default function OrderCheckout() {
         )
       : 0;
 
-  const finalPayable = Math.max(0, subtotal - walletDeduction - superCoinDeduction) + PLATFORM_FEE;
+  const finalPayable = Math.max(
+    0,
+    subtotal - orderRewards.couponDiscount - walletDeduction - superCoinDeduction
+  ) + PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
   const estimatedEarn = finalPayable * 0.01;
 
@@ -515,13 +522,19 @@ export default function OrderCheckout() {
             superCoinState.balance
           ) / effectiveSupercoinMultiplier
         : 0;
-    const currentFinalPayable = Math.max(0, subtotal - currentWalletDeduction - currentSuperCoinDeduction);
-    return {
-      subtotal,
-      walletDeduction: currentWalletDeduction,
-      superCoinDeduction: currentSuperCoinDeduction,
-      finalPayable: currentFinalPayable,
-    };
+      const currentFinalPayable = Math.max(
+        0,
+        subtotal - orderRewards.couponDiscount - currentWalletDeduction - currentSuperCoinDeduction
+      ) + (currentSuperCoinDeduction > 0
+        ? Number(Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2))
+        : 0);
+      return {
+        subtotal,
+        walletDeduction: currentWalletDeduction,
+        superCoinDeduction: currentSuperCoinDeduction,
+        couponDiscount: orderRewards.couponDiscount,
+        finalPayable: currentFinalPayable,
+      };
   };
 
   // ── SuperCoin hold / unhold / switch (mirror Cart) ───────────────────────
@@ -545,15 +558,16 @@ export default function OrderCheckout() {
       superCoinHoldContextRef.current ||
       superCoinHoldContext ||
       (on ? getSuperCoinHoldForOrder(on) : null);
-    if (!activeHoldContext || !superCoinIdentity) return;
+    const merchantTransactionId = activeHoldContext?.merchantTransactionId || previousSuperCoinTxnId;
+    if (!merchantTransactionId || !superCoinIdentity) return;
     try {
       await cancelSuperCoinHold({
         identity: superCoinIdentity,
-        merchantTransactionId: activeHoldContext.merchantTransactionId,
-        merchantWalletId: activeHoldContext.merchantWalletId,
+        merchantTransactionId,
+        merchantWalletId: activeHoldContext?.merchantWalletId || superCoinMerchantWalletId,
       });
       trackEvent("supercoin_removed", {
-        coins: activeHoldContext.amount,
+        coins: activeHoldContext?.amount ?? orderRewards.coinsRedeemed,
         transaction_id: on || orderNumber || undefined,
       });
     } catch (error) {
@@ -565,17 +579,18 @@ export default function OrderCheckout() {
       clearActiveSuperCoinHold();
       clearSuperCoinHoldForOrder(on || orderNumber || "");
       setPreviousSuperCoinTxnId(null);
+      setOrderRewards((previous) => ({ ...previous, coinsRedeemed: 0 }));
     }
   };
 
   const requestSwitchToCashback = useCallback(() => {
-    if (superCoinAuthorized) {
+    if (superCoinAuthorized || previousSuperCoinTxnId) {
       setShowSuperCoinRemoveDialog(true);
       return;
     }
 
     setRewardMode("cashbackWallet");
-  }, [superCoinAuthorized]);
+  }, [superCoinAuthorized, previousSuperCoinTxnId]);
 
   // The order already exists — no ensureOrder needed; key the hold to it.
   const openSuperCoinFlow = useCallback(async () => {
@@ -617,7 +632,7 @@ export default function OrderCheckout() {
   }, [superCoinIdentity, orderNumber, previousSuperCoinTxnId, superCoinMerchantWalletId, toast]);
 
   // ── Pay orchestration (mirrors Cart minus order creation) ────────────────
-  const isProcessing = validateOrderMutation.isPending || backendPaymentMutation.isPending;
+  const isProcessing = isRetryingPayment;
 
   const handlePayNow = async () => {
     if (!isAuthenticated) {
@@ -630,94 +645,48 @@ export default function OrderCheckout() {
       return;
     }
     try {
+      setIsRetryingPayment(true);
       setPaymentSheetOpen(true);
-      const paymentBreakdown = buildPaymentBreakdown(useWalletBalance);
+      const selectedWalletUsage = rewardMode === "cashbackWallet" && useWalletBalance;
+      const paymentBreakdown = buildPaymentBreakdown(selectedWalletUsage);
       await persistSuperCoinHoldForPayment(orderNumber, paymentBreakdown.superCoinDeduction);
-      validateOrder(orderNumber, paymentBreakdown);
+      if (rewardMode === "cashbackWallet" && previousSuperCoinTxnId) {
+        await unholdSuperCoin(orderNumber);
+      }
+      setIsRetryingPayment(true);
+      const response = await initiateRetryPayment(
+        orderNumber,
+        selectedWalletUsage,
+        paymentBreakdown.walletDeduction,
+        rewardMode === "cashbackWallet"
+      );
+      const paymentUrl = response.payment_url || response.paymentUrl || response.data;
+      if (!(response.status === 1 || response.status === true) || !paymentUrl) {
+        throw new Error(response.message || "Unable to initiate payment. Please try again.");
+      }
+      paymentInFlightRef.current = true;
+      clearActiveSuperCoinHold();
+      trackEvent("payment_initiated", {
+        value: paymentBreakdown.finalPayable,
+        currency: "INR",
+        transaction_id: orderNumber,
+        gateway: "sabbpe",
+      });
+      window.location.href = paymentUrl;
     } catch (error) {
       await cancelSuperCoinHoldIfNeeded(orderNumber);
       toast({
         title: "Checkout Failed",
-        description: "Failed to continue checkout. Please try again.",
+        description:
+          (error as any)?.response?.data?.message ||
+          (error as Error)?.message ||
+          "Failed to continue checkout. Please try again.",
         variant: "destructive",
       });
       setPaymentSheetOpen(false);
+    } finally {
+      setIsRetryingPayment(false);
     }
-  };
-
-  const validateOrder = (
-    on: string,
-    paymentBreakdown: ReturnType<typeof buildPaymentBreakdown>
-  ) => {
-    validateOrderMutation.mutate(
-      {
-        orderNumber: on,
-        cartTotal: paymentBreakdown.subtotal,
-        walletAmount: paymentBreakdown.walletDeduction,
-        walletUsed: useWalletBalance,
-      },
-      {
-        onSuccess: (validationResponse) => {
-          if (!validationResponse.valid) {
-            void cancelSuperCoinHoldIfNeeded(on);
-            setPaymentSheetOpen(false);
-            toast({
-              title: "Validation Failed",
-              description: validationResponse.message,
-              variant: "destructive",
-            });
-            return;
-          }
-          startBackendPayment(on);
-        },
-        onError: (error) => {
-          void cancelSuperCoinHoldIfNeeded(on);
-          setPaymentSheetOpen(false);
-          toast({
-            title: "Validation Failed",
-            description: error.message || "Failed to validate order. Please try again.",
-            variant: "destructive",
-          });
-        },
-      }
-    );
-  };
-
-  const startBackendPayment = (on: string) => {
-    backendPaymentMutation.mutate({ orderNumber: on, freshSession: true }, {
-      onSuccess: (response) => {
-        const isSuccess = response.status === 1 || response.status === true;
-        const paymentUrl = response.payment_url || response.paymentUrl || response.data;
-        if (!isSuccess || !paymentUrl) {
-          void cancelSuperCoinHoldIfNeeded(on);
-          setPaymentSheetOpen(false);
-          toast({
-            title: "Payment initiation failed",
-            description: response.message || "Unable to initiate payment. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-        paymentInFlightRef.current = true;
-        clearActiveSuperCoinHold();
-        trackEvent("payment_initiated", {
-          value: uiTotalToPay,
-          currency: "INR",
-          transaction_id: on,
-          gateway: "sabbpe",
-        });
-        window.location.href = paymentUrl;
-      },
-      onError: () => {
-        void cancelSuperCoinHoldIfNeeded(on);
-        setPaymentSheetOpen(false);
-        toast({
-          title: "Payment failed",
-          description: "Failed to initiate payment. Please try again.",
-          variant: "destructive",
-        });
-      },
-    });
   };
 
   // ── Auth / loading / error gates ─────────────────────────────────────────
@@ -844,37 +813,6 @@ export default function OrderCheckout() {
 
                       <Separator className="my-3 sm:my-4" />
 
-                      {/* Existing rewards are displayed as a read-only snapshot. */}
-                      <div className="rounded-xl border border-[rgba(151,71,255,0.2)] bg-[rgba(151,71,255,0.04)] p-3 sm:p-4 space-y-2">
-                        <p className="text-sm sm:text-base font-semibold cart-text-primary">Applied rewards</p>
-                        {orderRewards.couponDiscount > 0 && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="cart-text-secondary">Coupon discount</span>
-                            <span className="font-medium cart-text-primary">-₹{orderRewards.couponDiscount.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {orderRewards.walletAmount > 0 && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="cart-text-secondary">Wallet points used</span>
-                            <span className="font-medium cart-text-primary">-₹{orderRewards.walletAmount.toFixed(2)}</span>
-                          </div>
-                        )}
-                        {orderRewards.coinsRedeemed > 0 && (
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="flex items-center gap-1.5 cart-text-secondary">
-                              SuperCoins used <img src={superCoinIcon} alt="" className="h-4 w-4" />
-                            </span>
-                            <span className="font-medium cart-text-primary">{orderRewards.coinsRedeemed} SC</span>
-                          </div>
-                        )}
-                        {orderRewards.couponDiscount <= 0 && orderRewards.walletAmount <= 0 && orderRewards.coinsRedeemed <= 0 && (
-                          <p className="text-xs cart-text-secondary">No rewards were applied to this order.</p>
-                        )}
-                        <p className="text-xs cart-text-secondary pt-1">Rewards are shown for reference and cannot be changed here.</p>
-                      </div>
-
-                      {/* Interactive rewards stay disabled on this view-only page. */}
-                      {false && (
                       <div className="space-y-4">
                         <div className="flex items-center justify-center">
                           <div className="relative flex items-center rounded-full bg-muted p-1">
@@ -1088,7 +1026,6 @@ export default function OrderCheckout() {
                           )}
                         </div>
                       </div>
-                      )}
 
                       <Separator className="my-3 sm:my-4" />
 
@@ -1099,23 +1036,23 @@ export default function OrderCheckout() {
                         </span>
                       </div>
 
-                      {orderRewards.walletAmount > 0 && (
+                      {walletDeduction > 0 && (
                         <div className="flex items-center justify-between text-green-600 dark:text-green-400">
                           <span className="text-sm sm:text-base flex items-center gap-1">
                             <Wallet className="h-4 w-4" />
                             Wallet Points Used
                           </span>
-                          <span className="font-medium text-sm sm:text-base">-₹{orderRewards.walletAmount.toFixed(2)}</span>
+                          <span className="font-medium text-sm sm:text-base">-₹{walletDeduction.toFixed(2)}</span>
                         </div>
                       )}
 
-                      {orderRewards.coinsRedeemed > 0 && (
+                      {superCoinAuthorized && superCoinHoldContext && (
                         <div className="flex items-center justify-between text-emerald-500 dark:text-emerald-400">
                           <span className="text-sm sm:text-base flex items-center gap-1.5">
                             SuperCoins Redeemed
                             <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                           </span>
-                          <span className="font-medium text-sm sm:text-base">{orderRewards.coinsRedeemed} SC</span>
+                          <span className="font-medium text-sm sm:text-base">{superCoinHoldContext.amount} SC</span>
                         </div>
                       )}
 
@@ -1130,15 +1067,22 @@ export default function OrderCheckout() {
                     <Separator />
 
                     <div className="flex items-center justify-between">
-                      <span className="text-base sm:text-lg font-bold cart-text-primary">Order Net Amount</span>
-                      <div className="text-right">
-                        <span className="text-2xl sm:text-3xl font-extrabold text-[var(--cart-primary)]">
-                          ₹{(orderRewards.netAmountPaid ?? Math.max(0, subtotal - orderRewards.walletAmount - orderRewards.couponDiscount - orderRewards.coinsRedeemed)).toFixed(2)}
-                        </span>
+                        <span className="text-base sm:text-lg font-bold cart-text-primary">Pay Now</span>
+                        <div className="text-right">
+                          <span className="text-2xl sm:text-3xl font-extrabold text-[var(--cart-primary)]">
+                           ₹{uiTotalToPay.toFixed(2)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
 
-                    <p className="text-center text-xs cart-text-secondary">View-only order summary</p>
+                    <Button
+                      type="button"
+                      className="w-full cart-gradient-fill h-12 text-base font-bold"
+                      onClick={handlePayNow}
+                      disabled={isProcessing || orderLoading || cartItems.length === 0}
+                    >
+                      {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
+                    </Button>
                   </CardContent>
                 </Card>
               </div>

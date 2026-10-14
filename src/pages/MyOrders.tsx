@@ -117,7 +117,7 @@ function OrderRow({
               style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
             >
               <Eye size={12} />
-              View Now
+              Pay Now
             </button>
           )}
         </div>
@@ -331,7 +331,7 @@ export default function MyOrders() {
               {tab === "payment-pending" && paymentPendingOrders.length > 0 && (
                 <div className="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] font-medium text-amber-800">
                   These orders are awaiting payment. Tap{" "}
-                  <span className="font-bold">View Now</span> to review the order details.
+                  <span className="font-bold">Pay Now</span> to review this order and complete payment.
                 </div>
               )}
 
