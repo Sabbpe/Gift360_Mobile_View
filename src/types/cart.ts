@@ -39,6 +39,7 @@ export interface OrderRequest {
     walletUsed?: boolean; 
     walletAmount?: number;
     earnCashback?: boolean;
+    paymentMethod?: "NORMAL" | "SUPERCOIN";
   };
   items: {
     brandId: string;

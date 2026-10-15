@@ -7,7 +7,7 @@ import { fetchOrderDetails } from "@/api/orderApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
-import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164, prepareSuperCoinBurnOrder } from "@/api/supercoinApi";
+import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164 } from "@/api/supercoinApi";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, { type SuperCoinHoldContext } from "@/components/SuperCoinOTPModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -233,6 +233,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
           walletUsed: false,
           walletAmount: 0,
           earnCashback: false,
+          paymentMethod: "SUPERCOIN",
         },
         items: [
           {
@@ -251,14 +252,15 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
       };
 
       const orderResponse = await createOrderMutation.mutateAsync(orderRequest);
-      await prepareSuperCoinBurnOrder(orderResponse.orderNumber);
       setOrderNumber(orderResponse.orderNumber);
       setSuperCoinOTPModalOpen(true);
     } catch (err: any) {
       console.error("Failed to create order for SuperCoin burn", err);
       toast({
         title: "Unable to start",
-        description: err?.message || "Failed to create order. Please try again.",
+        description:
+          err?.response?.data?.message || err?.response?.data?.detail ||
+          err?.message || "Failed to create order. Please try again.",
         variant: "destructive",
       });
     }
