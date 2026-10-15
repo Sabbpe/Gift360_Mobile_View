@@ -29,6 +29,7 @@ import GiftVoucherChatbot from "./components/Giftvoucherchatbot";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
+import DeleteAccount from "./pages/DeleteAccount";
 import Profile from "./pages/Profile";
 import Notifications from "./pages/Notifications";
 import Nearby from "./pages/Nearby";
@@ -107,6 +108,7 @@ function AppRoutes() {
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/refund" component={Refund} />
+      <Route path="/delete-account" component={DeleteAccount} />
       <Route path="/profile" component={Profile} />
       <Route path="/forgot-password" component={ForgotPassword} />
       <Route path="/reset-password" component={ResetPassword} />
