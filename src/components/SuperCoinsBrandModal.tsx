@@ -714,6 +714,11 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                         <span>Min {formatCurrency(min)}</span>
                         <span>Max {formatCurrency(max)}</span>
                       </div>
+                      <div className="mt-[6px] flex items-center justify-center gap-1.5 text-[10px] font-semibold leading-[15px] text-[#7C3AED]">
+                        <span>Earn upto 5% SuperCoins</span>
+                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
+                        <span>upto 100 SuperCoins</span>
+                      </div>
                     </div>
                   )}
 
