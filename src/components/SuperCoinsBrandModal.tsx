@@ -773,13 +773,6 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 {/* SuperCoin burn info + CTA */}
                 {superCoinIdentity && !superCoinAuthorized && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-medium text-[#667085]">SuperCoins needed</span>
-                      <span className="text-[13px] font-bold text-[#9747FF] flex items-center gap-1">
-                        <img src={superCoinIcon} alt="" className="h-4 w-4" />
-                        {superCoinsRequired.toLocaleString("en-IN")}
-                      </span>
-                    </div>
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[11px] font-medium text-[#667085]">Your balance</span>
                       <span className={`text-[13px] font-bold ${hasEnoughCoins ? "text-emerald-600" : "text-red-500"} flex items-center gap-1`}>
@@ -794,7 +787,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </p>
                     ) : !hasEnoughCoins ? (
                       <p className="text-[10px] text-red-500 mb-3">
-                        Minimum {superCoinsRequired.toLocaleString("en-IN")} SuperCoins required
+                        You don&apos;t have enough SuperCoins for this voucher.
                       </p>
                     ) : null}
 
