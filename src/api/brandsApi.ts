@@ -122,8 +122,8 @@ export const getBrands = async (): Promise<Brand[]> => {
 // what the backend will independently calculate and validate against
 // (GiftcardOrderService.calculatePlatformFee), even if an admin changes
 // the percent/max via the admin dashboard with no frontend redeploy.
-export const fetchPlatformFeeConfig = async (): Promise<{ feePercent: number; feeMax: number }> => {
-  const res = await brandApi.get<{ feePercent: number; feeMax: number }>(
+export const fetchPlatformFeeConfig = async (): Promise<{ feePercent: number; feeMax: number; feePercentCash: number; feeMaxCash: number }> => {
+  const res = await brandApi.get<{ feePercent: number; feeMax: number; feePercentCash: number; feeMaxCash: number }>(
     "/v1/platform-fee-config"
   );
   return res.data;

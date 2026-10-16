@@ -238,6 +238,8 @@ export default function Cart() {
   const [platformFeeConfig, setPlatformFeeConfig] = useState({
     feePercent: 0.02,
     feeMax: 20,
+    feePercentCash: 0.02,
+    feeMaxCash: 20,
   });
   useEffect(() => {
     fetchPlatformFeeConfig()
@@ -1203,11 +1205,11 @@ export default function Cart() {
   // (superCoinDeduction === 0) skip the fee entirely, matching the
   // backend's same conditional check on coinsRedeemed.
   const inSuperCoinMode = rewardMode === 'superCoins';
-  const PLATFORM_FEE = inSuperCoinMode || superCoinDeduction > 0
-    ? Number(
-        Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
-      )
-    : 0;
+  const FEE_PERCENT = inSuperCoinMode ? platformFeeConfig.feePercent : platformFeeConfig.feePercentCash;
+  const FEE_MAX = inSuperCoinMode ? platformFeeConfig.feeMax : platformFeeConfig.feeMaxCash;
+  const PLATFORM_FEE = Number(
+    Math.min(subtotal * FEE_PERCENT, FEE_MAX).toFixed(2)
+  );
 
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
   const finalPayable =
