@@ -44,6 +44,7 @@ import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import JanmashtamiPromoModal from "@/components/JanmashtamiPromoModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
+import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/ganeshbackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
@@ -925,6 +926,15 @@ function MobileHomeScreen() {
   //   }
   // }, []);
 
+  const [scIntroOpen, setScIntroOpen] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem("showSuperCoinIntro") !== "1") return;
+    localStorage.removeItem("showSuperCoinIntro");
+    const t = setTimeout(() => setScIntroOpen(true), 700);
+    return () => clearTimeout(t);
+  }, []);
+
   const [topBrandsFromApi, setTopBrandsFromApi] = useState<Brand[]>([]);
 
   useEffect(() => {
@@ -1112,6 +1122,7 @@ function MobileHomeScreen() {
         brandId={SUPERCOIN_FEATURED_BRAND_ID}
         onClose={() => setSuperCoinsModalOpen(false)}
       />
+      <SuperCoinIntroModal open={scIntroOpen} onClose={() => setScIntroOpen(false)} />
       <BrandVoucherModal
         open={topBrandModalOpen}
         vouchers={topBrandVouchers}
