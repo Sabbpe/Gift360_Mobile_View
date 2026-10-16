@@ -10,8 +10,8 @@ type Props = { open: boolean; onClose: () => void };
 type TabId = "brands" | "convert";
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: "brands", label: "Use on Brands" },
-  { id: "convert", label: "Convert Coins" },
+  { id: "brands", label: "for all brands" },
+  { id: "convert", label: "for SuperCoins voucher" },
 ];
 
 const CONVERT_STEPS = [

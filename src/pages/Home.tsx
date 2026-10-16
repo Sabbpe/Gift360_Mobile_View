@@ -1032,7 +1032,7 @@ function MobileHomeScreen() {
       });
       return;
     }
-    setSuperCoinsModalOpen(true);
+    window.location.href = "/supercoin-voucher";
   };
 
   // (feedback auto-trigger removed — feedback is only reachable via the floating button)

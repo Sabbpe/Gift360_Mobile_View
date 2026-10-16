@@ -241,12 +241,13 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             quantity,
             unitValue: amount,
             lineTotal: totalVoucherValue,
-            meta: JSON.stringify({
-              brand_name: brand.BrandName,
-              brandId: brand.BrandId,
-              image_url: imageSrc !== FALLBACK ? imageSrc : undefined,
-              redeem_steps: brand.RedeemSteps || [],
-            }),
+      meta: JSON.stringify({
+        brand_name: brand.BrandName,
+        brand_code: brand.BrandCode,
+        brandId: brand.BrandId,
+        image_url: imageSrc !== FALLBACK ? imageSrc : undefined,
+        redeem_steps: brand.RedeemSteps || [],
+      }),
           },
         ],
       };
@@ -829,6 +830,22 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                           Convert your Supercoins
                         </>
                       )}
+                    </button>
+                  </div>
+                )}
+
+                {!superCoinIdentity && !superCoinAuthorized && (
+                  <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
+                    <p className="mb-3 text-[11px] font-medium leading-snug text-[#667085]">
+                      Login to convert your SuperCoins into vouchers.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setLocation("/login")}
+                      className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] py-2.5 text-[12px] font-bold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)] active:scale-[0.98] transition-transform"
+                    >
+                      <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                      Login/Register to Convert
                     </button>
                   </div>
                 )}

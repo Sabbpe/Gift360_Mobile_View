@@ -56,9 +56,11 @@ function OrderRow({
   const badge =
     status === "PENDING"
       ? { label: "Pending", bg: "#fff7ed", color: "#c2410c", border: "#fdba74" }
-      : hasIssuedVoucher(order)
-        ? { label: "Vouchers Issued", bg: "#ecfdf5", color: "#047857", border: "#6ee7b7" }
-        : { label: "Voucher Pending", bg: "#fefce8", color: "#a16207", border: "#fde047" };
+      : status === "FAILED"
+        ? { label: "Failed", bg: "#fef2f2", color: "#b91c1c", border: "#fecaca" }
+        : hasIssuedVoucher(order)
+          ? { label: "Vouchers Issued", bg: "#ecfdf5", color: "#047857", border: "#6ee7b7" }
+          : { label: "Voucher Pending", bg: "#fefce8", color: "#a16207", border: "#fde047" };
 
   return (
     <div
@@ -207,7 +209,12 @@ export default function MyOrders() {
     [orders]
   );
   const voucherPendingOrders = useMemo(
-    () => orders.filter(o => getOrderStatus(o) === "PAID" && !hasIssuedVoucher(o)),
+    () =>
+      orders.filter(
+        o =>
+          (getOrderStatus(o) === "PAID" && !hasIssuedVoucher(o)) ||
+          getOrderStatus(o) === "FAILED"
+      ),
     [orders]
   );
   const paymentPendingOrders = useMemo(
