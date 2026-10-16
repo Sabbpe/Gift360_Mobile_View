@@ -1202,7 +1202,8 @@ export default function Cart() {
   // Only charged on orders that redeem SuperCoins -- pure cash orders
   // (superCoinDeduction === 0) skip the fee entirely, matching the
   // backend's same conditional check on coinsRedeemed.
-  const PLATFORM_FEE = superCoinDeduction > 0
+  const inSuperCoinMode = rewardMode === 'superCoins';
+  const PLATFORM_FEE = inSuperCoinMode || superCoinDeduction > 0
     ? Number(
         Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
       )
