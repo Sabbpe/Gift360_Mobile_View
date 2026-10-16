@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164 } from "@/api/supercoinApi";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
+import SuperCoinExpiryCard, { SUPERCOIN_CLAIM_URL } from "@/components/SuperCoinExpiryCard";
+import { superCoinConversionConfig } from "@/config/features.config";
 import SuperCoinOTPModal, { type SuperCoinHoldContext } from "@/components/SuperCoinOTPModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
@@ -509,10 +511,33 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   )}
                 </div>
               )}
-              <div className="mt-6 flex w-full max-w-[320px] flex-col gap-3">
+              <div className="mt-4 w-full max-w-[320px] rounded-lg bg-white p-3 text-left shadow-[0_4px_12px_rgba(0,0,0,0.08)]">
+                <p className="text-[12px] font-bold text-[#101828]">Redeem your voucher for fresh SuperCoins</p>
+                <ol className="mt-1.5 space-y-1">
+                  {(brand?.RedeemSteps || []).map((step: any, index: number) => (
+                    <li key={index} className="flex gap-2 text-[11px] leading-snug text-[#475467]">
+                      <span className="mt-[1px] grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#EDEAFF] text-[9px] font-bold text-[#7C3AED]">
+                        {index + 1}
+                      </span>
+                      <span>{step.title || step.name}{step.description ? ` - ${step.description}` : ""}</span>
+                    </li>
+                  ))}
+                </ol>
+                <p className="mt-1.5 text-[10px] text-[#667085]">Your voucher code and PIN are in Orders.</p>
+              </div>
+              <div className="mt-4 flex w-full max-w-[320px] flex-col gap-3">
+                <a
+                  href={SUPERCOIN_CLAIM_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)]"
+                >
+                  <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                  Redeem your voucher
+                </a>
                 <button
                   onClick={handleGoToOrders}
-                  className="w-full h-11 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)]"
+                  className="w-full h-10 rounded-[10px] border border-[#9747FF] bg-white text-[12px] font-semibold text-[#7C3AED]"
                 >
                   View in Orders
                 </button>
@@ -597,6 +622,23 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             {/* Brand content */}
             {!isLoading && !isError && brand && !burnSuccess && (
               <>
+                {/* Expiry-extension message (Flipkart entry) */}
+                {!superCoinAuthorized && (
+                  <SuperCoinExpiryCard
+                    coinsNeeded={superCoinsRequired}
+                    voucherValue={totalVoucherValue}
+                    balance={superCoinState.balance}
+                    loggedIn={!!superCoinIdentity}
+                    balanceLoading={searchUserMutation.isPending || balanceMutation.isPending}
+                    canConvert={hasEnoughCoins}
+                    busy={createOrderMutation.isPending || burnMutation.isPending}
+                    paused={superCoinConversionConfig.paused}
+                    pausedMessage={superCoinConversionConfig.pausedMessage}
+                    onConvert={() => void openSuperCoinFlow()}
+                    onLogin={() => setLocation("/login")}
+                  />
+                )}
+
                 {/* Brand card */}
                 <div className="sc-top-card overflow-hidden">
                   <div className="flex h-full items-center gap-3 p-3">
