@@ -7,7 +7,7 @@ import { fetchOrderDetails } from "@/api/orderApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
-import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164 } from "@/api/supercoinApi";
+import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164, fetchSuperCoinConfig } from "@/api/supercoinApi";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinExpiryCard, { SUPERCOIN_CLAIM_URL } from "@/components/SuperCoinExpiryCard";
 import { superCoinConversionConfig } from "@/config/features.config";
@@ -24,7 +24,10 @@ type Props = {
 };
 
 const FALLBACK = FALLBACK_IMAGE;
-const SUPERCOIN_EARN_PERCENT = 5;
+// Last-resort earn % shown before the DB-backed config resolves. The live
+// value comes from the SuperCoin brand row (giftvouchers_brands
+// .earn_percent_special_sku, V41) via GET /v1/supercoin/config.
+const FALLBACK_SUPERCOIN_EARN_PERCENT = 5;
 const SUPERCOIN_EARN_CAP = 100;
 const SUPERCOIN_EARN_MIN_DENOMINATION = 100;
 export const SUPERCOIN_FEATURED_BRAND_ID = "c1ae829e-0e78-4dfe-8432-c4c1ac9360e1";
@@ -71,6 +74,30 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const [orderDetailsCoinsEarned, setOrderDetailsCoinsEarned] = useState<number | null>(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
 
+  // Live SuperCoin conversion rules from GET /v1/supercoin/config (served
+  // from the SuperCoin brand row, V41). fetchSuperCoinConfig applies the
+  // returned burnRatio to the module-level ratio that
+  // calculateSuperCoinsRequired reads, so the coins-required figure below
+  // tracks the DB with no prop plumbing; we only need the earn % in local
+  // state. Both fall back to the pre-V41 hardcoded values until the fetch
+  // resolves or if it fails.
+  const [earnPercentSpecialSku, setEarnPercentSpecialSku] = useState<number>(
+    FALLBACK_SUPERCOIN_EARN_PERCENT
+  );
+
+  useEffect(() => {
+    if (!open) return;
+    fetchSuperCoinConfig()
+      .then((config) => {
+        if (typeof config.earnPercentSpecialSku === "number" && config.earnPercentSpecialSku > 0) {
+          setEarnPercentSpecialSku(config.earnPercentSpecialSku);
+        }
+      })
+      .catch((err) => {
+        console.warn("Could not fetch SuperCoin config, using fallback earn percent:", err);
+      });
+  }, [open]);
+
   const superCoinMerchantWalletId =
     import.meta.env.VITE_SUPERCOIN_MERCHANT_WALLET_ID?.trim() || "";
 
@@ -103,7 +130,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
     && amount > 0
     && !qualifiesForSuperCoinEarn;
   const superCoinsEarnPotential = qualifiesForSuperCoinEarn
-    ? Math.round(Math.min(totalVoucherValue * (SUPERCOIN_EARN_PERCENT / 100), SUPERCOIN_EARN_CAP) * 100) / 100
+    ? Math.round(Math.min(totalVoucherValue * (earnPercentSpecialSku / 100), SUPERCOIN_EARN_CAP) * 100) / 100
     : 0;
   const hasEnoughCoins = isAmountValid && canAffordVoucher(superCoinState.balance, totalVoucherValue);
 

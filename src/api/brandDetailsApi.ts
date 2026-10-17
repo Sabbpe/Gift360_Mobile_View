@@ -77,6 +77,16 @@ export const getBrandDetails = async (brandId: string): Promise<BrandDetailsPars
     }
   }
 
+  // SuperCoin conversion knobs (nullable -- only the SuperCoin E-Gift
+  // Voucher brand carries them). The backend serializes BigDecimal/Integer as
+  // JSON numbers, but tolerate strings and drop anything non-numeric so a
+  // malformed row can't produce NaN downstream.
+  const parseOptionalNumber = (value: unknown): number | null => {
+    if (value === null || value === undefined || value === "") return null;
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
   return {
     BrandCode: b.brandCode,
     BrandId: b.brandId,
@@ -108,5 +118,9 @@ export const getBrandDetails = async (brandId: string): Promise<BrandDetailsPars
 
     CreatedAt: b.createdAt || null,
     UpdatedAt: b.updatedAt || null,
+
+    SupercoinBurnRatio: parseOptionalNumber((b as any).supercoinBurnRatio),
+    RedemptionSurchargePercent: parseOptionalNumber((b as any).redemptionSurchargePercent),
+    EarnPercentSpecialSku: parseOptionalNumber((b as any).earnPercentSpecialSku),
   };
 };

@@ -160,10 +160,29 @@ export interface SuperCoinBurnOrderPayload {
 export const burnSuperCoinOrder = (payload: SuperCoinBurnOrderPayload) =>
   postSuperCoin<SuperCoinBurnOrderResponse>("/burn-and-order", payload);
 
-export const SUPERCOIN_BURN_RATIO = Number(import.meta.env.VITE_SUPERCOIN_BURN_RATIO) || 1.0;
+// Burn ratio = coins shown as required per rupee of voucher value.
+// DB-configurable on the SuperCoin brand row (giftvouchers_brands
+// .supercoin_burn_ratio, V41 migration) and served by GET /v1/supercoin/config,
+// so retuning it needs a SQL UPDATE -- not a .env edit plus a rebuild.
+// VITE_SUPERCOIN_BURN_RATIO is only the bootstrap fallback used before the
+// first fetchSuperCoinConfig() resolves (or if it fails), matching the
+// backend's own fallback chain.
+let superCoinBurnRatio = Number(import.meta.env.VITE_SUPERCOIN_BURN_RATIO) || 1.0;
+
+export const getSuperCoinBurnRatio = (): number => superCoinBurnRatio;
+
+// Only accept a positive finite ratio; a bad/absent server value keeps the
+// previous one rather than silently dropping the ratio to 0 and making
+// every voucher look free.
+export const setSuperCoinBurnRatio = (ratio: unknown): void => {
+  const parsed = Number(ratio);
+  if (Number.isFinite(parsed) && parsed > 0) {
+    superCoinBurnRatio = parsed;
+  }
+};
 
 export const calculateSuperCoinsRequired = (voucherAmount: number): number => {
-  return Math.ceil(Math.round(voucherAmount * SUPERCOIN_BURN_RATIO * 100) / 100);
+  return Math.ceil(Math.round(voucherAmount * superCoinBurnRatio * 100) / 100);
 };
 
 export const canAffordVoucher = (balance: number, voucherAmount: number): boolean => {
@@ -192,14 +211,40 @@ export const extractSuperCoinBalance = (
 };
 
 export interface SuperCoinConfigResponse {
+  sku?: string;
   capPercent?: number;
+  burnRatio?: number;
+  surchargePercent?: number;
+  earnPercentSpecialSku?: number;
   [key: string]: unknown;
 }
 
-// Live-configurable SuperCoin cap percent (sabbpe.supercoin.cap-percent on
-// the backend). Fetched fresh, not cached client-side, so a property change
-// on the server is reflected without a frontend redeploy.
-export const fetchSuperCoinConfig = async (): Promise<SuperCoinConfigResponse> => {
-  const response = await brandApi.get<SuperCoinConfigResponse>("/v1/supercoin/config");
+// Live-configurable SuperCoin rules (POST /v1/supercoin/config). Sent as POST
+// to match the rest of this API surface; it behaves as a READ -- no auth, no
+// persistence. The SKU to read rides in the request body and the response comes
+// straight from that catalog row (giftvouchers_brands, V41 migration), so a SQL
+// UPDATE is reflected without a frontend redeploy.
+//
+// `sku` is OPTIONAL. Omit it (or send blank) and the backend resolves to its
+// sabbpe.supercoin.voucher-sku property, so callers that don't have a brand code
+// to hand still get the right values. Whatever resolves, the response echoes it
+// back in `sku` so the caller can see which row was actually read.
+//
+// Side effect: the returned burnRatio is applied to the module-level ratio that
+// calculateSuperCoinsRequired() reads, so any page that fetches the config
+// (Cart, OrderCheckout, the convert-coins modal) also refreshes the conversion
+// display everywhere else in the session.
+export const fetchSuperCoinConfig = async (sku?: string): Promise<SuperCoinConfigResponse> => {
+  // SKU sent in the POST body. Explicit argument wins, else the VITE_ env var,
+  // else empty -- the backend then falls back to its own
+  // sabbpe.supercoin.voucher-sku property, so a blank value can never hard-fail.
+  const skuToSend = sku?.trim() || import.meta.env.VITE_SUPERCOIN_VOUCHER_SKU?.trim() || "";
+  const response = await brandApi.post<SuperCoinConfigResponse>(
+    "/v1/supercoin/config",
+    skuToSend ? { sku: skuToSend } : {}
+  );
+  if (typeof response.data?.burnRatio === "number") {
+    setSuperCoinBurnRatio(response.data.burnRatio);
+  }
   return response.data;
 };
