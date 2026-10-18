@@ -29,6 +29,14 @@ function storageKeyFor(user: { clientId?: string; email?: string } | null | unde
   return `${TICKET_ID_KEY}:${identityFor(user)}`;
 }
 
+// Sahil can end a message with "[[options: A | B | C]]"; the widget shows these as tap-to-send buttons.
+const OPTIONS_RE = /\n?\[\[options:\s*([^\]]*)\]\]\s*$/;
+function splitOptions(message: string): { text: string; options: string[] } {
+  const m = message.match(OPTIONS_RE);
+  if (!m) return { text: message, options: [] };
+  return { text: message.replace(OPTIONS_RE, ""), options: m[1].split("|").map((o) => o.trim()).filter(Boolean) };
+}
+
 export default function SupportChatWidget() {
   const { user } = useAuthContext();
   const [open, setOpen] = useState(false);
@@ -198,9 +206,10 @@ export default function SupportChatWidget() {
     }
   };
 
-  const handleSendReply = async () => {
-    if (!ticketId || !replyText.trim()) return;
-    const text = replyText.trim();
+  const handleSendReply = async (override?: string) => {
+    const raw = typeof override === "string" ? override : replyText;
+    if (!ticketId || !raw.trim()) return;
+    const text = raw.trim();
     setSendingReply(true);
     setReplyError(null);
     try {
@@ -393,14 +402,29 @@ export default function SupportChatWidget() {
                           </p>
                         )}
                         <p className="whitespace-pre-wrap break-words">
-                          {m.message.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                          {splitOptions(m.message).text.split(/(https?:\/\/\S+)/g).map((part, i) =>
                             /^https?:\/\//.test(part) ? (
-                              <a key={i} href={part} className="underline text-blue-600 break-all" target={part.includes(window.location.host) ? "_self" : "_blank"} rel="noopener noreferrer">{part.includes("/faq/") ? "Read the full answer" : part}</a>
+                              <a key={i} href={part} className="underline text-blue-600 break-all" target={part.includes(window.location.host) ? "_self" : "_blank"} rel="noopener noreferrer">{part.includes("/faq/") ? "Read the full answer" : part.includes("/brands/") ? "Buy now" : part}</a>
                             ) : (
                               <span key={i}>{part}</span>
                             )
                           )}
                         </p>
+                        {m.senderType !== "USER" && idx === messages.length - 1 && ticketStatus !== "CLOSED" && !waitingSince && (
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {splitOptions(m.message).options.map((o) => (
+                              <button
+                                key={o}
+                                type="button"
+                                disabled={sendingReply}
+                                onClick={() => handleSendReply(o)}
+                                className="rounded-full border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50"
+                              >
+                                {o}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                         <p
                           className={`mt-1 text-[10px] ${
                             m.senderType === "USER" ? "text-blue-100" : "text-gray-400"
@@ -462,7 +486,7 @@ export default function SupportChatWidget() {
                     disabled={sendingReply}
                   />
                   <Button
-                    onClick={handleSendReply}
+                    onClick={() => handleSendReply()}
                     disabled={sendingReply || !replyText.trim()}
                     size="icon"
                     className="h-9 w-9 flex-shrink-0"
