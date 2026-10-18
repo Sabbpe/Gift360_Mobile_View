@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthContext } from "@/contexts/AuthContext";
+import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import {
   createSupportTicket,
   getSupportTicketThread,
@@ -50,6 +51,7 @@ export default function SupportChatWidget() {
   const [email, setEmail] = useState(user?.email || "");
   const [mobile, setMobile] = useState(user?.mobile || "");
   const [message, setMessage] = useState("");
+  const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);   // "Buy now" opens the normal buy sheet
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
 
@@ -298,6 +300,14 @@ export default function SupportChatWidget() {
                   Your chatbot friend is here
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                aria-label="Close chat"
+                className="ml-auto h-8 w-8 rounded-full flex items-center justify-center text-white/90 hover:bg-white/20"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
           </div>
 
@@ -404,7 +414,11 @@ export default function SupportChatWidget() {
                         <p className="whitespace-pre-wrap break-words">
                           {splitOptions(m.message).text.split(/(https?:\/\/\S+)/g).map((part, i) =>
                             /^https?:\/\//.test(part) ? (
-                              <a key={i} href={part} className="underline text-blue-600 break-all" target={part.includes(window.location.host) ? "_self" : "_blank"} rel="noopener noreferrer">{part.includes("/faq/") ? "Read the full answer" : part.includes("/brands/") ? "Buy now" : part}</a>
+                              <a key={i} href={part} className="underline text-blue-600 break-all" target={part.includes(window.location.host) ? "_self" : "_blank"} rel="noopener noreferrer"
+                                onClick={(e) => {
+                                  const bm = part.match(/\/brands\/([^/\s?#]+)/);
+                                  if (bm) { e.preventDefault(); setSheetBrandId(bm[1]); setOpen(false); }
+                                }}>{part.includes("/faq/") ? "Read the full answer" : part.includes("/brands/") ? "Buy now" : part}</a>
                             ) : (
                               <span key={i}>{part}</span>
                             )
@@ -504,6 +518,7 @@ export default function SupportChatWidget() {
           )}
         </div>
       )}
+      <PaymentDetailsSheet brandId={sheetBrandId} open={!!sheetBrandId} onClose={() => setSheetBrandId(null)} />
     </>
   );
 }
