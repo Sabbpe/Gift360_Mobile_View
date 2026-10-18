@@ -192,9 +192,7 @@ Possible reasons:
 
 **Need Help?**
 If you still can't see your vouchers:
-📧 Email: support@gift360.io (with order ID)
-📞 Phone: +91-9876543210
-💬 WhatsApp: +91-9876543210
+📧 Email: gift360@gift360.io (with order ID)
 
 We can resend vouchers or check order status!`,
                 actions: ['Check balance', 'Redeem voucher', 'Order not showing?', 'Create support ticket']
@@ -260,7 +258,6 @@ Would you like information about any specific brand or category?`,
 **For Corporate Orders:**
 Contact our B2B team for approval process:
 📧 B2B@gift360.io
-📞 +91-8765432109
 ⏱️ Approval timeline: 24-48 hours
 
 **Redemption:** Use at Amazon.in for any products, instant delivery in 5 minutes!`,
@@ -282,7 +279,6 @@ Contact our B2B team for approval process:
 
 **For Bulk/Corporate Orders:**
 📧 B2B@gift360.io
-📞 +91-8765432109
 
 **Features:**
 ✓ Instant digital delivery
@@ -318,7 +314,7 @@ All Reliance brands share a **combined monthly limit of ₹25,000 per customer**
 **Requirements:**
 • Prior approval from Reliance required
 • Approval timeline: 24-48 hours
-• Contact B2B team: B2B@gift360.io | +91-8765432109
+• Contact B2B team: B2B@gift360.io
 
 **Denominations:** Varies by brand, typically ₹500 to ₹10,000`,
                 actions: ['How does shared limit work?', 'Other brands', 'Get approval', 'Corporate orders']
@@ -339,7 +335,6 @@ All Reliance brands share a **combined monthly limit of ₹25,000 per customer**
 
 **For Corporate Orders:**
 📧 B2B@gift360.io
-📞 +91-8765432109
 
 **Features:**
 ✓ Use on TataCliq.com or app
@@ -444,7 +439,6 @@ If balance doesn't update or shows incorrect:
 **Process:**
 1. **Contact B2B Team:**
    📧 B2B@gift360.io
-   📞 +91-8765432109
 
 2. **Share Requirements:**
    • Brands needed
@@ -537,9 +531,7 @@ Create a support ticket and our team will help resolve within 4-6 hours!`,
 **⚠️ Immediate Action Required:**
 
 1. **Report Immediately:**
-   📧 support@gift360.io
-   📞 +91-9876543210
-   💬 WhatsApp: +91-9876543210
+   📧 gift360@gift360.io
 
 2. **Information Needed:**
    • Your registered email/mobile
@@ -594,7 +586,7 @@ Create a support ticket and our team will help resolve within 4-6 hours!`,
 • Shipping charges may apply
 
 **🔄 Refund Process:**
-1. Email: support@gift360.io
+1. Email: gift360@gift360.io
 2. Provide order ID and reason
 3. Include proof if card is damaged/defective
 4. Our team reviews within 24 hours
@@ -715,8 +707,7 @@ Gift360 is India's leading **B2B gift voucher aggregator platform** connecting b
 E-commerce, Fashion, Food, Electronics, Groceries, Beauty, Entertainment, Travel, and more!
 
 **Contact:**
-📧 support@gift360.io
-📞 +91-9876543210 (Customer support)
+📧 gift360@gift360.io
 💼 B2B@gift360.io (Corporate sales)`,
                 actions: ['Browse brands', 'Corporate solutions', 'How to redeem?', 'Purchase vouchers']
             };
@@ -814,7 +805,7 @@ Example: ₹1,000 voucher = ₹1,000 shopping value`,
 • Verify OTP
 • Try different method
 • Contact your bank
-• Reach out to us: support@gift360.io`,
+• Reach out to us: gift360@gift360.io`,
                 actions: ['Purchase now', 'Corporate orders', 'Available brands', 'Security info']
             };
         }
@@ -857,7 +848,6 @@ During checkout:
 **💼 Corporate Gifting:**
 For bulk gifting to employees/clients:
 📧 B2B@gift360.io
-📞 +91-8765432109
 
 Options include:
 • Customized cards with company logo
@@ -953,8 +943,7 @@ Possible reasons:
    • Contact brand customer care
 
 **Need Activation Help?**
-📧 support@gift360.io
-📞 +91-9876543210
+📧 gift360@gift360.io
 
 Include:
 • Order ID
@@ -1121,9 +1110,7 @@ Unclear about a specific brand's policy?`,
 5. Reach out to our support
 
 **Need Help?**
-📧 support@gift360.io (include order ID)
-📞 +91-9876543210
-💬 WhatsApp: +91-9876543210
+📧 gift360@gift360.io (include order ID)
 
 **Order ID Format:** Usually like ORD-123456789`,
                 actions: ['View my vouchers', 'Check balance', 'Download invoice', 'Create support ticket']
@@ -1146,7 +1133,7 @@ Based on your question, here are some topics I can assist you with:
 
 **Quick Actions:**
 • Create support ticket for complex issues
-• Talk to our team: support@gift360.io | +91-9876543210
+• Talk to our team: gift360@gift360.io
 
 Could you please clarify what you'd like to know? Or choose one of the suggested topics below!`,
             actions: ['Available brands', 'How to redeem?', 'Check balance', 'Corporate orders', 'Create ticket']
@@ -1191,7 +1178,7 @@ ${ticket.phone ? `📞 **Contact number:** ${ticket.phone}` : ''}
 **What happens next?**
 1. Our support team will review your request
 2. You'll receive a response within **4-6 hours**
-3. For urgent issues, call us at +91-9876543210
+3. For urgent issues, email us at gift360@gift360.io
 
 Is there anything else I can help you with?`,
             timestamp: new Date(),
@@ -1482,12 +1469,8 @@ Is there anything else I can help you with?`,
                                     </p>
                                     <div className="space-y-1 text-sm text-blue-700">
                                         <div className="flex items-center gap-2">
-                                            <Phone className="w-4 h-4" />
-                                            <span>+91-9876543210 (9AM-6PM IST)</span>
-                                        </div>
-                                        <div className="flex items-center gap-2">
                                             <Mail className="w-4 h-4" />
-                                            <span>support@gift360.io</span>
+                                            <span>gift360@gift360.io</span>
                                         </div>
                                     </div>
                                 </div>

@@ -39,6 +39,7 @@ import Onboarding from "./pages/Onboarding";
 import BlogPage from "./pages/BlogPage";
 import SingleBlogPage from "./pages/SingleBlogPage";
 import FAQPage from "./pages/FAQPage";
+import FAQTopicPage from "./pages/FAQTopicPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import SuperCoinVoucherPreview from "./pages/SuperCoinVoucherPreview";
@@ -116,6 +117,7 @@ function AppRoutes() {
       <Route path="/blogs" component={BlogPage} />
       <Route path="/blogs/:id" component={SingleBlogPage} />
       <Route path="/faq" component={FAQPage} />
+      <Route path="/faq/:id" component={FAQTopicPage} />
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
       <Route path="/supercoin-voucher" component={SuperCoinVoucherPreview} />

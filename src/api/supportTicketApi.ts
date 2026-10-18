@@ -16,7 +16,7 @@ export interface CreateTicketResponse {
 }
 
 export interface TicketMessage {
-  senderType: "USER" | "ADMIN";
+  senderType: "USER" | "ADMIN" | "BOT";
   message: string;
   createdAt: string;
 }

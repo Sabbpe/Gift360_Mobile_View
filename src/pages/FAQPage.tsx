@@ -28,9 +28,12 @@ import {
     DialogTitle,
     DialogDescription,
 } from "@/components/ui/dialog";
+import { FAQ_TOPICS, fillFacts, type ScFacts } from "@/data/faqTopics";
+import { fetchScFacts } from "@/api/supportFactsApi";
 import { Search, HelpCircle, ShoppingCart, CreditCard, ShieldCheck, Zap, MessageSquare, ArrowRight, User, Mail, MessageCircle } from "lucide-react";
 
 const faqCategories = [
+    { id: "supercoins", label: "SuperCoins & Vouchers", icon: Zap, color: "bg-amber-500" },
     { id: "general", label: "General", icon: HelpCircle, color: "bg-blue-500" },
     { id: "orders", label: "Orders & Payments", icon: ShoppingCart, color: "bg-green-500" },
     { id: "vouchers", label: "Vouchers & Brands", icon: CreditCard, color: "bg-purple-500" },
@@ -40,6 +43,7 @@ const faqCategories = [
 ];
 
 const faqData = {
+    supercoins: FAQ_TOPICS.map(t => ({ q: t.title, a: t.answer, id: t.id })),
     general: [
         { q: "What is Gift360?", a: "Gift360 is India's leading digital gifting platform where you can buy, send, and manage gift vouchers from over 200+ top brands instantly." },
         { q: "How do I create an account?", a: "To create an account, click on the 'Sign In' button at the top right, select 'Register', and enter your mobile number or email address to get started." },
@@ -49,7 +53,7 @@ const faqData = {
         { q: "What should I do if I forgot my password?", a: "Click on the 'Forgot Password' link on the sign-in page. We will send an OTP to your registered mobile/email to help you reset it." },
         { q: "Are there any membership fees for Gift360?", a: "No, joining Gift360 is completely free. You only pay for the gift vouchers you purchase." },
         { q: "Can I use multiple vouchers in a single brand purchase?", a: "This depends on the brand's policy. Most brands allow only one voucher per transaction, while some allow multiple. Please check the brand-specific terms." },
-        { q: "How do I contact customer support?", a: "You can reach us via the 'Support' category on this FAQ page, drop a query using the button on the right, or email us at support@gift360.io." },
+        { q: "How do I contact customer support?", a: "You can reach us via the 'Support' category on this FAQ page, drop a query using the button on the right, or email us at gift360@gift360.io." },
         { q: "Is Gift360 available in multiple languages?", a: "Currently, we support English and Hindi. We are working on adding more regional languages soon." },
         { q: "What are the benefits of the Gift360 Referral Program?", a: "Our Referral Program allows you to earn wallet credits for every friend you bring to the platform. Credits can be used to buy your favorite vouchers at a discount." },
     ],
@@ -67,7 +71,7 @@ const faqData = {
     ],
     security: [
         { q: "Is my payment information safe?", a: "Yes, we use industry-standard SSL encryption and PCI-DSS compliant payment gateways to ensure your financial data is 100% secure." },
-        { q: "What should I do if I suspect a fraudulent transaction?", a: "Immediately contact our support team at support@gift360.io and notify your bank. We take security very seriously and will investigate immediately." },
+        { q: "What should I do if I suspect a fraudulent transaction?", a: "Immediately contact our support team at gift360@gift360.io and notify your bank. We take security very seriously and will investigate immediately." },
     ],
     tech: [
         { q: "I didn't receive the OTP, what should I do?", a: "Please wait for 60 seconds and try 'Resend OTP'. Ensure you have a stable network connection. If the issue persists, try using an alternative login method." },
@@ -86,8 +90,10 @@ const faqData = {
 export default function FAQPage() {
     const { config } = useConfig();
     const [searchQuery, setSearchQuery] = useState("");
-    const [activeCategory, setActiveCategory] = useState("general");
+    const [activeCategory, setActiveCategory] = useState("supercoins");
     const [showQueryDialog, setShowQueryDialog] = useState(false);
+    const [scFacts, setScFacts] = useState<ScFacts | null>(null);
+    useEffect(() => { fetchScFacts().then(setScFacts); }, []);
     const [visibleCount, setVisibleCount] = useState(10);
 
     const searchResults = useMemo(() => {
@@ -238,7 +244,7 @@ export default function FAQPage() {
                                                             </div>
                                                         </AccordionTrigger>
                                                         <AccordionContent className="text-muted-foreground pb-4 md:pb-6 leading-relaxed text-sm md:text-base">
-                                                            {item.a}
+                                                            <span className="whitespace-pre-line">{item.category === "supercoins" ? fillFacts(item.a, scFacts) : item.a}</span>
                                                         </AccordionContent>
                                                     </AccordionItem>
                                                 ))}
@@ -263,18 +269,18 @@ export default function FAQPage() {
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: 20 }}
                                     >
-                                        <Accordion type="single" collapsible className="space-y-4">
+                                        <Accordion type="single" collapsible defaultValue={new URLSearchParams(window.location.search).get("topic") ?? undefined} className="space-y-4">
                                             {faqData[activeCategory as keyof typeof faqData].slice(0, visibleCount).map((item, idx) => (
                                                 <AccordionItem
                                                     key={idx}
-                                                    value={`item-${idx}`}
+                                                    value={(item as { id?: string }).id ?? `item-${idx}`}
                                                     className="border border-border/50 rounded-2xl bg-card/50 backdrop-blur-sm px-4 md:px-6 overflow-hidden"
                                                 >
                                                     <AccordionTrigger className="hover:no-underline py-4 md:py-6 text-left font-bold text-base md:text-lg group">
                                                         <span className="group-data-[state=open]:text-primary transition-colors">{item.q}</span>
                                                     </AccordionTrigger>
                                                     <AccordionContent className="text-muted-foreground pb-4 md:pb-6 leading-relaxed text-sm md:text-base">
-                                                        {item.a}
+                                                        <span className="whitespace-pre-line">{activeCategory === "supercoins" ? fillFacts(item.a, scFacts) : item.a}</span>
                                                     </AccordionContent>
                                                 </AccordionItem>
                                             ))}

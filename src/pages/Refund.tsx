@@ -104,7 +104,7 @@ export default function Refund() {
               <h2 className="text-2xl font-semibold mb-3">6. Contact for Refund Queries</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <p className="text-gray-700 mb-2">
-                  <strong>Email:</strong> support@gift360.io
+                  <strong>Email:</strong> gift360@gift360.io
                 </p>
                 {/* <p className="text-gray-700 mb-2">
                   <strong>Phone:</strong> +91-XXXXXXXXXX

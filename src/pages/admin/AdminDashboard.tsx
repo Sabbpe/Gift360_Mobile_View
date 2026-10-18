@@ -2262,9 +2262,12 @@ export default function AdminDashboard() {
                       className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                         m.sender_type === "ADMIN"
                           ? "self-end bg-[#7C3AED] text-white"
+                          : m.sender_type === "BOT"
+                          ? "self-end bg-[#E0E7FF] text-[#3730A3] border border-[#C7D2FE]"
                           : "self-start bg-white border"
                       }`}
                     >
+                      {m.sender_type === "BOT" && <p className="text-[10px] font-semibold mb-0.5">Sahil (bot)</p>}
                       <p className="whitespace-pre-wrap break-words">{m.message}</p>
                       <p className={`mt-1 text-[10px] ${m.sender_type === "ADMIN" ? "text-white/70" : "text-[#9CA3AF]"}`}>
                         {m.created_at ? new Date(m.created_at).toLocaleString("en-IN") : ""}

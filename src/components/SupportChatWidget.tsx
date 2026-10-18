@@ -15,6 +15,8 @@ import {
 
 const TICKET_ID_KEY = "gift360_support_ticket_id";
 const POLL_INTERVAL_MS = 10000;
+const FAST_POLL_MS = 2000;          // while waiting for Sahil's reply
+const TYPING_MAX_MS = 25000;        // stop showing "typing" if no reply arrives
 
 // Scopes the remembered ticket to who's actually using the widget right now,
 // so a guest's ticket never surfaces for a different logged-in account (or
@@ -49,6 +51,10 @@ export default function SupportChatWidget() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [threadError, setThreadError] = useState<string | null>(null);
   const pollRef = useRef<number | null>(null);
+  // Set when the customer sends a message; cleared when a BOT/ADMIN reply arrives or after TYPING_MAX_MS.
+  const [waitingSince, setWaitingSince] = useState<number | null>(null);
+  const [, forceTick] = useState(0);
+  const endRef = useRef<HTMLDivElement | null>(null);
 
   // Whether an admin reply has arrived that the user hasn't opened the panel
   // to see yet — drives the blinking dot on the launcher button.
@@ -96,6 +102,7 @@ export default function SupportChatWidget() {
       setThreadError(null);
 
       const latest = thread.messages[thread.messages.length - 1];
+      if (latest && latest.senderType !== "USER") setWaitingSince(null);
       if (markSeen) {
         seenMessageCountRef.current = thread.messages.length;
         setHasUnread(false);
@@ -124,7 +131,7 @@ export default function SupportChatWidget() {
 
     pollRef.current = window.setInterval(() => {
       fetchMessages(ticketId, open);
-    }, POLL_INTERVAL_MS);
+    }, waitingSince ? FAST_POLL_MS : POLL_INTERVAL_MS);
 
     return () => {
       if (pollRef.current) {
@@ -132,7 +139,22 @@ export default function SupportChatWidget() {
         pollRef.current = null;
       }
     };
-  }, [open, ticketId, ticketStatus, fetchMessages]);
+  }, [open, ticketId, ticketStatus, fetchMessages, waitingSince]);
+
+  // expire the typing indicator, and allow other pages (FAQ) to open the chat
+  useEffect(() => {
+    if (!waitingSince) return;
+    const id = window.setTimeout(() => setWaitingSince(null), Math.max(0, TYPING_MAX_MS - (Date.now() - waitingSince)));
+    return () => window.clearTimeout(id);
+  }, [waitingSince]);
+  useEffect(() => {
+    const openChat = () => setOpen(true);
+    window.addEventListener("gift360:open-support-chat", openChat);
+    return () => window.removeEventListener("gift360:open-support-chat", openChat);
+  }, []);
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+  }, [messages.length, waitingSince]);
 
   // Loops the "Ask Us!!" label on/off while the launcher is collapsed —
   // paused once the panel is open, since the button is icon-only (X) then.
@@ -168,6 +190,7 @@ export default function SupportChatWidget() {
       sessionStorage.setItem(storageKeyFor(user), response.publicId);
       setTicketId(response.publicId);
       setMessages([]);
+      setWaitingSince(Date.now());
     } catch (err: any) {
       setFormError(err.message || "Failed to submit your request. Please try again.");
     } finally {
@@ -184,6 +207,7 @@ export default function SupportChatWidget() {
       const saved = await sendSupportTicketMessage(ticketId, text);
       setMessages((prev) => [...prev, saved]);
       setReplyText("");
+      setWaitingSince(Date.now());
     } catch (err: any) {
       if (err instanceof TicketClosedError) {
         // The ticket closed (e.g. an admin closed it) since our last poll —
@@ -210,6 +234,7 @@ export default function SupportChatWidget() {
     setReplyText("");
     setMessage("");
     setHasUnread(false);
+    setWaitingSince(null);
     seenMessageCountRef.current = 0;
   };
 
@@ -227,7 +252,7 @@ export default function SupportChatWidget() {
             background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
             boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)",
           }}
-          aria-label={open ? "Close support chat" : "Open support chat"}
+          aria-label={open ? "Close chat with Sahil" : "Chat with Sahil"}
         >
           {open ? (
             <X className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
@@ -236,10 +261,10 @@ export default function SupportChatWidget() {
               <LifeBuoy className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
               <span
                 className={`text-xs font-bold text-white whitespace-nowrap overflow-hidden transition-all duration-500 ${
-                  askLabelVisible ? "max-w-[70px] opacity-100" : "max-w-0 opacity-0"
+                  askLabelVisible ? "max-w-[90px] opacity-100" : "max-w-0 opacity-0"
                 }`}
               >
-                Ask Us!!
+                Ask Sahil
               </span>
             </>
           )}
@@ -255,8 +280,16 @@ export default function SupportChatWidget() {
       {open && (
         <div className="fixed bottom-[132px] right-4 z-50 w-[320px] max-w-[calc(100vw-2rem)] max-h-[65vh] flex flex-col rounded-xl border bg-card border-card-border shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           <div className="flex-shrink-0 px-4 py-3 bg-gradient-to-br from-blue-600 to-blue-700 text-white">
-            <h3 className="text-sm font-bold">Support Chat</h3>
-            <p className="text-xs text-blue-100">We usually reply within a few hours</p>
+            <div className="flex items-center gap-2.5">
+              <div className="h-9 w-9 rounded-full bg-white/20 flex items-center justify-center text-base font-bold">S</div>
+              <div>
+                <h3 className="text-sm font-bold leading-tight">Sahil</h3>
+                <p className="text-xs text-blue-100 flex items-center gap-1">
+                  <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-300" />
+                  Your chatbot friend is here
+                </p>
+              </div>
+            </div>
           </div>
 
           {!ticketId ? (
@@ -303,7 +336,7 @@ export default function SupportChatWidget() {
                 <Textarea
                   value={message}
                   onChange={(e) => setMessage(e.target.value)}
-                  placeholder="How can we help you?"
+                  placeholder="Hi, I'm Sahil! Ask me anything about SuperCoins, vouchers or orders…"
                   rows={3}
                   className="text-sm resize-none"
                 />
@@ -339,7 +372,7 @@ export default function SupportChatWidget() {
                   </div>
                 ) : messages.length === 0 ? (
                   <p className="text-xs text-muted-foreground text-center py-6">
-                    Your message has been received. Our support team will respond here shortly.
+                    Sahil is on it. Your message has been received.
                   </p>
                 ) : (
                   messages.map((m, idx) => (
@@ -354,7 +387,20 @@ export default function SupportChatWidget() {
                             : "bg-white border border-gray-200 text-gray-800 rounded-bl-sm"
                         }`}
                       >
-                        <p className="whitespace-pre-wrap break-words">{m.message}</p>
+                        {m.senderType !== "USER" && (
+                          <p className="text-[10px] font-semibold text-blue-600 mb-0.5">
+                            {m.senderType === "BOT" ? "Sahil" : "Gift360 Support"}
+                          </p>
+                        )}
+                        <p className="whitespace-pre-wrap break-words">
+                          {m.message.split(/(https?:\/\/\S+)/g).map((part, i) =>
+                            /^https?:\/\//.test(part) ? (
+                              <a key={i} href={part} className="underline text-blue-600 break-all" target={part.includes(window.location.host) ? "_self" : "_blank"} rel="noopener noreferrer">{part.includes("/faq/") ? "Read the full answer" : part}</a>
+                            ) : (
+                              <span key={i}>{part}</span>
+                            )
+                          )}
+                        </p>
                         <p
                           className={`mt-1 text-[10px] ${
                             m.senderType === "USER" ? "text-blue-100" : "text-gray-400"
@@ -366,6 +412,19 @@ export default function SupportChatWidget() {
                     </div>
                   ))
                 )}
+                {waitingSince && ticketStatus !== "CLOSED" && (
+                  <div className="flex justify-start" aria-live="polite">
+                    <div className="rounded-2xl rounded-bl-sm bg-white border border-gray-200 px-3 py-2 text-xs text-gray-500 flex items-center gap-2">
+                      <span className="font-semibold text-blue-600">Sahil</span> is typing
+                      <span className="flex gap-0.5">
+                        {[0, 150, 300].map((d) => (
+                          <span key={d} className="h-1.5 w-1.5 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+                        ))}
+                      </span>
+                    </div>
+                  </div>
+                )}
+                <div ref={endRef} />
               </div>
               {threadError && (
                 <div className="flex-shrink-0 px-3 py-2 bg-red-50 border-t border-red-200">
