@@ -1062,9 +1062,7 @@ function MobileHomeScreen() {
         onStartQuiz={() => { setJanmashtamiPromoOpen(false); setJanmashtamiQuizOpen(true); }}
       /> */}
       {/* <RakhiBanner /> */}
-      <PersonalPicksSection
-        onOpenBrand={openStandardPaymentSheet}
-      />
+      {/* PersonalPicksSection hidden */}
       <OccasionPicksSections
         onOpenBrand={openTopBrandModal}
       />
