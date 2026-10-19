@@ -281,8 +281,8 @@ export default function JanmashtamiQuizModal({
         {phase === "success" && (
           <div className="relative flex flex-col items-center px-6 py-9 text-center" style={{ backgroundImage: `url(${resultBackdrop})`, backgroundSize: "cover", backgroundPosition: "center" }}>
             <PartyPopper className="h-12 w-12 text-[#10B981]" />
-            <h3 className="mt-3 text-[17px] font-bold text-gray-900">You won {QUIZ_SUPERCOIN_REWARD} SuperCoins!</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Apply this bonus to a new purchase within five minutes.</p>
+            <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz won! Earn {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins.</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Complete a new purchase within five minutes. The bonus is added automatically after payment and voucher fulfillment.</p>
             <p className="mt-3 flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[12px] font-bold text-[#7C3AED]">
               <Clock className="h-3.5 w-3.5" /> Expires in <Countdown seconds={secondsLeft} />
             </p>

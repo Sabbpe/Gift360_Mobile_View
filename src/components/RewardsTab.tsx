@@ -54,12 +54,12 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
       <div className="rounded-[12px] border border-violet-200/40 bg-white/12 px-4 py-4">
         <div className="flex items-center gap-2">
           <Gift className="h-5 w-5 text-[#C4B5FD]" strokeWidth={2} />
-          <p className="text-[14px] font-semibold text-white">{QUIZ_SUPERCOIN_REWARD} SuperCoins ready to apply</p>
+          <p className="text-[14px] font-semibold text-white">{QUIZ_SUPERCOIN_REWARD} bonus SuperCoins available</p>
         </div>
-        <p className="mt-1 text-[11px] text-white/70">Apply this bonus to a new purchase at checkout.</p>
+        <p className="mt-1 text-[11px] text-white/70">Complete a new purchase in this window; the bonus is added automatically after successful payment and voucher fulfillment.</p>
         <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#FCD34D]">
           <Clock className="h-[13px] w-[13px]" strokeWidth={2.4} />
-          {secondsLeft > 0 ? `Redeem within ${formatCountdown(secondsLeft)}` : "Redemption window expired"}
+          {secondsLeft > 0 ? `Purchase within ${formatCountdown(secondsLeft)}` : "Bonus window expired"}
         </p>
       </div>
     );

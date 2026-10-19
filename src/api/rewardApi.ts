@@ -104,25 +104,3 @@ export const getRewardStatus = async (
   return response.data;
 };
 
-export const getApplicableQuizReward = async (
-  clientId: string,
-  orderNumber: string
-): Promise<QuizRewardStatus> => {
-  const response = await brandApi.get<QuizRewardStatus>("/v1/rewards/available", {
-    params: { clientId, orderNumber },
-  });
-  return response.data;
-};
-
-export const applyQuizReward = async (
-  clientId: string,
-  publicId: string,
-  orderNumber: string
-): Promise<QuizRewardStatus> => {
-  const response = await brandApi.post<QuizRewardStatus>("/v1/rewards/apply", {
-    clientId,
-    publicId,
-    orderNumber,
-  });
-  return response.data;
-};

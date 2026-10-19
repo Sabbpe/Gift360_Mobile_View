@@ -45,9 +45,9 @@ export default function JanmashtamiPromoModal({ open, onClose }: Props) {
               <span className="font-bold text-[#e0e8ff]">Dussehra Quiz within 2 minutes</span>{" "}
               and earn{" "}
               <span className="font-bold text-[#e0e8ff]">
-                SuperCoins
+                5 bonus SuperCoins
               </span>
-              to apply to a new purchase within 5 minutes.
+              when a new purchase is completed within 5 minutes. They are added after payment and voucher fulfillment.
             </p>
             <button
               type="button"

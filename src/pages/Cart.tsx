@@ -58,8 +58,6 @@ import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
 import {
-  applyQuizReward,
-  getApplicableQuizReward,
   getRewardStatus,
   type QuizRewardStatus,
 } from "@/api/rewardApi";
@@ -298,16 +296,11 @@ export default function Cart() {
   const [sheetQuantity, setSheetQuantity] = useState<number | undefined>(undefined);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
   const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
-  const [quizRewardSelected, setQuizRewardSelected] = useState(false);
-  const [quizRewardApplied, setQuizRewardApplied] = useState(false);
-  const [quizRewardApplying, setQuizRewardApplying] = useState(false);
   const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
   useEffect(() => {
     if (!user?.clientId) {
       setPendingQuizReward(null);
-      setQuizRewardSelected(false);
-      setQuizRewardApplied(false);
       return;
     }
 
@@ -320,8 +313,6 @@ export default function Cart() {
           && !!reward.expiresAt
           && new Date(reward.expiresAt).getTime() > Date.now();
         setPendingQuizReward(stillRedeemable ? reward : null);
-        setQuizRewardSelected(false);
-        setQuizRewardApplied(!!reward.reservedOrderNumber);
       })
       .catch((error) => {
         console.warn("Could not load pending Dussehra quiz reward", error);
@@ -335,14 +326,14 @@ export default function Cart() {
 
   useEffect(() => {
     const expiresAt = pendingQuizReward?.expiresAt;
-    if (!expiresAt || quizRewardApplied) return;
+    if (!expiresAt) return;
     const updateCountdown = () => setQuizRewardSecondsLeft(
       Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
     );
     updateCountdown();
     const timer = window.setInterval(updateCountdown, 250);
     return () => window.clearInterval(timer);
-  }, [pendingQuizReward?.expiresAt, quizRewardApplied]);
+  }, [pendingQuizReward?.expiresAt]);
 
   // NEW: Wallet feature
   const [useWalletBalance, setUseWalletBalance] = useState(false);
@@ -1501,33 +1492,6 @@ export default function Cart() {
       const paymentBreakdown = buildPaymentBreakdown(useWalletBalance);
       const orderContext = await ensureOrder();
 
-      if (quizRewardSelected && pendingQuizReward?.publicId && !quizRewardApplied) {
-        setQuizRewardApplying(true);
-        try {
-          const applicable = await getApplicableQuizReward(user.clientId, orderContext.orderNumber);
-          if (!applicable.hasReward || applicable.publicId !== pendingQuizReward.publicId) {
-            throw new Error(
-              "This order is not eligible for the quiz bonus. It must be created after completing the quiz, and the five-minute window must still be open."
-            );
-          }
-
-          const appliedReward = await applyQuizReward(
-            user.clientId,
-            pendingQuizReward.publicId,
-            orderContext.orderNumber
-          );
-          setPendingQuizReward(appliedReward);
-          setQuizRewardApplied(true);
-          setQuizRewardSelected(false);
-          toast({
-            title: "Quiz bonus applied",
-            description: "5 SuperCoins will be added after this order is paid and fulfilled.",
-          });
-        } finally {
-          setQuizRewardApplying(false);
-        }
-      }
-
       const validateResult = await validateAndReserveCoupon(orderContext, "pay");
       console.log("[pay] validate status/message", {
         status: validateResult.httpStatus ?? 200,
@@ -2194,43 +2158,17 @@ export default function Cart() {
                         <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4">
                           <div className="flex items-center gap-2 font-semibold text-violet-950">
                             <img src={superCoinIcon} alt="" className="h-5 w-5" />
-                            5 SuperCoins quiz bonus
+                            Dussehra quiz bonus: 5 SuperCoins
                           </div>
-                          {quizRewardApplied ? (
-                            <p className="mt-1 text-xs leading-relaxed text-violet-800">
-                              Applied to order {pendingQuizReward.reservedOrderNumber}. The bonus is issued after successful payment and voucher fulfillment.
-                            </p>
-                          ) : (
-                            <>
-                              <p className="mt-1 text-xs leading-relaxed text-violet-800">
-                                Apply to this new order before the timer expires. The coins are added after successful payment and fulfillment; they do not reduce the amount due.
-                              </p>
-                              <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-violet-900">
-                                <Clock className="h-3.5 w-3.5" />
-                                {quizRewardSecondsLeft > 0
-                                  ? `Apply within ${Math.floor(quizRewardSecondsLeft / 60)}:${String(quizRewardSecondsLeft % 60).padStart(2, "0")}`
-                                  : "Redemption window expired"}
-                              </p>
-                              <Button
-                                type="button"
-                                size="sm"
-                                className={`mt-3 w-full font-semibold ${quizRewardSelected ? "bg-violet-900 text-white hover:bg-violet-950" : "bg-violet-700 text-white hover:bg-violet-800"}`}
-                                disabled={quizRewardApplying || quizRewardSecondsLeft <= 0}
-                                onClick={() => setQuizRewardSelected((selected) => !selected)}
-                              >
-                                {quizRewardApplying
-                                  ? "Applying bonus…"
-                                  : quizRewardSelected
-                                    ? "Quiz bonus selected — click to remove"
-                                    : "Apply 5 SuperCoins to this order"}
-                              </Button>
-                              {quizRewardSelected && (
-                                <p className="mt-1 text-center text-[11px] text-violet-800">
-                                  It will be reserved when you continue to payment.
-                                </p>
-                              )}
-                            </>
-                          )}
+                          <p className="mt-1 text-xs leading-relaxed text-violet-800">
+                            Make a purchase within the timer and the 5 bonus coins will be added automatically on top of your regular SuperCoin earnings after successful payment and voucher fulfillment.
+                          </p>
+                          <p className="mt-2 flex items-center gap-1 text-xs font-semibold text-violet-900">
+                            <Clock className="h-3.5 w-3.5" />
+                            {quizRewardSecondsLeft > 0
+                              ? `Purchase within ${Math.floor(quizRewardSecondsLeft / 60)}:${String(quizRewardSecondsLeft % 60).padStart(2, "0")}`
+                              : "Bonus window expired"}
+                          </p>
                         </div>
                       )}
 

@@ -431,7 +431,7 @@ export default function PaymentResult() {
                       </>
                     ) : calloutReward.status === "PENDING" ? (
                       <p className="text-sm font-semibold text-orange-950">
-                        You earned 5 SuperCoins. Apply them to a new purchase within five minutes.
+                        Quiz won! Complete a new purchase within five minutes to receive 5 bonus SuperCoins after payment and voucher fulfillment.
                       </p>
                     ) : (
                       <p className="text-sm font-medium text-orange-900">
