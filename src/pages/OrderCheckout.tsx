@@ -21,6 +21,7 @@ import {
 import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
+import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
@@ -491,8 +492,14 @@ export default function OrderCheckout() {
 
   const finalPayable = cashBeforeFee + PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
-  // Earn is on the amount paid for the voucher, never on the platform fee.
-  const estimatedEarn = cashBeforeFee * 0.01;
+  // SuperCoins earned: computed by the backend with the same rule it credits by
+  // (per-brand earn percent, else the global rate) on the cash paid, never on the fee.
+  const earnEstimate = useSuperCoinEarnEstimate(
+    cartItems.map((i) => ({ brandId: i.brandId, lineTotal: i.lineTotal })),
+    cashBeforeFee,
+    rewardMode === "superCoins"
+  );
+  const estimatedEarn = earnEstimate ?? 0;
 
   const cashbackPercent = useMemo(() => {
     if (!cartItems.length) return 0;
@@ -503,7 +510,8 @@ export default function OrderCheckout() {
       return sum + (item.lineTotal / totalLine) * disc;
     }, 0);
   }, [cartItems, brandDiscountMap]);
-  const cashbackAmount = finalPayable * (cashbackPercent / 100);
+  // Cashback is on the voucher cash paid, not the platform fee (matches the credit trigger).
+  const cashbackAmount = cashBeforeFee * (cashbackPercent / 100);
 
   const brandTotals = cartItems.reduce((acc, item) => {
     const key = `${item.brandId}-${item.unitValue}`;

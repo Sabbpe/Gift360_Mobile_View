@@ -1246,7 +1246,8 @@ export default function Cart() {
       return sum + (item.lineTotal / totalLine) * disc;
     }, 0);
   }, [cartItems, brandDiscountMap]);
-  const cashbackAmount = finalPayable * (cashbackPercent / 100);
+  // Cashback is on the voucher cash paid, not the platform fee (matches the credit trigger).
+  const cashbackAmount = cashBeforeFee * (cashbackPercent / 100);
 
   const buildPaymentBreakdown = (
     walletEnabled: boolean,
