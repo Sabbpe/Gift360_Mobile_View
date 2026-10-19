@@ -1,4 +1,4 @@
-﻿// pages/CartPage.tsx - Complete responsive implementation
+// pages/CartPage.tsx - Complete responsive implementation
 import { Link, useLocation } from "wouter";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Header from "@/components/Header";
@@ -15,6 +15,7 @@ import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loa
 import { useExternalScript } from "@/hooks/useExternalScript";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
+import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
@@ -1226,8 +1227,14 @@ export default function Cart() {
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
   const finalPayable = cashBeforeFee + PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
-  // Earn is on the amount paid for the voucher, never on the platform fee.
-  const estimatedEarn = cashBeforeFee * 0.01;
+  // SuperCoins earned: computed by the backend with the same rule it credits by
+  // (per-brand earn percent, else the global rate) on the cash paid, never on the fee.
+  const earnEstimate = useSuperCoinEarnEstimate(
+    cartItems.map((i) => ({ brandId: i.brandId, lineTotal: i.lineTotal })),
+    cashBeforeFee,
+    rewardMode === 'superCoins'
+  );
+  const estimatedEarn = earnEstimate ?? 0;
 
   // Cashback percentage from brand discounts (weighted average across cart items)
   const cashbackPercent = useMemo(() => {
