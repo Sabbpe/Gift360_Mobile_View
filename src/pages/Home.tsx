@@ -46,7 +46,6 @@ import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import homebackImg from "@/assets/dussehrabackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
-import SupportChatWidget from "@/components/SupportChatWidget";
 import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
@@ -1073,7 +1072,7 @@ function MobileHomeScreen() {
           setSheetInitialAmount(undefined);
         }}
       />
-      <SupportChatWidget />
+      
       <BottomNav />
         </div>
       </main>

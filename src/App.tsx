@@ -25,7 +25,7 @@ import Orders from "./pages/Orders";
 import MyOrders from "./pages/MyOrders";
 import OrderCheckout from "./pages/OrderCheckout";
 import OrderDetails from "./pages/OrderDetails";
-import GiftVoucherChatbot from "./components/Giftvoucherchatbot";
+import SupportChatWidget from "./components/SupportChatWidget";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
@@ -127,6 +127,16 @@ function AppRoutes() {
   );
 }
 
+// Support chat (Sahil) on every page except where it would get in the way.
+const NO_SUPPORT_CHAT_PREFIXES = ["/admin", "/onboarding", "/login", "/register", "/forgot-password", "/reset-password"];
+
+function GlobalSupportChat() {
+  const [location] = useLocation();
+  if (location === "/" && localStorage.getItem(ONBOARDING_KEY) !== "true") return null;
+  if (NO_SUPPORT_CHAT_PREFIXES.some((p) => location === p || location.startsWith(p + "/"))) return null;
+  return <SupportChatWidget />;
+}
+
 export default function App() {
   return (
     <WouterRouter hook={useBrowserLocation}>
@@ -138,7 +148,7 @@ export default function App() {
                 <ConfigProvider>
                   <AppRoutes />
                   <Toaster />
-                  {/* <GiftVoucherChatbot /> */}
+                  <GlobalSupportChat />
                 </ConfigProvider>
               </NotificationProvider>
             </AuthProvider>
