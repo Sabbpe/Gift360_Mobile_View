@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
+import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import payOnSabbpe from "@/assets/payonsabbpe.png";
 import AddToCartSuccessModal from "@/components/AddToCartSuccessModal";
 import type { BrandDetailsParsed } from "@/types/brandDetails";
@@ -60,6 +62,10 @@ export default function PaymentDetailsSheet({
   const createOrderMutation = useCreateOrder();
   const validateOrderMutation = useValidateOrder();
   const backendPaymentMutation = useBackendPaymentInitiation();
+  const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
+  const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
+  const paymentMethodCode = paymentMethodsLoaded && paymentMethods.length > 0 ? activePaymentMethod?.code : undefined;
   const brand = initialBrandDetails || fetchedBrand;
 
   const isFixedType = brand?.BrandType?.toLowerCase() === "fixed";
@@ -208,7 +214,7 @@ export default function PaymentDetailsSheet({
               return;
             }
 
-            backendPaymentMutation.mutate(orderResponse.orderNumber, {
+            backendPaymentMutation.mutate({ orderNumber: orderResponse.orderNumber, paymentMethod: paymentMethodCode }, {
               onSuccess: (response) => {
                 console.log("Backend payment initiation response:", response);
 
@@ -710,6 +716,19 @@ export default function PaymentDetailsSheet({
                 </div>
               </div>
             </div>
+
+            {paymentMethodCode && amount * quantity > 0 && (
+              <div className="info-section mx-auto w-[342px] rounded-[10px] bg-white p-3 shadow-[0px_6px_20px_rgba(0,0,0,0.15)]">
+                <PaymentMethodSelector
+                  methods={paymentMethods}
+                  value={paymentMethodCode}
+                  onChange={setSelectedPaymentMethod}
+                  cashAmount={amount * quantity}
+                  disabled={isProcessing}
+                  showTotal
+                />
+              </div>
+            )}
 
             <div className="info-section mx-auto flex h-[44px] w-[342px] items-center justify-between rounded-[10px] bg-white px-2 shadow-[0px_6px_20px_rgba(0,0,0,0.15)]">
               <button

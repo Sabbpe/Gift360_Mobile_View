@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Minus, Plus, Trash2, ShoppingBag, Ticket, CreditCard, CalendarDays, Loader2, Sparkles, Check, Clock } from "lucide-react";
 import { useExternalScript } from "@/hooks/useExternalScript";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
+import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
@@ -262,6 +264,8 @@ export default function Cart() {
   const paymentMutation = useInitiatePayment();
   const validateOrderMutation = useValidateOrder();
   const backendPaymentMutation = useBackendPaymentInitiation();
+  const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
 
   const easebuzzPaymentMutation = useEasebuzzInitiatePayment();
 
@@ -1207,16 +1211,23 @@ export default function Cart() {
   const inSuperCoinMode = rewardMode === 'superCoins';
   const FEE_PERCENT = inSuperCoinMode ? platformFeeConfig.feePercent : platformFeeConfig.feePercentCash;
   const FEE_MAX = inSuperCoinMode ? platformFeeConfig.feeMax : platformFeeConfig.feeMaxCash;
-  const PLATFORM_FEE = Number(
-    Math.min(subtotal * FEE_PERCENT, FEE_MAX).toFixed(2)
-  );
+  // Cash the customer pays before the platform fee.
+  const cashBeforeFee = Math.max(0, couponAdjustedAmount - walletDeduction - superCoinDeduction);
+  // Method-based fee (UPI / DC / CC / NB) on that cash amount, from the DB-backed
+  // payment_method_fee table. If the fee list could not be loaded, fall back to
+  // the legacy percent-of-face-value fee, which the backend also applies when no
+  // method is sent.
+  const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
+  const useMethodFee = paymentMethodsLoaded && paymentMethods.length > 0;
+  const PLATFORM_FEE = useMethodFee
+    ? computeMethodFee(activePaymentMethod, cashBeforeFee)
+    : Number(Math.min(subtotal * FEE_PERCENT, FEE_MAX).toFixed(2));
 
   // Final amount after coupon-adjusted amount, wallet deduction, and SuperCoin deduction
-  const finalPayable =
-    Math.max(0, couponAdjustedAmount - walletDeduction - superCoinDeduction) +
-    PLATFORM_FEE;
+  const finalPayable = cashBeforeFee + PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
-  const estimatedEarn = finalPayable * 0.01;
+  // Earn is on the amount paid for the voucher, never on the platform fee.
+  const estimatedEarn = cashBeforeFee * 0.01;
 
   // Cashback percentage from brand discounts (weighted average across cart items)
   const cashbackPercent = useMemo(() => {
@@ -1514,7 +1525,9 @@ export default function Cart() {
   };
 
   const startBackendPayment = (orderNumber: string) => {
-    backendPaymentMutation.mutate(orderNumber, {
+    backendPaymentMutation.mutate(
+      { orderNumber, paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined },
+      {
       onSuccess: (response) => {
         console.log("Backend payment initiation response:", response);
 
@@ -1562,7 +1575,8 @@ export default function Cart() {
           variant: "destructive",
         });
       },
-    });
+      }
+    );
   };
 
   // Step 2: Initiate Payment
@@ -2460,7 +2474,7 @@ export default function Cart() {
 
                     <div className="flex items-center justify-between">
                       <span className="text-sm sm:text-base cart-text-secondary">
-                        Platform Fee
+                        Platform Fee{useMethodFee && activePaymentMethod && cashBeforeFee > 0 ? ` (${activePaymentMethod.label})` : ""}
                       </span>
                       <span className="font-medium text-sm sm:text-base cart-text-primary">
                         ₹{PLATFORM_FEE.toFixed(2)}
@@ -2491,6 +2505,17 @@ export default function Cart() {
                     <p className="text-center text-[10px] text-muted-foreground -mt-2">
                       Fractional SuperCoins are added to your next purchase.
                     </p>
+                  )}
+
+                  {/* Payment method (UPI / Debit / Credit / Net Banking) with its platform fee */}
+                  {useMethodFee && (
+                    <PaymentMethodSelector
+                      methods={paymentMethods}
+                      value={activePaymentMethod?.code ?? ""}
+                      onChange={setSelectedPaymentMethod}
+                      cashAmount={cashBeforeFee}
+                      disabled={isProcessing}
+                    />
                   )}
 
                   {/* Payment Gateway Selection - SINGLE SABBPE BUTTON */}

@@ -128,3 +128,20 @@ export const fetchPlatformFeeConfig = async (): Promise<{ feePercent: number; fe
   );
   return res.data;
 };
+
+
+// Public checkout config -- active cash payment methods and their platform fee
+// (UPI / Debit Card / Credit Card percent, Net Banking flat). Rates live in the
+// payment_method_fee table; the backend recomputes the fee from the chosen
+// method and charges that, so this is for display only.
+export interface PaymentMethodFee {
+  code: string;
+  label: string;
+  feeType: "PERCENT" | "FLAT";
+  feeValue: number;
+}
+
+export const fetchPaymentMethodFees = async (): Promise<PaymentMethodFee[]> => {
+  const res = await brandApi.get<{ methods: PaymentMethodFee[] }>("/v1/payment-method-fees");
+  return Array.isArray(res.data?.methods) ? res.data.methods : [];
+};

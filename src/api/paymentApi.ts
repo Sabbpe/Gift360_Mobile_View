@@ -21,10 +21,12 @@ export interface BackendPaymentInitiationResponse {
 // so the frontend never sends an amount or token to the gateway directly.
 export const initiateBackendPayment = async (
   orderNumber: string,
-  freshSession = false
+  freshSession = false,
+  paymentMethod?: string
 ): Promise<BackendPaymentInitiationResponse> => {
   const response = await giftcardApiClient.post(
-    `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`
+    `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`,
+    paymentMethod ? { paymentMethod } : undefined
   );
   return response.data;
 };
@@ -33,11 +35,12 @@ export const initiateRetryPayment = async (
   orderNumber: string,
   walletUsed: boolean,
   walletAmount: number,
-  earnCashback: boolean
+  earnCashback: boolean,
+  paymentMethod?: string
 ): Promise<BackendPaymentInitiationResponse> => {
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/retry-payment`,
-    { walletUsed, walletAmount, earnCashback }
+    { walletUsed, walletAmount, earnCashback, ...(paymentMethod ? { paymentMethod } : {}) }
   );
   return response.data;
 };

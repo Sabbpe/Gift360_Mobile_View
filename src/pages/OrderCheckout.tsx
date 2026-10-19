@@ -20,6 +20,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
+import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
@@ -221,6 +223,8 @@ export default function OrderCheckout() {
   }, [isAuthenticated, orderNumber, loadOrder]);
 
   // ── Platform fee config ──────────────────────────────────────────────────
+  const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
   const [platformFeeConfig, setPlatformFeeConfig] = useState({
     feePercent: 0.02,
     feeMax: 20,
@@ -468,19 +472,27 @@ export default function OrderCheckout() {
         ) / effectiveSupercoinMultiplier
       : 0;
 
-  const PLATFORM_FEE =
-    superCoinDeduction > 0
+  // Cash the customer pays before the platform fee.
+  const cashBeforeFee = Math.max(
+    0,
+    subtotal - orderRewards.couponDiscount - walletDeduction - superCoinDeduction
+  );
+  // Method-based fee on that cash (DB-backed). If the fee list could not load,
+  // fall back to the legacy fee, which the backend also uses when no method is sent.
+  const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
+  const useMethodFee = paymentMethodsLoaded && paymentMethods.length > 0;
+  const PLATFORM_FEE = useMethodFee
+    ? computeMethodFee(activePaymentMethod, cashBeforeFee)
+    : superCoinDeduction > 0
       ? Number(
           Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2)
         )
       : 0;
 
-  const finalPayable = Math.max(
-    0,
-    subtotal - orderRewards.couponDiscount - walletDeduction - superCoinDeduction
-  ) + PLATFORM_FEE;
+  const finalPayable = cashBeforeFee + PLATFORM_FEE;
   const uiTotalToPay = Number(finalPayable.toFixed(2));
-  const estimatedEarn = finalPayable * 0.01;
+  // Earn is on the amount paid for the voucher, never on the platform fee.
+  const estimatedEarn = cashBeforeFee * 0.01;
 
   const cashbackPercent = useMemo(() => {
     if (!cartItems.length) return 0;
@@ -525,9 +537,7 @@ export default function OrderCheckout() {
       const currentFinalPayable = Math.max(
         0,
         subtotal - orderRewards.couponDiscount - currentWalletDeduction - currentSuperCoinDeduction
-      ) + (currentSuperCoinDeduction > 0
-        ? Number(Math.min(subtotal * platformFeeConfig.feePercent, platformFeeConfig.feeMax).toFixed(2))
-        : 0);
+      );
       return {
         subtotal,
         walletDeduction: currentWalletDeduction,
@@ -658,7 +668,8 @@ export default function OrderCheckout() {
         orderNumber,
         selectedWalletUsage,
         paymentBreakdown.walletDeduction,
-        rewardMode === "cashbackWallet"
+        rewardMode === "cashbackWallet",
+        useMethodFee ? activePaymentMethod?.code : undefined
       );
       const paymentUrl = response.payment_url || response.paymentUrl || response.data;
       if (!(response.status === 1 || response.status === true) || !paymentUrl) {
@@ -1065,6 +1076,25 @@ export default function OrderCheckout() {
                     </div>
 
                     <Separator />
+
+                    {useMethodFee && (
+                      <PaymentMethodSelector
+                        methods={paymentMethods}
+                        value={activePaymentMethod?.code ?? ""}
+                        onChange={setSelectedPaymentMethod}
+                        cashAmount={cashBeforeFee}
+                        disabled={isProcessing}
+                      />
+                    )}
+
+                    {PLATFORM_FEE > 0 && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm sm:text-base cart-text-secondary">
+                          Platform Fee{useMethodFee && activePaymentMethod ? ` (${activePaymentMethod.label})` : ""}
+                        </span>
+                        <span className="font-medium text-sm sm:text-base cart-text-primary">₹{PLATFORM_FEE.toFixed(2)}</span>
+                      </div>
+                    )}
 
                     <div className="flex items-center justify-between">
                         <span className="text-base sm:text-lg font-bold cart-text-primary">Pay Now</span>

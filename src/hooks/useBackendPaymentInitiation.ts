@@ -8,13 +8,13 @@ import { AxiosError } from "axios";
 
 export type BackendPaymentInitiationInput =
   | string
-  | { orderNumber: string; freshSession?: boolean };
+  | { orderNumber: string; freshSession?: boolean; paymentMethod?: string };
 
 export const useBackendPaymentInitiation = () => {
   return useMutation<BackendPaymentInitiationResponse, AxiosError, BackendPaymentInitiationInput>({
     mutationFn: (input) =>
       typeof input === "string"
         ? initiateBackendPayment(input)
-        : initiateBackendPayment(input.orderNumber, input.freshSession),
+        : initiateBackendPayment(input.orderNumber, input.freshSession, input.paymentMethod),
   });
 };

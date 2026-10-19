@@ -8,6 +8,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
+import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
+import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 
 const MAX_QUANTITY_PER_ITEM = 3;
 
@@ -34,6 +36,10 @@ export default function QuickBuyModal({
   const { toast } = useToast();
 const createOrderMutation = useCreateOrder();
 const backendPaymentMutation = useBackendPaymentInitiation();
+const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
+const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
+const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
+const paymentMethodCode = paymentMethodsLoaded && paymentMethods.length > 0 ? activePaymentMethod?.code : undefined;
 const validateOrderMutation = useValidateOrder();
 
 const { data: brandDetails, isLoading } = useBrandDetails(brand.BrandId, {
@@ -280,7 +286,7 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
 };
 
 const initiateBackendPaymentNow = (orderNumber: string) => {
-  backendPaymentMutation.mutate(orderNumber, {
+  backendPaymentMutation.mutate({ orderNumber, paymentMethod: paymentMethodCode }, {
     onSuccess: (response) => {
       console.log("Backend payment initiation response:", response);
 
@@ -472,6 +478,17 @@ const isProcessing =
                   </span>
                 </div>
               </div>
+            )}
+
+            {isValidAmount() && paymentMethodCode && (
+              <PaymentMethodSelector
+                methods={paymentMethods}
+                value={paymentMethodCode}
+                onChange={setSelectedPaymentMethod}
+                cashAmount={Number(amount) * quantity}
+                disabled={isProcessing}
+                showTotal
+              />
             )}
               </>
 )}
