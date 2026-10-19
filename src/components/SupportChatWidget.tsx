@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { LifeBuoy, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -263,19 +263,19 @@ export default function SupportChatWidget() {
             background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
             boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)",
           }}
-          aria-label={open ? "Close chat with Sahil" : "Chat with Sahil"}
+          aria-label={open ? "Close chat" : "Ask us"}
         >
           {open ? (
             <X className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
           ) : (
             <>
-              <LifeBuoy className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
+              <MessageCircle className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
               <span
                 className={`text-xs font-bold text-white whitespace-nowrap overflow-hidden transition-all duration-500 ${
                   askLabelVisible ? "max-w-[90px] opacity-100" : "max-w-0 opacity-0"
                 }`}
               >
-                Ask Sahil
+                Ask Us
               </span>
             </>
           )}
