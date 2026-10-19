@@ -8,7 +8,7 @@ import { useRegisterVerifyOtp } from "@/hooks/useRegisterVerifyOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { decodeJwtPayload } from "@/api/authApi";
 import gift360Logo from "@/assets/gift360full.png";
-import loginBg from "@/assets/LoginBackground.png";
+import loginBg from "@/assets/dussehraauth.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";
@@ -128,7 +128,6 @@ export default function Register() {
           const payload = decodeJwtPayload(data.token);
           setUser({ name: fullName, email, mobile, token: data.token, clientId: payload.userId ?? "" });
           toast({ title: "Welcome to Gift360!", description: "Account created successfully", duration: 3000 });
-          localStorage.setItem("showSuperCoinIntro", "1");
           setTimeout(() => setLocation("/"), 400);
         } else {
           setError(data.message || "OTP verification failed");
@@ -160,16 +159,6 @@ export default function Register() {
         {/* Logo */}
         <div className="flex justify-center mb-2">
           <img src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
-        </div>
-
-        {/* Heading */}
-        <div className="text-center mb-1">
-          <h1 className="text-[17px] font-semibold text-black leading-tight">
-            India #1 Destination for <span className="text-[#7C3AED]">Gifting</span>
-          </h1>
-          <p className="text-[10px] text-[#1E1E1E] mt-1 px-4">
-            Access 400+ brands Vouchers. Delivered instantly, and gift feeling
-          </p>
         </div>
 
         {/* Spacer */}

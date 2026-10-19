@@ -1,60 +1,39 @@
 import { useEffect, useState } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import type { AxiosError } from "axios";
-import { Gift, Clock, CheckCircle2, Frown } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getRewardStatus, claimReward, QUIZ_CASHBACK_REWARD } from "@/api/rewardApi";
+import { useQuery } from "@tanstack/react-query";
+import { CheckCircle2, Clock, Frown, Gift } from "lucide-react";
+import { getRewardStatus, QUIZ_SUPERCOIN_REWARD } from "@/api/rewardApi";
 
-function formatRupees(amount: number | null | undefined): string {
-  return (amount ?? 0).toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+function remainingSeconds(expiresAt: string | null): number {
+  if (!expiresAt) return 0;
+  return Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000));
 }
 
-function formatRemaining(expiresAt: string): string {
-  const remainingMs = new Date(expiresAt).getTime() - Date.now();
-  if (remainingMs <= 0) return "Expired";
-  const hours = Math.floor(remainingMs / 3_600_000);
-  const minutes = Math.floor((remainingMs % 3_600_000) / 60_000);
-  const seconds = Math.floor((remainingMs % 60_000) / 1000);
-  return `${String(hours).padStart(2, "0")}h ${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
+function formatCountdown(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(minutes).padStart(2, "0")}m ${String(seconds).padStart(2, "0")}s`;
 }
 
 export default function RewardsTab({ clientId }: { clientId: string | undefined }) {
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  const [countdown, setCountdown] = useState("");
-
+  const [secondsLeft, setSecondsLeft] = useState(0);
   const { data: reward, isLoading } = useQuery({
     queryKey: ["rewardStatus", clientId],
     queryFn: () => getRewardStatus(clientId!),
     enabled: !!clientId,
-    refetchInterval: 30_000,
+    refetchInterval: 10_000,
   });
+
+  const deadline = reward?.status === "PENDING"
+    ? reward.expiresAt
+    : reward?.quizStartExpiresAt;
 
   useEffect(() => {
-    if (!reward?.hasReward || !reward.expiresAt) return;
-    if (reward.status !== "PENDING" && reward.status !== "LOST") return;
-    setCountdown(formatRemaining(reward.expiresAt));
-    const interval = window.setInterval(() => setCountdown(formatRemaining(reward.expiresAt!)), 1000);
+    if (!deadline) return;
+    const tick = () => setSecondsLeft(remainingSeconds(deadline));
+    tick();
+    const interval = window.setInterval(tick, 250);
     return () => window.clearInterval(interval);
-  }, [reward?.hasReward, reward?.status, reward?.expiresAt]);
-
-  const claimMutation = useMutation({
-    mutationFn: () => claimReward(clientId!, reward!.publicId!),
-    onSuccess: (updated) => {
-      queryClient.setQueryData(["rewardStatus", clientId], updated);
-      toast({
-        title: `₹${formatRupees(updated.cashbackAmountCredited)} cashback credited!`,
-        duration: 3000,
-      });
-    },
-    onError: (error: AxiosError<{ message?: string }>) => {
-      toast({
-        title: "Couldn't claim right now",
-        description: error.response?.data?.message ?? "Please try again in a moment.",
-        duration: 4000,
-      });
-    },
-  });
+  }, [deadline]);
 
   if (!clientId || isLoading) {
     return <p className="px-1 text-[13px] text-white/70">Loading rewards…</p>;
@@ -62,26 +41,40 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
 
   if (!reward?.hasReward) {
     return (
-      <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[18px] text-center">
+      <div className="rounded-[12px] border border-white/25 bg-white/12 px-4 py-[18px] text-center">
         <Gift className="mx-auto h-6 w-6 text-white/70" strokeWidth={1.8} />
-        <p className="mt-2 text-[13px] font-medium text-white/80">
-          No rewards yet
+        <p className="mt-2 text-[13px] font-medium text-white/80">No rewards yet</p>
+        <p className="mt-1 text-[11px] text-white/60">A Dussehra quiz offer appears after a payment cancellation.</p>
+      </div>
+    );
+  }
+
+  if (reward.status === "PENDING") {
+    return (
+      <div className="rounded-[12px] border border-violet-200/40 bg-white/12 px-4 py-4">
+        <div className="flex items-center gap-2">
+          <Gift className="h-5 w-5 text-[#C4B5FD]" strokeWidth={2} />
+          <p className="text-[14px] font-semibold text-white">{QUIZ_SUPERCOIN_REWARD} SuperCoins ready to apply</p>
+        </div>
+        <p className="mt-1 text-[11px] text-white/70">Apply this bonus to a new purchase at checkout.</p>
+        <p className="mt-2 flex items-center gap-1 text-[11px] font-semibold text-[#FCD34D]">
+          <Clock className="h-[13px] w-[13px]" strokeWidth={2.4} />
+          {secondsLeft > 0 ? `Redeem within ${formatCountdown(secondsLeft)}` : "Redemption window expired"}
         </p>
       </div>
     );
   }
 
-  if (reward.status === "CLAIMED") {
+  if (reward.status === "REDEEMED" || reward.status === "CLAIMED") {
     return (
-      <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[16px]">
+      <div className="rounded-[12px] border border-white/25 bg-white/12 px-4 py-4">
         <div className="flex items-center gap-2">
           <CheckCircle2 className="h-5 w-5 text-[#34D399]" strokeWidth={2.2} />
-          <p className="text-[14px] font-semibold text-white">
-            ₹{formatRupees(reward.cashbackAmountCredited)} Cashback claimed
-          </p>
+          <p className="text-[14px] font-semibold text-white">{QUIZ_SUPERCOIN_REWARD} SuperCoins redeemed</p>
         </div>
-        <p className="mt-1 text-[11px] text-white/60">
-          {reward.claimedAt && `on ${new Date(reward.claimedAt).toLocaleString("en-IN")}`}
+        <p className="mt-1 text-[11px] text-white/65">
+          {reward.redeemedOrderNumber ? `Added to order ${reward.redeemedOrderNumber}` : "Your reward has been redeemed."}
+          {reward.redeemedAt ? ` · ${new Date(reward.redeemedAt).toLocaleString("en-IN")}` : ""}
         </p>
       </div>
     );
@@ -89,48 +82,30 @@ export default function RewardsTab({ clientId }: { clientId: string | undefined 
 
   if (reward.status === "EXPIRED") {
     return (
-      <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[18px] text-center">
+      <div className="rounded-[12px] border border-white/25 bg-white/12 px-4 py-[18px] text-center">
         <Clock className="mx-auto h-6 w-6 text-white/70" strokeWidth={1.8} />
-        <p className="mt-2 text-[13px] font-medium text-white/80">
-          Your cashback reward expired unclaimed.
-        </p>
+        <p className="mt-2 text-[13px] font-medium text-white/80">Your Dussehra quiz reward expired unused.</p>
       </div>
     );
   }
 
   if (reward.status === "LOST") {
     return (
-      <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[18px] text-center">
+      <div className="rounded-[12px] border border-white/25 bg-white/12 px-4 py-[18px] text-center">
         <Frown className="mx-auto h-6 w-6 text-white/70" strokeWidth={1.8} />
-        <p className="mt-2 text-[13px] font-medium text-white/80">
-          You didn't win cashback this time. Try again tomorrow!
-        </p>
-        <p className="mt-2 flex items-center justify-center gap-1 text-[11px] font-semibold text-[#FCD34D]">
-          <Clock className="h-[13px] w-[13px]" strokeWidth={2.4} />
-          Try again in {countdown || "24h 00m 00s"}
-        </p>
+        <p className="mt-2 text-[13px] font-medium text-white/80">All answers must be correct to earn the 5 SuperCoins.</p>
       </div>
     );
   }
 
-  // PENDING
   return (
-    <div className="rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[16px]">
-      <p className="text-[14px] font-bold text-white">You won ₹{QUIZ_CASHBACK_REWARD} cashback! 🎉</p>
-      <p className="mt-1 flex items-center gap-1 text-[11px] font-semibold text-[#FCD34D]">
-        <Clock className="h-[13px] w-[13px]" strokeWidth={2.4} />
-        Claim within {countdown || "24h 00m 00s"}
-      </p>
-
-      <button
-        type="button"
-        onClick={() => claimMutation.mutate()}
-        disabled={claimMutation.isPending}
-        className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(90deg,#f06da6_0%,#755ff0_100%)] py-3 text-[13px] font-semibold text-white active:scale-95 disabled:opacity-60"
-      >
-        <Gift className="h-[16px] w-[16px]" strokeWidth={2.2} />
-        {claimMutation.isPending ? "Claiming…" : `Claim ₹${QUIZ_CASHBACK_REWARD} Cashback`}
-      </button>
+    <div className="rounded-[12px] border border-white/25 bg-white/12 px-4 py-4">
+      <div className="flex items-center gap-2">
+        <Clock className="h-5 w-5 text-[#FCD34D]" strokeWidth={2} />
+        <p className="text-[14px] font-semibold text-white">Dussehra quiz offer is active</p>
+      </div>
+      <p className="mt-1 text-[11px] text-white/70">Return to the payment result to start or continue the quiz.</p>
+      <p className="mt-2 text-[11px] font-semibold text-[#FCD34D]">{formatCountdown(secondsLeft)} remaining</p>
     </div>
   );
 }

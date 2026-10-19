@@ -21,6 +21,8 @@ import type { AuthUser } from "@/types/auth";
 import type { GiftcardOrderDetailsResponse } from "@/types/order";
 import { trackEvent } from "@/lib/analytics";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
+import { registerPaymentCancellation, type QuizRewardStatus } from "@/api/rewardApi";
 
 export default function PaymentResult() {
   const [, setLocation] = useLocation();
@@ -34,17 +36,23 @@ export default function PaymentResult() {
   const [orderDetails, setOrderDetails] = useState<GiftcardOrderDetailsResponse | null>(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [orderDetailsError, setOrderDetailsError] = useState<string | null>(null);
+  const [calloutLoading, setCalloutLoading] = useState(false);
+  const [calloutReward, setCalloutReward] = useState<QuizRewardStatus | null>(null);
+  const [calloutSecondsLeft, setCalloutSecondsLeft] = useState(0);
+  const [quizOpen, setQuizOpen] = useState(false);
   const purchaseTrackedRef = useRef(false);
+  const cancellationCalloutAttemptedRef = useRef(false);
   const resumeAttemptedRef = useRef(false);
   const resumePromiseRef = useRef<Promise<void> | null>(null);
 
-  const loadOrderDetails = async (orderNumber: string) => {
-    if (!orderNumber) return;
+  const loadOrderDetails = async (orderNumber: string): Promise<GiftcardOrderDetailsResponse | null> => {
+    if (!orderNumber) return null;
     setOrderDetailsLoading(true);
     setOrderDetailsError(null);
     try {
       const details = await fetchOrderDetails(orderNumber);
       setOrderDetails(details);
+      return details;
     } catch (error: any) {
       console.error("Failed to load order details:", error);
       setOrderDetailsError(
@@ -52,6 +60,7 @@ export default function PaymentResult() {
           error?.message ||
           "Unable to load reward details right now."
       );
+      return null;
     } finally {
       setOrderDetailsLoading(false);
     }
@@ -137,6 +146,7 @@ export default function PaymentResult() {
       message,
       encryptedTransactionId,
       gateway,
+      wasCancelled: gateway === "easebuzz" && easebuzzStatus?.toLowerCase() === "usercancelled",
     };
   }, [searchParams]);
 
@@ -178,6 +188,43 @@ export default function PaymentResult() {
     resumePromiseRef.current = resumeSessionForReturn();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [paymentData.encryptedTransactionId]);
+
+  // The payment return is the source of truth for making the offer visible.
+  // The backend also verifies ownership and that the order is still PENDING.
+  useEffect(() => {
+    if (loading || !paymentData.wasCancelled || !decryptedOrderNumber || cancellationCalloutAttemptedRef.current) return;
+    cancellationCalloutAttemptedRef.current = true;
+
+    void (async () => {
+      setCalloutLoading(true);
+      try {
+        if (resumePromiseRef.current) await resumePromiseRef.current;
+        const storedUser = localStorage.getItem("authUser");
+        const clientId = storedUser ? (JSON.parse(storedUser) as AuthUser).clientId : undefined;
+        if (!clientId) return;
+
+        const details = await loadOrderDetails(decryptedOrderNumber);
+        if (!details || details.status?.toUpperCase() !== "PENDING") return;
+
+        const reward = await registerPaymentCancellation(clientId, decryptedOrderNumber);
+        setCalloutReward(reward);
+      } catch (error) {
+        console.warn("Could not open payment-cancel quiz callout", error);
+      } finally {
+        setCalloutLoading(false);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, paymentData.wasCancelled, decryptedOrderNumber]);
+
+  useEffect(() => {
+    const deadline = calloutReward?.quizStartExpiresAt;
+    if (!deadline) return;
+    const tick = () => setCalloutSecondsLeft(Math.max(0, Math.ceil((new Date(deadline).getTime() - Date.now()) / 1000)));
+    tick();
+    const timer = window.setInterval(tick, 250);
+    return () => window.clearInterval(timer);
+  }, [calloutReward?.quizStartExpiresAt]);
 
   // Decrypt transaction ID and extract the order number (read-only).
   useEffect(() => {
@@ -357,6 +404,43 @@ export default function PaymentResult() {
                   </div>
                 )}
 
+                {paymentData.wasCancelled && calloutLoading && (
+                  <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm font-medium text-orange-900">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Preparing your Dussehra quiz offer…
+                  </div>
+                )}
+
+                {paymentData.wasCancelled && calloutReward && (
+                  <div className="rounded-xl border border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50 p-4">
+                    {calloutReward.status === "AVAILABLE" || calloutReward.status === "IN_PROGRESS" ? (
+                      <>
+                        <p className="text-sm font-bold text-orange-950">
+                          Payment cancelled? Play a quick Dussehra quiz and earn 5 SuperCoins!
+                        </p>
+                        <p className="mt-1 text-xs text-orange-900">
+                          Start and finish within {Math.floor(calloutSecondsLeft / 60)}:{String(calloutSecondsLeft % 60).padStart(2, "0")}.
+                        </p>
+                        <Button
+                          size="sm"
+                          className="mt-3 bg-orange-600 font-semibold text-white hover:bg-orange-700"
+                          disabled={calloutSecondsLeft <= 0 || !calloutReward.publicId}
+                          onClick={() => setQuizOpen(true)}
+                        >
+                          Play Dussehra Quiz
+                        </Button>
+                      </>
+                    ) : calloutReward.status === "PENDING" ? (
+                      <p className="text-sm font-semibold text-orange-950">
+                        You earned 5 SuperCoins. Apply them to a new purchase within five minutes.
+                      </p>
+                    ) : (
+                      <p className="text-sm font-medium text-orange-900">
+                        This Dussehra quiz offer has expired or is no longer available.
+                      </p>
+                    )}
+                  </div>
+                )}
+
                 {paymentData.status === "success" &&
                   (orderDetailsLoading ||
                     (orderDetails?.coinsRedeemed !== null &&
@@ -483,6 +567,15 @@ export default function PaymentResult() {
           </CardContent>
         </Card>
       </main>
+
+      {calloutReward?.publicId && calloutReward.quizStartExpiresAt && (
+        <JanmashtamiQuizModal
+          open={quizOpen}
+          onClose={() => setQuizOpen(false)}
+          rewardPublicId={calloutReward.publicId}
+          quizStartExpiresAt={calloutReward.quizStartExpiresAt}
+        />
+      )}
 
       <Footer />
     </div>

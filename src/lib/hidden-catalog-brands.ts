@@ -14,21 +14,21 @@ export const HIDDEN_CATALOG_BRAND_IDS = [
 
 export const HIDDEN_CATALOG_BRAND_NAMES = ["SuperCoin E-Gift Voucher"];
 
-function normalizeName(value?: string | null): string {
-  return (value || "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+function normalizeName(value?: string | number | null): string {
+  return (value == null ? "" : String(value)).trim().toLowerCase().replace(/[^a-z0-9]/g, "");
 }
 
 export function isHiddenCatalogBrand(
-  brandId?: string | null,
+  brandId?: string | number | null,
   brandName?: string | null,
   brandCode?: string | null
 ): boolean {
-  const resolvedId = (brandId || "").trim().toLowerCase();
+  const resolvedId = (brandId == null ? "" : String(brandId)).trim().toLowerCase();
   if (resolvedId && HIDDEN_CATALOG_BRAND_IDS.some((id) => id.toLowerCase() === resolvedId)) {
     return true;
   }
 
-  const resolvedCode = (brandCode || "").trim().toUpperCase();
+  const resolvedCode = (brandCode == null ? "" : String(brandCode)).trim().toUpperCase();
   if (resolvedCode && HIDDEN_CATALOG_BRAND_CODES.includes(resolvedCode)) {
     return true;
   }

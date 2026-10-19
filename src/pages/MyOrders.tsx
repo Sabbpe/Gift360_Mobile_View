@@ -11,6 +11,7 @@ import {
   XCircle, Eye, ArrowLeft,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
+import homebackImg from "@/assets/dussehrabackdrop.png";
 import { format } from "date-fns";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
@@ -262,6 +263,10 @@ export default function MyOrders() {
   return (
     <div className="min-h-screen flex flex-col relative">
       <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${homebackImg})` }}
+      />
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <div className="relative py-4 px-4 sm:px-6 lg:px-10">

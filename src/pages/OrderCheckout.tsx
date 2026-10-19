@@ -41,6 +41,7 @@ import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
+import { applyQuizReward, getApplicableQuizReward, type QuizRewardStatus } from "@/api/rewardApi";
 
 const FALLBACK = FALLBACK_IMAGE;
 const SUPERCOIN_HOLD_MAP_KEY = "superCoinHoldByOrder";
@@ -179,6 +180,10 @@ export default function OrderCheckout() {
   const [orderLoading, setOrderLoading] = useState(true);
   const [orderError, setOrderError] = useState(false);
   const [releasingPreviousHold, setReleasingPreviousHold] = useState(false);
+  const [quizReward, setQuizReward] = useState<QuizRewardStatus | null>(null);
+  const [quizRewardApplied, setQuizRewardApplied] = useState(false);
+  const [quizRewardApplying, setQuizRewardApplying] = useState(false);
+  const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
   const loadOrder = useCallback(async () => {
     if (!orderNumber) return;
@@ -212,16 +217,67 @@ export default function OrderCheckout() {
         netAmountPaid: details?.netAmountPaid == null ? null : Number(details.netAmountPaid),
       });
       setPreviousSuperCoinTxnId(details?.scMerchantTxnId || null);
+      setQuizReward(null);
+      setQuizRewardApplied(false);
+      if (user?.clientId && details?.status?.toUpperCase() === "PENDING") {
+        try {
+          const availableReward = await getApplicableQuizReward(user.clientId, orderNumber);
+          if (availableReward.hasReward && availableReward.status === "PENDING") {
+            setQuizReward(availableReward);
+            setQuizRewardApplied(availableReward.reservedOrderNumber === orderNumber);
+          }
+        } catch {
+          // The quiz offer is optional; its availability must never block checkout.
+        }
+      }
     } catch {
       setOrderError(true);
     } finally {
       setOrderLoading(false);
     }
-  }, [orderNumber]);
+  }, [orderNumber, user?.clientId]);
 
   useEffect(() => {
     if (isAuthenticated && orderNumber) loadOrder();
   }, [isAuthenticated, orderNumber, loadOrder]);
+
+  useEffect(() => {
+    const expiresAt = quizReward?.expiresAt;
+    if (!expiresAt || quizRewardApplied) return;
+    const updateCountdown = () => setQuizRewardSecondsLeft(
+      Math.max(0, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 1000))
+    );
+    updateCountdown();
+    const timer = window.setInterval(updateCountdown, 250);
+    return () => window.clearInterval(timer);
+  }, [quizReward?.expiresAt, quizRewardApplied]);
+
+  const handleApplyQuizReward = async () => {
+    if (!user?.clientId || !quizReward?.publicId || quizRewardApplying) return;
+    setQuizRewardApplying(true);
+    try {
+      const applied = await applyQuizReward(user.clientId, quizReward.publicId, orderNumber);
+      setQuizReward(applied);
+      setQuizRewardApplied(true);
+      toast({
+        title: "5 SuperCoins applied",
+        description: "They’ll be added to your SuperCoin earnings after this purchase succeeds.",
+      });
+    } catch (error: any) {
+      if (error?.response?.status === 410) {
+        setQuizReward(null);
+        toast({ title: "Quiz reward expired", description: "The five-minute redemption window has ended." });
+      } else {
+        toast({
+          title: "Could not apply SuperCoins",
+          description: error?.response?.data?.message || "Please try again before the reward expires.",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      setQuizRewardApplying(false);
+    }
+  };
 
   // ── Platform fee config ──────────────────────────────────────────────────
   const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
@@ -829,6 +885,35 @@ export default function OrderCheckout() {
                           </span>
                         </div>
                       ))}
+
+                      {quizReward?.status === "PENDING" && (
+                        <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4">
+                          <div className="flex items-center gap-2 font-semibold text-violet-900">
+                            <img src={superCoinIcon} alt="" className="h-5 w-5" />
+                            5 SuperCoins quiz reward
+                          </div>
+                          {quizRewardApplied ? (
+                            <p className="mt-1 text-xs leading-relaxed text-violet-800">
+                              Applied to this purchase. The 5 bonus coins will be issued after successful payment and voucher fulfillment.
+                            </p>
+                          ) : (
+                            <>
+                              <p className="mt-1 text-xs text-violet-800">
+                                Apply within {Math.floor(quizRewardSecondsLeft / 60)}:{String(quizRewardSecondsLeft % 60).padStart(2, "0")} and get 5 bonus SuperCoins after this purchase succeeds.
+                              </p>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="mt-3 w-full bg-violet-700 font-semibold text-white hover:bg-violet-800"
+                                disabled={quizRewardApplying || quizRewardSecondsLeft <= 0}
+                                onClick={() => void handleApplyQuizReward()}
+                              >
+                                {quizRewardApplying ? "Applying reward…" : "Apply 5 SuperCoins"}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      )}
 
                       <Separator className="my-3 sm:my-4" />
 
