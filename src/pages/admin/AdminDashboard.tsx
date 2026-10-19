@@ -47,6 +47,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import AdminLogin from "./AdminLogin";
+import QuizPerformanceTab from "./QuizPerformanceTab";
 import {
   fetchSummary,
   fetchOrders,
@@ -543,6 +544,7 @@ export default function AdminDashboard() {
             <TabsTrigger value="currentcarts">Current Carts</TabsTrigger>
             <TabsTrigger value="mis">MIS</TabsTrigger>
             <TabsTrigger value="tickets">Tickets</TabsTrigger>
+            <TabsTrigger value="quiz">Quiz</TabsTrigger>
           </TabsList>
 
           {/* ================= OVERVIEW ================= */}
@@ -2171,6 +2173,11 @@ export default function AdminDashboard() {
                 </Table>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* ================= QUIZ ================= */}
+          <TabsContent value="quiz">
+            <QuizPerformanceTab from={from} to={to} />
           </TabsContent>
         </Tabs>
 
