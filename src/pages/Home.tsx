@@ -114,8 +114,19 @@ function HomeHeader({ onSuperCoinClick }: { onSuperCoinClick: () => void }) {
 function BalanceCard() {
   const [visible, setVisible] = useState(true);
   const { user } = useAuthContext();
-  const { data: walletData } = useFetchWallet(user?.clientId);
-  const balance = walletData?.totalBalance ?? 0;
+  const { data: walletData, isPending, isError, refetch } = useFetchWallet(user?.clientId);
+  const hasClient = !!user?.clientId;
+  const hasBalance = typeof walletData?.totalBalance === "number";
+  // "0" only when the server actually said 0 (or for a guest). A loading or failed
+  // fetch must not look like an empty wallet.
+  const balanceText = hasBalance
+    ? `\u20b9 ${walletData!.totalBalance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+    : !hasClient
+      ? "\u20b9 0.00"
+      : isPending
+        ? "\u20b9 \u2026"
+        : "\u20b9 \u2014";
+  const loadFailed = hasClient && !hasBalance && isError;
 
   return (
     <section className="absolute left-0 right-0 top-[86px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
@@ -125,13 +136,22 @@ function BalanceCard() {
           <p className="text-[13px] font-normal leading-none tracking-[-0.01em] text-black">Your CashBack points</p>
         <div className="relative mt-[12px] flex items-center gap-[14px]">
           <p className="text-[0px] font-bold leading-none tracking-[-0.035em] text-black">
-            <span className="text-[22px]">{visible ? `\u20b9 ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
-            {visible ? `₹ ${balance.toLocaleString("en-IN", { minimumFractionDigits: 2 })}` : "₹ •••••••"}
+            <span className="text-[22px]">{visible ? balanceText : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
+            {visible ? balanceText : "₹ •••••••"}
           </p>
           <button onClick={() => setVisible((value) => !value)} className="mt-[4px] active:scale-95" aria-label="Toggle balance">
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
           </button>
         </div>
+        {loadFailed && (
+          <button
+            type="button"
+            onClick={() => void refetch()}
+            className="mt-[6px] text-[10px] font-semibold text-[#5B3FFF] underline active:opacity-70"
+          >
+            Couldn&apos;t load your balance. Tap to retry
+          </button>
+        )}
         <div className="absolute bottom-[6px] right-[10px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
           <style>{`
             @keyframes gold-pulse-badge {

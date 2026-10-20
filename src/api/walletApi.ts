@@ -22,14 +22,23 @@ export const fetchWalletBalance = async (clientId: string): Promise<WalletBalanc
   const authUser = localStorage.getItem("authUser");
   const token = authUser ? JSON.parse(authUser).token : null;
 
-  const response = await axios.post<WalletBalance>(
-    `${API_BASE_URL}/wallet/${clientId}`,
-    {}, // Empty body for POST
-    {
-      headers: {
-        Authorization: `Bearer ${token}`, // ✅ Add token
-      },
+  try {
+    const response = await axios.post<WalletBalance>(
+      `${API_BASE_URL}/wallet/${clientId}`,
+      {}, // Empty body for POST
+      {
+        headers: {
+          Authorization: `Bearer ${token}`, // ✅ Add token
+        },
+      }
+    );
+    return response.data;
+  } catch (err) {
+    // This call uses bare axios, so the shared 401 handler never saw it and an expired
+    // session silently rendered as "0". Raise the same event the other clients raise.
+    if (axios.isAxiosError(err) && err.response?.status === 401) {
+      window.dispatchEvent(new Event("auth:expired"));
     }
-  );
-  return response.data;
+    throw err;
+  }
 };

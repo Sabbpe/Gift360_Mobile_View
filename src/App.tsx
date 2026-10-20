@@ -46,8 +46,15 @@ import SuperCoinVoucherPreview from "./pages/SuperCoinVoucherPreview";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { trackPageView } from "./lib/analytics";
+import { savePostLoginRedirect } from "./lib/postLoginRedirect";
 
 const ONBOARDING_KEY = "g360_onboarding_v3";
+
+// One-time or sensitive pages we never send a user back to after login.
+const NO_RETURN_PREFIXES = [
+  "/payment-result", "/reset-password", "/forgot-password",
+  "/onboarding", "/admin", "/delete-account",
+];
 
 function AppRoutes() {
   const [location] = useLocation();
@@ -59,6 +66,13 @@ function AppRoutes() {
   // so gtag never sees them unless we fire page_view manually here.
   useEffect(() => {
     trackPageView(location);
+  }, [location]);
+
+  // Remember the last page the visitor was on (path only, no query string), so
+  // Login/Register can return them there. /login and /register are ignored by the helper.
+  useEffect(() => {
+    if (NO_RETURN_PREFIXES.some((p) => location === p || location.startsWith(p + "/"))) return;
+    savePostLoginRedirect(location);
   }, [location]);
 
   // Listen for localStorage changes and location changes

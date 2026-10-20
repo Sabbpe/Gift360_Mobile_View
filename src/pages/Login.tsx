@@ -6,6 +6,10 @@ import { useSendOtp } from "@/hooks/useSendOtp";
 import { useLoginWithOtp } from "@/hooks/useLoginWithOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import {
+  savePostLoginRedirect, peekPostLoginRedirect, consumePostLoginRedirect,
+  savePrefillMobile, consumePrefillMobile,
+} from "@/lib/postLoginRedirect";
 import gift360Logo from "@/assets/gift360full.png";
 import loginBg from "@/assets/dussehraauth.png";
 import amazon from "@/assets/amazon.png";
@@ -36,7 +40,7 @@ export default function Login() {
   const [, setLocation] = useLocation();
   const searchParams = useSearch();
   const isSessionExpired = searchParams.includes("session=expired");
-  const [mobile, setMobile] = useState("");
+  const [mobile, setMobile] = useState(() => consumePrefillMobile());
   const [error, setError] = useState("");
   const [mobileError, setMobileError] = useState("");
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -45,8 +49,25 @@ export default function Login() {
   const [otpMsg, setOtpMsg] = useState("");
   const sendOtpMutation = useSendOtp();
   const loginWithOtpMutation = useLoginWithOtp();
-  const { setUser } = useAuthContext();
+  const { user, setUser } = useAuthContext();
   const { toast } = useToast();
+
+  // Already logged in (valid, unexpired session): skip the form and go where they were headed.
+  // Also covers a fresh OTP login, since setUser() makes `user` non-null.
+  const redirectedRef = useRef(false); // guards against a second run (e.g. React StrictMode in dev)
+  useEffect(() => {
+    if (!user || isSessionExpired || redirectedRef.current) return;
+    redirectedRef.current = true;
+    setLocation(consumePostLoginRedirect("/"));
+  }, [user, isSessionExpired]);
+
+  // Remember an explicit ?redirect=/path so we can return there after login.
+  const redirectParam = new URLSearchParams(searchParams).get("redirect");
+  useEffect(() => { savePostLoginRedirect(redirectParam); }, [redirectParam]);
+  // Use the URL param directly: the effect above saves it to sessionStorage only after first render.
+  const fromSuperCoin =
+    (redirectParam ?? peekPostLoginRedirect() ?? "").startsWith("/supercoin") ||
+    new URLSearchParams(searchParams).get("src") === "flipkart";
 
   useEffect(() => {
     if (isSessionExpired) {
@@ -93,7 +114,13 @@ export default function Login() {
     setMobileError("");
     sendOtpMutation.mutate({ mobileNumber: mobile }, {
       onSuccess: (data) => {
-        if (data.notRegistered) { setError("Mobile number not registered. Please register first."); return; }
+        if (data.notRegistered) {
+          // New user: carry the number over to sign-up instead of a dead-end error.
+          savePrefillMobile(mobile);
+          toast({ title: "Let's create your account", description: "This number is new to Gift360. It only takes a moment.", duration: 3000 });
+          setLocation("/register");
+          return;
+        }
         if (data.success) {
           setOtpSent(true);
           setOtpMsg(data.message || "OTP sent successfully");
@@ -121,7 +148,7 @@ export default function Login() {
             token: data.token, clientId: data.userInfo.clientId,
           });
           toast({ title: "Welcome back!", description: data.message || "Login successful", duration: 3000 });
-          setTimeout(() => setLocation("/"), 400);
+          // Redirect happens in the effect above once `user` is set.
         } else { setError(data.message || "OTP login failed"); }
       },
       onError: (err: any) => {
@@ -157,8 +184,14 @@ export default function Login() {
 
         {/* White card */}
         <div className="w-full max-w-[342px] mx-auto bg-white rounded-[16px] border border-[#C9C9C9] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] p-4 mb-2">
-          <h2 className="text-[16px] font-semibold text-black mb-0.5">Get Started</h2>
-          <p className="text-[9px] text-[#4E4E4E] mb-3">Enter your mobile number to continue</p>
+          <h2 className="text-[16px] font-semibold text-black mb-0.5">
+            {fromSuperCoin ? "Redeem your SuperCoins" : "Get Started"}
+          </h2>
+          <p className="text-[9px] text-[#4E4E4E] mb-3">
+            {fromSuperCoin
+              ? "Log in with your mobile number to turn SuperCoins into gift vouchers"
+              : "Enter your mobile number to continue"}
+          </p>
 
           {isSessionExpired && (
             <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-amber-300/30 bg-amber-50 text-amber-700 text-[10px] font-medium">

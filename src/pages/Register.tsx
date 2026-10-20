@@ -6,6 +6,10 @@ import { useToast } from "@/hooks/use-toast";
 import { useRegisterSendOtp } from "@/hooks/useRegisterSendOtp";
 import { useRegisterVerifyOtp } from "@/hooks/useRegisterVerifyOtp";
 import { useAuthContext } from "@/contexts/AuthContext";
+import {
+  peekPostLoginRedirect, consumePostLoginRedirect,
+  savePrefillMobile, consumePrefillMobile,
+} from "@/lib/postLoginRedirect";
 import { decodeJwtPayload } from "@/api/authApi";
 import gift360Logo from "@/assets/gift360full.png";
 import loginBg from "@/assets/dussehraauth.png";
@@ -37,7 +41,8 @@ export default function Register() {
   const [, setLocation] = useLocation();
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
-  const [mobile, setMobile] = useState("");
+  const [mobile, setMobile] = useState(() => consumePrefillMobile());
+  const fromSuperCoin = (peekPostLoginRedirect() ?? "").startsWith("/supercoin");
   const [error, setError] = useState("");
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
@@ -101,7 +106,8 @@ export default function Register() {
       onSuccess: (data) => {
         if (data.alreadyRegistered) {
           toast({ title: "Already registered", description: "This mobile is already registered. Please login.", variant: "destructive", duration: 4000 });
-          setTimeout(() => setLocation("/login"), 2000); return;
+          savePrefillMobile(mobile);
+          setTimeout(() => setLocation("/login"), 1200); return;
         }
         if (data.success) {
           setOtpSent(true);
@@ -128,7 +134,7 @@ export default function Register() {
           const payload = decodeJwtPayload(data.token);
           setUser({ name: fullName, email, mobile, token: data.token, clientId: payload.userId ?? "" });
           toast({ title: "Welcome to Gift360!", description: "Account created successfully", duration: 3000 });
-          setTimeout(() => setLocation("/"), 400);
+          setTimeout(() => setLocation(consumePostLoginRedirect("/")), 400);
         } else {
           setError(data.message || "OTP verification failed");
         }
@@ -166,8 +172,14 @@ export default function Register() {
 
         {/* White card */}
         <div className="w-full max-w-[342px] mx-auto bg-white rounded-[16px] border border-[#C9C9C9] shadow-[4px_4px_4px_rgba(0,0,0,0.25)] p-4 mb-2">
-          <h2 className="text-[16px] font-semibold text-black mb-0.5">Get Started</h2>
-          <p className="text-[9px] text-[#4E4E4E] mb-3">Create your account to start gifting</p>
+          <h2 className="text-[16px] font-semibold text-black mb-0.5">
+            {fromSuperCoin ? "One step to redeem" : "Get Started"}
+          </h2>
+          <p className="text-[9px] text-[#4E4E4E] mb-3">
+            {fromSuperCoin
+              ? "Create your account to turn SuperCoins into gift vouchers"
+              : "Create your account to start gifting"}
+          </p>
 
           {error && (
             <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-red-300 bg-red-50 text-red-600 text-[10px] font-medium">
