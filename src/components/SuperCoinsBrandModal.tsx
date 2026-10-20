@@ -481,9 +481,9 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             }
           `}</style>
 
-          {/* Header */}
+          {/* Header + brand chips share one purple background that grows with the chip rows */}
+          <div className="shrink-0 bg-[linear-gradient(135deg,#9747FF_0%,#7C3AED_45%,#5B2B99_100%)]">
           <div className="relative flex shrink-0 items-center gap-3 px-4 pb-3 pt-4 text-white">
-            <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(135deg,#9747FF_0%,#7C3AED_45%,#5B2B99_100%)]" />
             <button
               onClick={handleClose}
               aria-label="Back"
@@ -545,6 +545,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 {b.label}
               </button>
             ))}
+          </div>
           </div>
 
           {/* Success state - rendered outside scroll container for proper centering */}
