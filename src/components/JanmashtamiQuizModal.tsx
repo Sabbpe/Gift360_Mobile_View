@@ -307,7 +307,7 @@ export default function JanmashtamiQuizModal({
           <div className="relative flex flex-col items-center px-6 py-9 text-center" style={{ backgroundImage: `url(${resultBackdrop})`, backgroundSize: "cover", backgroundPosition: "center" }}>
             <PartyPopper className="h-12 w-12 text-[#10B981]" />
             <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz won! Earn {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins.</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Complete a new purchase within five minutes. The bonus is added automatically after payment and voucher fulfillment.</p>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Complete a new purchase before the timer runs out. The bonus is added automatically after payment and voucher fulfillment.</p>
             <p className="mt-3 flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[12px] font-bold text-[#7C3AED]">
               <Clock className="h-3.5 w-3.5" /> Expires in <Countdown seconds={secondsLeft} />
             </p>
@@ -330,7 +330,7 @@ export default function JanmashtamiQuizModal({
           <div className="flex flex-col items-center px-6 py-9 text-center">
             <Clock className="h-10 w-10 text-[#B45309]" />
             <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz window expired</h3>
-            <p className="mt-2 text-[13px] text-gray-600">Time is up. Each quiz must be finished within two minutes, and a bonus must be used within five minutes of winning.</p>
+            <p className="mt-2 text-[13px] text-gray-600">Time is up. Each quiz must be finished within two minutes, and a bonus must be used before its timer runs out.</p>
             {triesLine && <p className="mt-2 text-[13px] font-semibold text-[#7C3AED]">{triesLine}</p>}
             <button type="button" onClick={close} className="mt-5 rounded-lg bg-gray-900 px-8 py-2 text-[13px] font-semibold text-white">Close</button>
           </div>
