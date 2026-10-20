@@ -31,6 +31,9 @@ export interface QuizRewardStatus {
   appliedAt: string | null;
   /** Legacy response alias; this value is coins, not rupees. */
   cashbackAmountCredited: number | null;
+  /** Quiz tries left today; null if unknown. */
+  attemptsRemaining?: number | null;
+  dailyAttemptLimit?: number | null;
 }
 
 export interface QuizQuestion {

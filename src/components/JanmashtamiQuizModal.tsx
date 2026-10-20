@@ -4,6 +4,7 @@ import { Clock, PartyPopper, Globe, Loader2, Gift } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
   completeQuiz,
+  getRewardStatus,
   gradeAnswer,
   QUIZ_SUPERCOIN_REWARD,
   startQuizSession,
@@ -11,8 +12,8 @@ import {
   type QuizRewardStatus,
 } from "@/api/rewardApi";
 import { LANG_LABELS, LANG_FLAGS, type QuizLang } from "@/data/quizQuestions";
-import resultBackdrop from "@/assets/Dussehrasuccess.png";
-import krishnasadBackdrop from "@/assets/Dussehrafailure.png";
+import resultBackdrop from "@/assets/quizsuccess.png";
+import krishnasadBackdrop from "@/assets/quizsad.png";
 
 type Phase = "language" | "starting" | "playing" | "success" | "failed" | "expired" | "error";
 type Props = {
@@ -52,6 +53,7 @@ export default function JanmashtamiQuizModal({
   const [rewardExpiresAt, setRewardExpiresAt] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [correctCount, setCorrectCount] = useState(0);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const allCorrectRef = useRef(true);
   const answerBusyRef = useRef(false);
   const transitionTimerRef = useRef<number | null>(null);
@@ -75,6 +77,7 @@ export default function JanmashtamiQuizModal({
     setRewardExpiresAt(null);
     setSubmitting(false);
     setCorrectCount(0);
+    setAttemptsRemaining(null);
     allCorrectRef.current = true;
     answerBusyRef.current = false;
   }, [quizStartExpiresAt]);
@@ -100,6 +103,26 @@ export default function JanmashtamiQuizModal({
     return () => window.clearInterval(interval);
   }, [open, phase, deadline]);
 
+  // Show how many tries are left today on the lost / timed-out screens.
+  useEffect(() => {
+    if (!open || !user?.clientId) return;
+    if ((phase !== "failed" && phase !== "expired") || attemptsRemaining !== null) return;
+    let active = true;
+    getRewardStatus(user.clientId, rewardPublicId)
+      .then((status) => {
+        if (active && typeof status.attemptsRemaining === "number") setAttemptsRemaining(status.attemptsRemaining);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [open, phase, attemptsRemaining, user?.clientId, rewardPublicId]);
+
+  const triesLine =
+    attemptsRemaining === null
+      ? null
+      : attemptsRemaining > 0
+        ? `You have ${attemptsRemaining} ${attemptsRemaining === 1 ? "try" : "tries"} left today.`
+        : "You have used all your tries for today. Come back tomorrow for more.";
+
   const startQuiz = async (lang: QuizLang) => {
     if (!user?.clientId || !rewardPublicId) {
       setPhase("error");
@@ -118,6 +141,7 @@ export default function JanmashtamiQuizModal({
         setPhase("expired");
         return;
       }
+      if (typeof started.reward.attemptsRemaining === "number") setAttemptsRemaining(started.reward.attemptsRemaining);
       setQuestions(started.questions);
       setQuestionIndex(0);
       setSelectedOption(null);
@@ -138,6 +162,7 @@ export default function JanmashtamiQuizModal({
     setSubmitting(true);
     try {
       const result: QuizRewardStatus = await completeQuiz(user.clientId, rewardPublicId);
+      if (typeof result.attemptsRemaining === "number") setAttemptsRemaining(result.attemptsRemaining);
       if (result.status === "PENDING" && result.expiresAt) {
         setRewardExpiresAt(result.expiresAt);
         setSecondsLeft(remainingSeconds(result.expiresAt));
@@ -281,8 +306,8 @@ export default function JanmashtamiQuizModal({
         {phase === "success" && (
           <div className="relative flex flex-col items-center px-6 py-9 text-center" style={{ backgroundImage: `url(${resultBackdrop})`, backgroundSize: "cover", backgroundPosition: "center" }}>
             <PartyPopper className="h-12 w-12 text-[#10B981]" />
-            <h3 className="mt-3 text-[17px] font-bold text-gray-900">Happy Dussehra! You won the quiz.</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Earn {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins — complete a new purchase within five minutes. The bonus is added automatically after payment and voucher fulfillment.</p>
+            <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz won! Earn {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins.</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">Complete a new purchase within five minutes. The bonus is added automatically after payment and voucher fulfillment.</p>
             <p className="mt-3 flex items-center gap-1 rounded-full bg-white/80 px-3 py-1 text-[12px] font-bold text-[#7C3AED]">
               <Clock className="h-3.5 w-3.5" /> Expires in <Countdown seconds={secondsLeft} />
             </p>
@@ -294,8 +319,9 @@ export default function JanmashtamiQuizModal({
 
         {phase === "failed" && (
           <div className="relative flex flex-col items-center px-6 py-9 text-center" style={{ backgroundImage: `url(${krishnasadBackdrop})`, backgroundSize: "cover", backgroundPosition: "center" }}>
-            <h3 className="mt-2 text-[17px] font-bold text-gray-900">Better luck this Dussehra!</h3>
-            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">You got {correctCount} of {questions.length} correct. All answers must be correct to earn the {QUIZ_SUPERCOIN_REWARD} SuperCoins — try again today.</p>
+            <h3 className="mt-2 text-[17px] font-bold text-gray-900">Not quite this time</h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-gray-700">You got {correctCount} of {questions.length} correct. All answers must be correct to earn the 5 SuperCoins.</p>
+            {triesLine && <p className="mt-2 text-[13px] font-semibold text-[#7C3AED]">{triesLine}</p>}
             <button type="button" onClick={close} className="mt-4 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 px-8 py-2 text-[13px] font-semibold text-white">Close</button>
           </div>
         )}
@@ -304,7 +330,8 @@ export default function JanmashtamiQuizModal({
           <div className="flex flex-col items-center px-6 py-9 text-center">
             <Clock className="h-10 w-10 text-[#B45309]" />
             <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz window expired</h3>
-            <p className="mt-2 text-[13px] text-gray-600">The quiz must be completed within two minutes of the payment-cancellation offer.</p>
+            <p className="mt-2 text-[13px] text-gray-600">Time is up. Each quiz must be finished within two minutes, and a bonus must be used within five minutes of winning.</p>
+            {triesLine && <p className="mt-2 text-[13px] font-semibold text-[#7C3AED]">{triesLine}</p>}
             <button type="button" onClick={close} className="mt-5 rounded-lg bg-gray-900 px-8 py-2 text-[13px] font-semibold text-white">Close</button>
           </div>
         )}
@@ -313,7 +340,7 @@ export default function JanmashtamiQuizModal({
           <div className="flex flex-col items-center px-6 py-9 text-center">
             <Gift className="h-10 w-10 text-[#7C3AED]" />
             <h3 className="mt-3 text-[17px] font-bold text-gray-900">Quiz unavailable</h3>
-            <p className="mt-2 text-[13px] text-gray-600">We couldn’t start this quiz session. Please return to the payment result and try again before the offer expires.</p>
+            <p className="mt-2 text-[13px] text-gray-600">We couldn’t start this quiz right now. Please close this and try again.</p>
             <button type="button" onClick={close} className="mt-5 rounded-lg bg-gray-900 px-8 py-2 text-[13px] font-semibold text-white">Close</button>
           </div>
         )}
