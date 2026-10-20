@@ -502,7 +502,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
           </div>
 
           {/* Brand selector pills: order comes from the DB (supercoin_modal_order) */}
-          <div className="relative z-10 flex shrink-0 gap-2 overflow-x-auto px-4 pb-3 -mt-1 [scrollbar-width:none]">
+          <div className="relative z-10 flex shrink-0 flex-wrap gap-2 px-4 pb-3 -mt-1">
             {(() => {
               // Chips come strictly from the API list, in the DB order (supercoin_modal_order).
               const isVoucher = (b: SuperCoinModalBrand) =>
