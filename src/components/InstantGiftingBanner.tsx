@@ -1,6 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useLocation } from "wouter";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Gift, Coins, RefreshCw, BadgeDollarSign } from "lucide-react";
-import flipkartBannerImg from "@/assets/FlipkartBanner.png";
+import { useAuthContext } from "@/contexts/AuthContext";
+import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
+import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import partnerImg from "@/assets/coorp.png";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
@@ -76,12 +80,94 @@ function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   );
 }
 
+function QuizSlide({ title, sub, cta, onPlay, busy }: { title: string; sub: string; cta?: string; onPlay?: () => void; busy?: boolean }) {
+  return (
+    <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3"
+      style={{ background: "linear-gradient(135deg, #7C3AED 0%, #5B2B99 100%)" }}>
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
+          QUIZ
+        </span>
+        <h2 className="text-[15px] font-bold text-white leading-tight">{title}</h2>
+        <p className="text-[10px] text-white/85 leading-snug">{sub}</p>
+        {cta && (
+          <button
+            type="button"
+            onClick={onPlay}
+            disabled={busy}
+            className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[10px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all disabled:opacity-60"
+          >
+            {busy ? "Opening..." : cta}
+            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+          </button>
+        )}
+      </div>
+      <div className="w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
+        <Coins className="h-10 w-10 text-[#F7D46B]" strokeWidth={1.8} />
+      </div>
+    </div>
+  );
+}
+
 export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyNow }: InstantGiftingBannerProps) {
   const reduced = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
   const intervalRef = useRef<number>(0);
   const userPausedRef = useRef(false);
+
+  // Quiz slide: starts the quiz for the logged-in customer. Win = all 5 correct, then buy within
+  // 5 minutes and 5 bonus SuperCoins are credited. After a win we send the customer to the SuperCoin modal.
+  const [, setLocation] = useLocation();
+  const { user } = useAuthContext();
+  const queryClient = useQueryClient();
+  const [quizReward, setQuizReward] = useState<QuizRewardStatus | null>(null);
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizBusy, setQuizBusy] = useState(false);
+  const [quizNote, setQuizNote] = useState<string | null>(null);
+
+  const { data: rewardStatus } = useQuery({
+    queryKey: ["rewardStatus", user?.clientId],
+    queryFn: () => getRewardStatus(user!.clientId),
+    enabled: !!user?.clientId,
+  });
+  const quizEarned = rewardStatus?.status === "REDEEMED" || rewardStatus?.status === "CLAIMED";
+  const quizWon = rewardStatus?.status === "PENDING"
+    && !!rewardStatus.expiresAt && new Date(rewardStatus.expiresAt).getTime() > Date.now();
+
+  const handleQuizPlay = useCallback(async () => {
+    setQuizNote(null);
+    if (!user?.clientId) { setLocation("/login"); return; }
+    if (quizWon) { setLocation("/supercoin-voucher"); return; }
+    setQuizBusy(true);
+    try {
+      const reward = await startQuizFromBanner(user.clientId);
+      if (reward?.publicId && reward.quizStartExpiresAt
+          && (reward.status === "AVAILABLE" || reward.status === "IN_PROGRESS")) {
+        setQuizReward(reward);
+        setQuizOpen(true);
+      } else if (reward?.status === "PENDING") {
+        setLocation("/supercoin-voucher");
+      } else {
+        setQuizNote("You have used your quiz attempts for today. Try again tomorrow.");
+      }
+    } catch {
+      setQuizNote("The quiz is not available right now. Please try again.");
+    } finally {
+      setQuizBusy(false);
+    }
+  }, [user?.clientId, quizWon, setLocation]);
+
+  // When the quiz closes, refresh the status. A win (PENDING) takes the customer to the SuperCoin modal.
+  const handleQuizClose = useCallback(async () => {
+    setQuizOpen(false);
+    if (!user?.clientId) return;
+    try {
+      const fresh = await getRewardStatus(user.clientId, quizReward?.publicId ?? undefined);
+      queryClient.invalidateQueries({ queryKey: ["rewardStatus", user.clientId] });
+      if (fresh?.status === "PENDING") setLocation("/supercoin-voucher");
+    } catch { /* ignore */ }
+  }, [user?.clientId, quizReward?.publicId, queryClient, setLocation]);
 
   const scrollTo = useCallback(
     (index: number) => {
@@ -153,13 +239,24 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           }}
         >
           <div className="flex-shrink-0 w-full snap-start">
-            <div className="relative w-full h-[185px] flex items-center justify-center px-3 py-3">
-              <img
-                src={flipkartBannerImg}
-                alt="Flipkart Big Billion Days"
-                className="max-h-full max-w-full object-contain drop-shadow-md"
+            {quizEarned ? (
+              <QuizSlide title="Quiz reward earned" sub="Your 5 bonus SuperCoins have been credited. Thanks for playing." />
+            ) : quizWon ? (
+              <QuizSlide
+                title="You won! Buy now to get 5 SuperCoins"
+                sub="Complete a purchase within 5 minutes of your win and 5 bonus SuperCoins are credited after your voucher is issued."
+                cta="Buy now"
+                onPlay={handleQuizPlay}
               />
-            </div>
+            ) : (
+              <QuizSlide
+                title="Answer 5 questions, win 5 SuperCoins"
+                sub={quizNote || "Get all 5 right, then buy within 5 minutes and we credit 5 bonus SuperCoins."}
+                cta="Play now"
+                onPlay={handleQuizPlay}
+                busy={quizBusy}
+              />
+            )}
           </div>
           <div className="flex-shrink-0 w-full snap-start">
             <BlinkitSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BLINKIT_BRAND_ID) : undefined} />
@@ -184,6 +281,14 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           ))}
         </div>
       </div>
+      {quizReward?.publicId && quizReward.quizStartExpiresAt && (
+        <JanmashtamiQuizModal
+          open={quizOpen}
+          onClose={handleQuizClose}
+          rewardPublicId={quizReward.publicId}
+          quizStartExpiresAt={quizReward.quizStartExpiresAt}
+        />
+      )}
     </section>
   );
 }

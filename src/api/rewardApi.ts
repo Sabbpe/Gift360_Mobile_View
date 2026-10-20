@@ -55,6 +55,11 @@ export const registerPaymentCancellation = async (
   return response.data;
 };
 
+export const startQuizFromBanner = async (clientId: string): Promise<QuizRewardStatus> => {
+  const response = await brandApi.post<QuizRewardStatus>("/v1/rewards/start-from-banner", { clientId });
+  return response.data;
+};
+
 export const startQuizSession = async (
   clientId: string,
   publicId: string,
