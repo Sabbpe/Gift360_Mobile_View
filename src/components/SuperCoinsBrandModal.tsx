@@ -502,19 +502,23 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             </div>
           </div>
 
-          {/* Brand selector pills: the SuperCoin voucher first, then DB-driven earn brands */}
+          {/* Brand selector pills: order comes from the DB (supercoin_modal_order) */}
           <div className="relative z-10 flex shrink-0 gap-2 overflow-x-auto px-4 pb-3 -mt-1 [scrollbar-width:none]">
-            {[
-              ...SUPERCOIN_BRANDS.filter((b) => !b.hidden).map((b) => ({ id: b.id as string, label: b.label as string })),
-              ...modalBrands
-                .filter((b) => b.payMode === "CASH_EARN"
-                  && b.brandId !== SUPERCOIN_FEATURED_BRAND_ID
-                  && isSuperCoinEligible(b.brandId, b.brandName))
+            {(() => {
+              const fromDb = modalBrands
+                .filter((b) => b.brandId === SUPERCOIN_FEATURED_BRAND_ID
+                  || (b.payMode === "CASH_EARN" && isSuperCoinEligible(b.brandId, b.brandName)))
                 .map((b) => ({
                   id: b.brandId,
-                  label: Number(b.earnPercent) > 0 ? `${b.brandName} ${Number(b.earnPercent)}%` : b.brandName,
-                })),
-            ].map((b) => (
+                  label: b.brandId === SUPERCOIN_FEATURED_BRAND_ID
+                    ? "SuperCoin E-Gift Voucher"
+                    : (Number(b.earnPercent) > 0 ? `${b.brandName} ${Number(b.earnPercent)}%` : b.brandName),
+                }));
+              if (!fromDb.some((b) => b.id === SUPERCOIN_FEATURED_BRAND_ID)) {
+                fromDb.unshift({ id: SUPERCOIN_FEATURED_BRAND_ID, label: "SuperCoin E-Gift Voucher" });
+              }
+              return fromDb;
+            })().map((b) => (
               <button
                 key={b.id}
                 type="button"
