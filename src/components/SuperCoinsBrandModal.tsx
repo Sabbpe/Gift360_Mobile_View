@@ -9,7 +9,6 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSuperCoinAccount, useBurnSuperCoinOrder } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance, calculateSuperCoinsRequired, canAffordVoucher, normalizeMobileToE164, fetchSuperCoinConfig, fetchSuperCoinModalBrands, type SuperCoinModalBrand } from "@/api/supercoinApi";
-import { isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinExpiryCard, { SUPERCOIN_CLAIM_URL } from "@/components/SuperCoinExpiryCard";
 import { superCoinConversionConfig } from "@/config/features.config";
@@ -505,19 +504,20 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
           {/* Brand selector pills: order comes from the DB (supercoin_modal_order) */}
           <div className="relative z-10 flex shrink-0 gap-2 overflow-x-auto px-4 pb-3 -mt-1 [scrollbar-width:none]">
             {(() => {
-              const fromDb = modalBrands
-                .filter((b) => b.brandId === SUPERCOIN_FEATURED_BRAND_ID
-                  || (b.payMode === "CASH_EARN" && isSuperCoinEligible(b.brandId, b.brandName)))
-                .map((b) => ({
-                  id: b.brandId,
-                  label: b.brandId === SUPERCOIN_FEATURED_BRAND_ID
-                    ? "SuperCoin E-Gift Voucher"
-                    : (Number(b.earnPercent) > 0 ? `${b.brandName} ${Number(b.earnPercent)}%` : b.brandName),
-                }));
-              if (!fromDb.some((b) => b.id === SUPERCOIN_FEATURED_BRAND_ID)) {
-                fromDb.unshift({ id: SUPERCOIN_FEATURED_BRAND_ID, label: "SuperCoin E-Gift Voucher" });
-              }
-              return fromDb;
+              // Chips come strictly from the API list, in the DB order (supercoin_modal_order).
+              const isVoucher = (b: SuperCoinModalBrand) =>
+                b.brandId === SUPERCOIN_FEATURED_BRAND_ID ||
+                b.payMode === "SC_ONLY";
+              const chips = modalBrands.map((b) => ({
+                id: isVoucher(b) ? SUPERCOIN_FEATURED_BRAND_ID : b.brandId,
+                label: isVoucher(b)
+                  ? "SuperCoin E-Gift Voucher"
+                  : (Number(b.earnPercent) > 0 ? `${b.brandName} ${Number(b.earnPercent)}%` : b.brandName),
+              }));
+              // Only before the list loads (or if the API fails): show the voucher chip alone.
+              return chips.length > 0
+                ? chips
+                : [{ id: SUPERCOIN_FEATURED_BRAND_ID, label: "SuperCoin E-Gift Voucher" }];
             })().map((b) => (
               <button
                 key={b.id}
