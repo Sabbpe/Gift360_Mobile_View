@@ -248,3 +248,21 @@ export const fetchSuperCoinConfig = async (sku?: string): Promise<SuperCoinConfi
   }
   return response.data;
 };
+
+export type SuperCoinPayMode = "SC_ONLY" | "CASH_EARN";
+
+export interface SuperCoinModalBrand {
+  brandId: string;
+  brandCode: string;
+  brandName: string;
+  payMode: SuperCoinPayMode;
+  earnPercent?: number | string | null;
+}
+
+// Brands shown in the SuperCoin modal and how each is paid for. Driven by
+// giftvouchers_brands.supercoin_modal_enabled / supercoin_modal_order /
+// supercoin_pay_mode (V47), so a SQL UPDATE changes the list with no deploy.
+export const fetchSuperCoinModalBrands = async (): Promise<SuperCoinModalBrand[]> => {
+  const response = await brandApi.get<{ brands?: SuperCoinModalBrand[] }>("/v1/supercoin/modal-brands");
+  return Array.isArray(response.data?.brands) ? response.data.brands : [];
+};

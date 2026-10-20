@@ -338,7 +338,17 @@ export default function Cart() {
   // NEW: Wallet feature
   const [useWalletBalance, setUseWalletBalance] = useState(false);
   const [earnCashback, setEarnCashback] = useState(true);
-  const [rewardMode, setRewardMode] = useState<'cashbackWallet' | 'superCoins'>('cashbackWallet');
+  const [rewardMode, setRewardMode] = useState<'cashbackWallet' | 'superCoins'>(() => {
+  try {
+    return sessionStorage.getItem('gift360.cartRewardMode') === 'superCoins' ? 'superCoins' : 'cashbackWallet';
+  } catch {
+    return 'cashbackWallet';
+  }
+});
+
+useEffect(() => {
+  try { sessionStorage.removeItem('gift360.cartRewardMode'); } catch { /* ignore */ }
+}, []);
   const [superCoinState, setSuperCoinState] = useState({
     enabled: false,
     eligible: false,
