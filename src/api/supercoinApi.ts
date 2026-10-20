@@ -1,4 +1,4 @@
-import { brandApi } from "@/lib/valuedesignApi";
+import { brandApi, ordersApiClient } from "@/lib/valuedesignApi";
 
 export type SuperCoinIdentityType = "MOBILE" | "FK_USER" | "HASHED_MOBILE";
 
@@ -263,6 +263,6 @@ export interface SuperCoinModalBrand {
 // giftvouchers_brands.supercoin_modal_enabled / supercoin_modal_order /
 // supercoin_pay_mode (V47), so a SQL UPDATE changes the list with no deploy.
 export const fetchSuperCoinModalBrands = async (): Promise<SuperCoinModalBrand[]> => {
-  const response = await brandApi.get<{ brands?: SuperCoinModalBrand[] }>("/v1/supercoin/modal-brands");
+  const response = await ordersApiClient.get<{ brands?: SuperCoinModalBrand[] }>("/v1/supercoin/modal-brands");
   return Array.isArray(response.data?.brands) ? response.data.brands : [];
 };
