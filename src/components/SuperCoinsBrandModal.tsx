@@ -105,7 +105,18 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   useEffect(() => {
     if (!open) return;
     fetchSuperCoinModalBrands()
-      .then((list) => setModalBrands(list))
+      .then((list) => {
+        setModalBrands(list);
+        // Always open on the first brand in DB order (supercoin_modal_order).
+        if (list.length > 0) {
+          const first = list[0];
+          setSelectedBrandId(
+            first.payMode === "SC_ONLY" || first.brandId === SUPERCOIN_FEATURED_BRAND_ID
+              ? SUPERCOIN_FEATURED_BRAND_ID
+              : first.brandId
+          );
+        }
+      })
       .catch((err) => console.warn("Could not fetch SuperCoin modal brands:", err));
   }, [open]);
 
