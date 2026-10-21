@@ -4,9 +4,10 @@
 // triggers voucher generation. Fulfilment (ValueDesign / QwikGift) is driven
 // exclusively by the payment callback on the backend. The frontend only reads
 // the payment outcome from the redirect URL and (optionally) order details.
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef, useCallback } from "react";
+import confetti from "canvas-confetti";
+import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 import { useLocation, useSearch } from "wouter";
-import { useToast } from "@/hooks/use-toast";
 import { useNotification } from "@/contexts/NotificationContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -25,10 +26,284 @@ import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import { registerPaymentCancellation, type QuizRewardStatus } from "@/api/rewardApi";
 import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
+// ── Success view: animated reward reveal + 10s auto-redirect to the vouchers page ──
+const REDIRECT_SECONDS = 10;
+
+function useCountUp(target: number, run: boolean, ms = 1400): number {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (!run || !(target > 0)) {
+      setValue(0);
+      return;
+    }
+    const reduce =
+      typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const tick = (t: number) => {
+      const p = Math.min(1, (t - t0) / ms);
+      setValue(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, run, ms]);
+  return value;
+}
+
+const fmtReward = (n: number, final: number) =>
+  final % 1 === 0 ? Math.round(n).toString() : n.toFixed(2);
+
+interface SuccessViewProps {
+  orderNumber: string;
+  orderDetails: GiftcardOrderDetailsResponse | null;
+  detailsLoading: boolean;
+  detailsError: string | null;
+  onRefresh: () => void;
+  onGoVouchers: () => void;
+  onContinueShopping: () => void;
+}
+
+function SuccessView({
+  orderNumber,
+  orderDetails,
+  detailsLoading,
+  detailsError,
+  onRefresh,
+  onGoVouchers,
+  onContinueShopping,
+}: SuccessViewProps) {
+  useHideSupportFab(true);
+  const [secondsLeft, setSecondsLeft] = useState(REDIRECT_SECONDS);
+  const [stay, setStay] = useState(false);
+  const goRef = useRef(onGoVouchers);
+  goRef.current = onGoVouchers;
+  const firedRef = useRef(false);
+  const polledRef = useRef(0);
+
+  const coins = Number(orderDetails?.coinsEarned ?? 0);
+  const cashback = Number(orderDetails?.cashbackEarned ?? 0);
+  const redeemed = Number(orderDetails?.coinsRedeemed ?? 0);
+  const hasCoins = coins > 0;
+  const hasCashback = cashback > 0;
+  const rewardsKnown = hasCoins || hasCashback;
+  const showSkeleton = !rewardsKnown && (detailsLoading || (!orderDetails && !detailsError));
+
+  // Countdown, then go to the vouchers page.
+  useEffect(() => {
+    if (stay) return;
+    const id = window.setInterval(() => {
+      setSecondsLeft((s) => {
+        if (s <= 1) {
+          window.clearInterval(id);
+          return 0;
+        }
+        return s - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+  }, [stay]);
+
+  useEffect(() => {
+    if (secondsLeft === 0 && !stay && !firedRef.current) {
+      firedRef.current = true;
+      goRef.current();
+    }
+  }, [secondsLeft, stay]);
+
+  // Rewards are credited by the payment callback, which can land a moment after the
+  // redirect. Re-read the order a couple of times (read-only) if nothing shows yet.
+  useEffect(() => {
+    if (rewardsKnown || detailsLoading || stay || polledRef.current >= 3) return;
+    const t = window.setTimeout(() => {
+      polledRef.current += 1;
+      onRefresh();
+    }, 2500);
+    return () => window.clearTimeout(t);
+  }, [rewardsKnown, detailsLoading, stay, orderDetails, onRefresh]);
+
+  const coinsShown = useCountUp(coins, hasCoins);
+  const cashbackShown = useCountUp(cashback, hasCashback);
+
+  // One burst of confetti when a reward is first revealed.
+  const burstRef = useRef(false);
+  useEffect(() => {
+    if (!rewardsKnown || burstRef.current) return;
+    burstRef.current = true;
+    const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (reduce) return;
+    const fire = (originX: number) =>
+      confetti({
+        particleCount: 60,
+        spread: 70,
+        startVelocity: 38,
+        scalar: 0.9,
+        origin: { x: originX, y: 0.45 },
+        colors: ["#7C3AED", "#FBBF24", "#34D399", "#FFFFFF"],
+        ticks: 160,
+      });
+    fire(0.3);
+    window.setTimeout(() => fire(0.7), 180);
+  }, [rewardsKnown]);
+
+  const ringLen = 2 * Math.PI * 18;
+
+  return (
+    <main className="flex flex-1 items-start justify-center px-4 pb-8 pt-5 sm:pt-12">
+      <style>{`
+        @keyframes pr-draw { to { stroke-dashoffset: 0; } }
+        @keyframes pr-pop { 0% { transform: scale(.4); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
+        @keyframes pr-ring { 0% { transform: scale(1); opacity: .45; } 100% { transform: scale(1.9); opacity: 0; } }
+        @keyframes pr-rise { from { transform: translateY(18px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes pr-spin { 0% { transform: rotateY(0deg) scale(.5); opacity: 0; } 60% { transform: rotateY(540deg) scale(1.15); opacity: 1; } 100% { transform: rotateY(720deg) scale(1); } }
+        @keyframes pr-float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+        @keyframes pr-shimmer { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+        .pr-badge { animation: pr-pop .5s cubic-bezier(.34,1.56,.64,1) both; }
+        .pr-ring { animation: pr-ring 1.6s ease-out .3s infinite; }
+        .pr-check { stroke-dasharray: 48; stroke-dashoffset: 48; animation: pr-draw .5s ease-out .35s forwards; }
+        .pr-rise { animation: pr-rise .55s ease-out both; }
+        .pr-coin { animation: pr-spin 1s ease-out .2s both, pr-float 2.4s ease-in-out 1.2s infinite; }
+        .pr-skel { background: linear-gradient(90deg,#ede9fe 0%,#f5f3ff 50%,#ede9fe 100%); background-size: 400px 100%; animation: pr-shimmer 1.2s linear infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .pr-badge,.pr-ring,.pr-check,.pr-rise,.pr-coin,.pr-skel { animation: none !important; stroke-dashoffset: 0; opacity: 1; }
+        }
+      `}</style>
+
+      <div className="w-full max-w-[420px] text-center">
+        {/* Animated check */}
+        <div className="relative mx-auto mb-4 h-[72px] w-[72px]">
+          <span className="pr-ring absolute inset-0 rounded-full bg-emerald-400" />
+          <div className="pr-badge relative flex h-full w-full items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-emerald-600 shadow-[0_10px_30px_rgba(16,185,129,0.4)]">
+            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path className="pr-check" d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </div>
+        </div>
+
+        <h1 className="pr-rise text-2xl font-extrabold text-[#1F1B3A]" style={{ animationDelay: ".4s" }}>
+          Payment successful
+        </h1>
+        <p className="pr-rise mt-1 text-sm text-[#6B7280]" style={{ animationDelay: ".5s" }}>
+          Your vouchers are being issued{orderNumber ? ` · Order #${orderNumber}` : ""}
+        </p>
+
+        {/* Reward reveal */}
+        <div className="mt-5 space-y-3" aria-live="polite">
+          {showSkeleton && (
+            <div className="pr-rise flex items-center gap-4 rounded-3xl border border-violet-100 bg-white px-4 py-3 text-left shadow-[0_12px_32px_rgba(108,92,231,0.12)]" style={{ animationDelay: ".6s" }}>
+              <div className="pr-skel h-14 w-14 shrink-0 rounded-full" />
+              <div className="flex-1">
+                <div className="pr-skel h-3 w-20 rounded-full" />
+                <div className="pr-skel mt-2 h-7 w-40 rounded-lg" />
+                <p className="mt-1.5 text-xs text-[#6B7280]">Counting your rewards…</p>
+              </div>
+            </div>
+          )}
+
+          {hasCoins && (
+            <div className="pr-rise flex items-center gap-4 rounded-3xl border border-violet-200 bg-gradient-to-r from-violet-50 to-white px-4 py-3 text-left shadow-[0_12px_32px_rgba(108,92,231,0.16)]" style={{ animationDelay: ".6s" }}>
+              <img src={superCoinIcon} alt="" className="pr-coin h-14 w-14 shrink-0" />
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-violet-700">You earned</p>
+                <p className="text-3xl font-extrabold leading-tight tabular-nums text-[#7C3AED]">
+                  +{fmtReward(coinsShown, coins)} <span className="text-lg">SuperCoins</span>
+                </p>
+                <p className="text-xs text-[#6B7280]">Added to your Flipkart SuperCoin account</p>
+              </div>
+            </div>
+          )}
+
+          {hasCashback && (
+            <div className="pr-rise flex items-center gap-4 rounded-3xl border border-emerald-200 bg-gradient-to-r from-emerald-50 to-white px-4 py-3 text-left shadow-[0_12px_32px_rgba(16,185,129,0.14)]" style={{ animationDelay: hasCoins ? ".9s" : ".6s" }}>
+              <div className="pr-coin flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-3xl">💰</div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-emerald-700">You earned</p>
+                <p className="text-3xl font-extrabold leading-tight tabular-nums text-emerald-600">
+                  +{fmtReward(cashbackShown, cashback)} <span className="text-lg">cashback points</span>
+                </p>
+                <p className="text-xs text-[#6B7280]">1 point = ₹1 · already in your wallet</p>
+              </div>
+            </div>
+          )}
+
+          {!showSkeleton && !rewardsKnown && (
+            <div className="pr-rise rounded-3xl border border-violet-100 bg-white p-5 text-sm text-[#6B7280] shadow-[0_12px_32px_rgba(108,92,231,0.1)]" style={{ animationDelay: ".6s" }}>
+              Any rewards from this order will show in your wallet once it is processed.
+            </div>
+          )}
+
+          {redeemed > 0 && (
+            <p className="pr-rise flex items-center justify-center gap-1.5 text-xs font-semibold text-violet-700" style={{ animationDelay: "1s" }}>
+              <img src={superCoinIcon} alt="" className="h-4 w-4" />
+              You used {Math.round(redeemed)} SuperCoins on this order
+            </p>
+          )}
+        </div>
+
+        {/* Redirect */}
+        <div className="pr-rise mt-5" style={{ animationDelay: "1.1s" }}>
+          {!stay ? (
+            <div className="flex items-center justify-center gap-3">
+              <svg width="44" height="44" viewBox="0 0 44 44" aria-hidden="true">
+                <circle cx="22" cy="22" r="18" fill="none" stroke="#E9D5FF" strokeWidth="4" />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r="18"
+                  fill="none"
+                  stroke="#7C3AED"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeDasharray={ringLen}
+                  strokeDashoffset={ringLen * (1 - secondsLeft / REDIRECT_SECONDS)}
+                  transform="rotate(-90 22 22)"
+                  style={{ transition: "stroke-dashoffset 1s linear" }}
+                />
+                <text x="22" y="27" textAnchor="middle" fontSize="14" fontWeight="700" fill="#4C1D95">
+                  {secondsLeft}
+                </text>
+              </svg>
+              <p className="text-left text-sm text-[#4B5563]">
+                Taking you to your
+                <br />
+                vouchers in {secondsLeft}s
+              </p>
+            </div>
+          ) : (
+            <p className="text-sm text-[#4B5563]">Your vouchers will appear on the Orders page once issued.</p>
+          )}
+
+          <button
+            type="button"
+            onClick={onGoVouchers}
+            className="mx-auto mt-3 flex h-12 min-w-[220px] items-center justify-center rounded-full bg-gradient-to-r from-[#7B61FF] to-[#5B3FFF] px-8 text-base font-bold text-white shadow-lg shadow-[rgba(108,92,231,0.3)] transition-all active:scale-[0.97]"
+          >
+            View my vouchers
+          </button>
+
+          <div className="mt-3 flex items-center justify-center gap-5 text-sm font-semibold text-[#5B3FFF]">
+            <button type="button" onClick={onContinueShopping} className="min-h-[44px] px-1">
+              Continue shopping
+            </button>
+            {!stay && (
+              <button type="button" onClick={() => setStay(true)} className="min-h-[44px] px-1 text-[#6B7280]">
+                Stay here
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
 export default function PaymentResult() {
   const [, setLocation] = useLocation();
   const searchParams = useSearch();
-  const { toast } = useToast();
   const { addNotification } = useNotification();
   const { setUser } = useAuthContext();
 
@@ -289,11 +564,6 @@ export default function PaymentResult() {
       currency: "INR",
     });
 
-    toast({
-      title: "Payment Successful",
-      description: `Order #${decryptedOrderNumber} has been confirmed. Vouchers will appear on your Orders page once issued.`,
-    });
-
     // Ensure the session restore has completed before loading the order, so the
     // request carries the restored Bearer token (avoids a token-less 401).
     void (async () => {
@@ -308,6 +578,19 @@ export default function PaymentResult() {
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, paymentData.status, decryptedOrderNumber]);
+
+  // Quiet re-read of the order (no loading flicker) for late-credited rewards.
+  const refreshOrderQuiet = useCallback(() => {
+    if (!decryptedOrderNumber) return;
+    fetchOrderDetails(decryptedOrderNumber)
+      .then((d) => setOrderDetails(d))
+      .catch(() => undefined);
+  }, [decryptedOrderNumber]);
+
+  const goToVouchers = () => {
+    sessionStorage.setItem("justReturnedFromPayment", "true");
+    setLocation("/orders");
+  };
 
   // Status UI helpers
   const getStatusIcon = () => {
@@ -361,6 +644,24 @@ export default function PaymentResult() {
       : paymentData.status === "pending"
       ? "PENDING"
       : "FAILED";
+
+  if (!loading && paymentData.status === "success") {
+    return (
+      <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(179.75deg, #9747FF -117.65%, #FFFFFF 99.79%)' }}>
+        <Header />
+        <SuccessView
+          orderNumber={decryptedOrderNumber}
+          orderDetails={orderDetails}
+          detailsLoading={orderDetailsLoading}
+          detailsError={orderDetailsError}
+          onRefresh={refreshOrderQuiet}
+          onGoVouchers={goToVouchers}
+          onContinueShopping={() => setLocation("/")}
+        />
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(179.75deg, #9747FF -117.65%, #FFFFFF 99.79%)' }}>

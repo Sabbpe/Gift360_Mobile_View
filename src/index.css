@@ -924,3 +924,10 @@ body[data-support-chat-open] .micro-widget {
   position: absolute;
   inset: -12px;
 }
+
+/* Cart page: sticky Buy Now bar sits above the nav; lift the help bubble over it, hide the quick-question card */
+body[data-cart-bar] .support-fab { display: none !important; }
+body[data-cart-bar] .micro-widget { display: none !important; }
+@media (min-width: 1024px) {
+  body[data-cart-bar] .support-fab { display: flex !important; bottom: 72px !important; }
+}
