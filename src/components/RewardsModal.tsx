@@ -19,6 +19,9 @@ type Props = {
   onClose: () => void;
 };
 
+/** SuperCoins credited for an approved Instagram reel or story. Must match the backend. */
+const STORY_SUPERCOIN_REWARD = 100;
+
 const INSTAGRAM_URL_RE = /^https?:\/\/([\w-]+\.)*instagram\.com\/.+/i;
 
 /**
@@ -26,7 +29,7 @@ const INSTAGRAM_URL_RE = /^https?:\/\/([\w-]+\.)*instagram\.com\/.+/i;
  * - The same quiz banner as the home Instant Gifting carousel, with the full
  *   quiz journey (start from banner → modal → win redirects to SuperCoin modal).
  * - The Instagram story/reel callout: buy a voucher, share a story, paste the
- *   link, submit to win 1 SuperCoin (submission goes to the backend).
+ *   link, submit to win SuperCoins (submission goes to the backend).
  */
 export default function RewardsModal({ open, onClose }: Props) {
   const { user } = useAuthContext();
@@ -195,11 +198,11 @@ export default function RewardsModal({ open, onClose }: Props) {
                   STORY &amp; REEL
                 </span>
                 <h3 className="text-[15px] font-bold text-white leading-tight">
-                  Share your Gift360 story, win 1 SuperCoin
+                  Share your Gift360 story, win {STORY_SUPERCOIN_REWARD} SuperCoins
                 </h3>
                 <p className="text-[10px] text-white/85 leading-snug">
                   Buy a voucher with us, share your experience as a reel or story on Instagram,
-                  paste your link below and submit to win <span className="font-bold text-[#F7D46B]">1 SuperCoin</span>.
+                  paste your link below and submit to win <span className="font-bold text-[#F7D46B]">{STORY_SUPERCOIN_REWARD} SuperCoins</span>.
                 </p>
               </div>
               <div className="w-[64px] h-[64px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
@@ -218,7 +221,7 @@ export default function RewardsModal({ open, onClose }: Props) {
                 <div className="flex items-start gap-2 rounded-lg bg-white/95 px-3 py-2.5">
                   <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
                   <p className="text-[11px] leading-snug text-gray-800 font-medium">
-                    Thanks! Your story link is submitted. Your 1 SuperCoin will be credited after verification.
+                    Thanks! Your story link is submitted. Your {STORY_SUPERCOIN_REWARD} SuperCoins will be credited after verification.
                   </p>
                 </div>
               ) : (
