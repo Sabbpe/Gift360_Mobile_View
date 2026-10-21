@@ -6,8 +6,8 @@ import { useAuthContext } from "@/contexts/AuthContext";
 
 // Post-login prompting was replaced by the contextual MicroQuestionWidget
 // (right-edge Yes/No questions). The full feedback form is still requested
-// for voucher-fetched / payment-pending, and manually via the header icon.
-export type FeedbackTrigger = "voucher-fetched" | "payment-pending";
+// for voucher-fetched / payment-cancelled, and manually via the header icon.
+export type FeedbackTrigger = "voucher-fetched" | "payment-cancelled";
 
 /** Any page can ask the orchestrator to consider showing the feedback form. */
 export function promptFeedback(trigger: FeedbackTrigger): void {
@@ -17,7 +17,7 @@ export function promptFeedback(trigger: FeedbackTrigger): void {
 const COOLDOWN_KEY = "gift360_fb_trigger_last";
 const TRIGGER_COOLDOWNS: Record<FeedbackTrigger, number> = {
   "voucher-fetched": 24 * 60 * 60_000,
-  "payment-pending": 2 * 60 * 60_000,
+  "payment-cancelled": 2 * 60 * 60_000,
 };
 // Never pop the form on pages where a survey would be noise.
 const BLOCKED_PATHS = [
@@ -56,7 +56,7 @@ function clearCooldown(trigger: FeedbackTrigger): void {
 
 /**
  * Global owner of the auto feedback form prompt (voucher-fetched and
- * payment-pending only). Whether the customer already submitted is decided
+ * payment-cancelled only). Whether the customer already submitted is decided
  * by the backend (`GET /v1/feedback/status`), not localStorage.
  */
 export default function FeedbackOrchestrator() {
@@ -111,7 +111,7 @@ export default function FeedbackOrchestrator() {
     prevUserClientIdRef.current = user.clientId;
     if (fresh) {
       clearCooldown("voucher-fetched");
-      clearCooldown("payment-pending");
+      clearCooldown("payment-cancelled");
       void refreshSubmitted(user.clientId);
     } else if (submittedRef.current === null) {
       // Same user across re-render/reload: fill in status if still unknown.
@@ -119,7 +119,7 @@ export default function FeedbackOrchestrator() {
     }
   }, [user?.clientId, refreshSubmitted]);
 
-  // Event entry point for voucher-fetched / payment-pending.
+  // Event entry point for voucher-fetched / payment-cancelled.
   useEffect(() => {
     const onPrompt = (e: Event) => {
       const trigger = (e as CustomEvent<FeedbackTrigger>).detail;

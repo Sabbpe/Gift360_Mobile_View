@@ -2,7 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { MessageSquareHeart, X } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { getAnsweredMicroFeedback, submitMicroFeedback } from "@/api/microFeedbackApi";
+import {
+  getAnsweredMicroFeedback,
+  getMicroQuestions,
+  submitMicroFeedback,
+} from "@/api/microFeedbackApi";
 import { trackEvent } from "@/lib/analytics";
 import RewardsModal from "@/components/RewardsModal";
 
@@ -16,16 +20,12 @@ type MicroQuestion = {
   href?: string;
 };
 
-/** The contextual Yes/No questions, segregated by page. */
-const MICRO_QUESTIONS: MicroQuestion[] = [
+// Fallback list (used when the questions API is unreachable). The canonical
+// question definitions live in the `feedback` table and are fetched on mount.
+const FALLBACK_QUESTIONS: MicroQuestion[] = [
   { key: "home_nearby_offers", pages: ["home"], text: "Are nearby offers useful to you?" },
   { key: "home_more_cities", pages: ["home"], text: "Want offers in more cities?" },
-  {
-    key: "home_corporate",
-    pages: ["home"],
-    text: "Interested in corporate bulk gifting?",
-    href: "/distributor",
-  },
+  { key: "home_corporate", pages: ["home"], text: "Interested in corporate bulk gifting?", href: "/distributor" },
   { key: "brands_more", pages: ["brands"], text: "Looking for more brands?" },
   { key: "brands_office", pages: ["brands"], text: "Are you looking for office-related vouchers?" },
   { key: "cart_discount", pages: ["cart"], text: "Looking for more discount?" },
@@ -35,16 +35,18 @@ const MICRO_QUESTIONS: MicroQuestion[] = [
     text: "Want to make a purchase and get a chance to earn SuperCoins?",
     reward: true,
   },
-  {
-    key: "cart_supercoin_plan",
-    pages: ["cart"],
-    text: "Planning to use SuperCoins soon?",
-    reward: true,
-  },
+  { key: "cart_supercoin_plan", pages: ["cart"], text: "Planning to use SuperCoins soon?", reward: true },
   { key: "orders_redeem", pages: ["orders"], text: "Ready to redeem your voucher?" },
   { key: "orders_help", pages: ["orders"], text: "Need help with an order?" },
   { key: "profile_happy", pages: ["profile"], text: "Happy with your Gift360 experience so far?" },
 ];
+
+// Client-side routing behaviour per question key (targets don't live in the DB).
+const ROUTES: Record<string, { pages?: string[]; href?: string; reward?: boolean }> = {
+  home_corporate: { href: "/distributor" },
+  purchase_supercoin: { pages: ["cart", "brands"], reward: true },
+  cart_supercoin_plan: { reward: true },
+};
 
 const BLOCKED_PATHS = [
   "/admin", "/onboarding", "/login", "/register",
@@ -79,12 +81,32 @@ export default function MicroQuestionWidget() {
   const [thanks, setThanks] = useState(false);
   const [rewardsOpen, setRewardsOpen] = useState(false);
   const [resumeTick, setResumeTick] = useState(0);
+  const [sourceQuestions, setSourceQuestions] = useState<MicroQuestion[]>(FALLBACK_QUESTIONS);
 
   const idxRef = useRef(0);
   const timerRef = useRef<number | undefined>(undefined);
 
   const blocked = BLOCKED_PATHS.some((p) => location === p || location.startsWith(p + "/"));
   const page = pageForPath(location);
+
+  // Questions come from the backend (seeded rows in the feedback table);
+  // fall back to the built-in list if the API is unreachable.
+  useEffect(() => {
+    getMicroQuestions()
+      .then((res) => {
+        const qs: MicroQuestion[] = (res.questions ?? [])
+          .filter((q) => q.key && q.text)
+          .map((q) => ({
+            key: q.key,
+            text: q.text,
+            pages: ROUTES[q.key]?.pages ?? (q.page ? [q.page] : []),
+            href: ROUTES[q.key]?.href,
+            reward: ROUTES[q.key]?.reward,
+          }));
+        if (qs.length > 0) setSourceQuestions(qs);
+      })
+      .catch(() => { /* keep the fallback list */ });
+  }, []);
 
   // Fetch already-answered keys so we never re-ask them.
   useEffect(() => {
@@ -98,8 +120,8 @@ export default function MicroQuestionWidget() {
   // Unanswered questions for the current page.
   const pool = useMemo(() => {
     if (!page) return [];
-    return MICRO_QUESTIONS.filter((q) => q.pages.includes(page) && !answered.has(q.key));
-  }, [page, answered]);
+    return sourceQuestions.filter((q) => q.pages.includes(page) && !answered.has(q.key));
+  }, [page, answered, sourceQuestions]);
   const poolKey = pool.map((q) => q.key).join(",");
 
   // Auto-cycle: show first question, 15s shown -> ~20s gap -> next, forever.
@@ -168,6 +190,7 @@ export default function MicroQuestionWidget() {
         questionKey: q.key,
         page: q.pages[0],
         answer: val,
+        question: q.text,
       });
     } catch {
       /* non-blocking: the widget is best-effort */

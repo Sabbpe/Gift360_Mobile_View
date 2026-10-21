@@ -23,6 +23,7 @@ import { trackEvent } from "@/lib/analytics";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import { registerPaymentCancellation, type QuizRewardStatus } from "@/api/rewardApi";
+import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
 export default function PaymentResult() {
   const [, setLocation] = useLocation();
@@ -149,6 +150,14 @@ export default function PaymentResult() {
       wasCancelled: gateway === "easebuzz" && easebuzzStatus?.toLowerCase() === "usercancelled",
     };
   }, [searchParams]);
+
+  // Payment cancelled by the customer: offer the feedback form shortly after
+  // the result page renders (the orchestrator applies cooldowns/limits).
+  useEffect(() => {
+    if (!paymentData.wasCancelled) return;
+    const t = setTimeout(() => promptFeedback("payment-cancelled"), 2000);
+    return () => clearTimeout(t);
+  }, [paymentData.wasCancelled]);
 
   // Restore the customer's existing session from the encrypted order reference
   // (`txnid`) in the return URL. This does NOT depend on browser storage, so it

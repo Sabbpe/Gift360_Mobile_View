@@ -7,6 +7,25 @@ export interface MicroFeedbackAnsweredResponse {
   keys: string[];
 }
 
+export interface MicroFeedbackQuestion {
+  key: string;
+  text: string;
+  page: string;
+}
+
+export interface MicroFeedbackQuestionsResponse {
+  success: boolean;
+  questions: MicroFeedbackQuestion[];
+}
+
+/** Question definitions seeded in the feedback table (served to the widget). */
+export const getMicroQuestions = async (): Promise<MicroFeedbackQuestionsResponse> => {
+  const response = await axios.get<MicroFeedbackQuestionsResponse>(
+    `${API_BASE_URL}/v1/micro-feedback/questions`
+  );
+  return response.data;
+};
+
 /** Question keys the client already answered (so we stop re-asking them). */
 export const getAnsweredMicroFeedback = async (
   clientId: string
@@ -24,6 +43,7 @@ export const submitMicroFeedback = async (payload: {
   questionKey: string;
   page: string;
   answer: "yes" | "no";
+  question?: string;
 }): Promise<{ success: boolean }> => {
   const response = await axios.post<{ success: boolean }>(
     `${API_BASE_URL}/v1/micro-feedback`,

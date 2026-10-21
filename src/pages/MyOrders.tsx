@@ -14,7 +14,6 @@ import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import homebackImg from "@/assets/dussehrabackdrop.png";
 import { format } from "date-fns";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
-import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
 const FALLBACK = FALLBACK_IMAGE;
 
@@ -223,14 +222,6 @@ export default function MyOrders() {
     () => orders.filter(o => getOrderStatus(o) === "PENDING"),
     [orders]
   );
-
-  // Customer landed on My Orders with an unpaid order — offer the feedback
-  // form shortly after load (the orchestrator applies cooldowns/limits).
-  useEffect(() => {
-    if (loading || paymentPendingOrders.length === 0) return;
-    const t = setTimeout(() => promptFeedback("payment-pending"), 2000);
-    return () => clearTimeout(t);
-  }, [loading, paymentPendingOrders.length]);
 
   const handleViewNow = (orderNumber: string) => {
     // Show a read-only cart-style summary for this order.
