@@ -41,3 +41,19 @@ export const submitFeedback = async (
     throw new Error("An unexpected error occurred");
   }
 };
+
+export interface FeedbackStatusResponse {
+  success: boolean;
+  submitted: boolean;
+}
+
+/** Backend-side source of truth: has this customer ever submitted feedback? */
+export const getFeedbackStatus = async (
+  clientId: string
+): Promise<FeedbackStatusResponse> => {
+  const response = await axios.get<FeedbackStatusResponse>(
+    `${API_BASE_URL}/v1/feedback/status`,
+    { params: { clientId } }
+  );
+  return response.data;
+};

@@ -12,7 +12,7 @@ import {
 } from "@/lib/postLoginRedirect";
 import { decodeJwtPayload } from "@/api/authApi";
 import gift360Logo from "@/assets/gift360full.png";
-import loginBg from "@/assets/dussehraauth.png";
+import loginBg from "@/assets/DussehraLoginn.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
 import myntra from "@/assets/myntra.png";
@@ -314,10 +314,10 @@ export default function Register() {
 
         {/* Sign in link */}
         <div className="w-full max-w-[342px] mx-auto text-center mt-2 mb-1">
-          <p className="text-[11px] font-semibold text-[#1E1E1E]">
+          <p className="inline-block rounded-full bg-white px-4 py-1.5 text-[11px] font-semibold text-black shadow-sm">
             Already have an account?{" "}
             <Link href="/login">
-              <button className="font-bold text-[#7C3AED] underline text-[12px]">Sign in</button>
+              <button className="font-bold text-black underline text-[12px]">Sign in</button>
             </Link>
           </p>
         </div>
@@ -326,7 +326,7 @@ export default function Register() {
         <div className="w-full max-w-[342px] mx-auto mb-1.5">
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-[#C9C9C9]" />
-            <span className="text-[10px] font-medium text-[#35009A] whitespace-nowrap">TRUSTED BY 400+ BRANDS</span>
+            <span className="rounded-full bg-white px-3 py-1 text-[10px] font-medium text-black whitespace-nowrap shadow-sm">TRUSTED BY 400+ BRANDS</span>
             <div className="flex-1 h-px bg-[#C9C9C9]" />
           </div>
         </div>

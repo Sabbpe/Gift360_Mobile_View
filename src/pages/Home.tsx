@@ -33,6 +33,7 @@ import {
   Instagram,
   Facebook,
   Youtube,
+  Coins,
 } from "lucide-react";
 import Hero from "@/components/Hero";
 import Header from "@/components/Header";
@@ -41,6 +42,7 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
+import RewardsModal from "@/components/RewardsModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
@@ -169,13 +171,14 @@ function BalanceCard() {
   );
 }
 
-function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => void; onSuperCoinClick?: () => void }) {
+function ActionGrid({ onBuyVoucher, onSuperCoinClick, onRewards }: { onBuyVoucher: () => void; onSuperCoinClick?: () => void; onRewards: () => void }) {
   const [, setLocation] = useLocation();
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
     { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
     { label: "Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
+    { label: "Rewards", Icon: Coins, href: "", onClick: onRewards },
   ];
 
   return (
@@ -195,7 +198,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
           100% { left: 200%; }
         }
       `}</style>
-      <div className="grid grid-cols-4 gap-[17px] pt-[4px]">
+      <div className="grid grid-cols-5 gap-[8px] pt-[4px]">
         {actions.map(({ label, Icon, href, onClick, isNew }) => (
           <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
             {isNew && (
@@ -215,7 +218,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
             <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
               <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Vouchers" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
             </span>
-            <span className="mt-[7px] h-[18px] w-[65px] text-center text-[8px] font-bold leading-[9px] text-[#161616]">{label}</span>
+            <span className="mt-[7px] h-[18px] w-full max-w-[65px] text-center text-[8px] font-bold leading-[9px] text-[#161616]">{label}</span>
           </button>
         ))}
       </div>
@@ -867,6 +870,7 @@ function MobileHomeScreen() {
   const { toast } = useToast();
   const { user } = useAuthContext();
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [rewardsOpen, setRewardsOpen] = useState(false);
   const [buySheetOpen, setBuySheetOpen] = useState(false);
   const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
   const [sheetInitialAmount, setSheetInitialAmount] = useState<number | undefined>(
@@ -1004,7 +1008,7 @@ function MobileHomeScreen() {
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
           <BalanceCard />
         </div>
-      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
+      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} onRewards={() => setRewardsOpen(true)} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard onBuyNow={openStandardPaymentSheet} />
       {/* PersonalPicksSection hidden */}
@@ -1060,6 +1064,7 @@ function MobileHomeScreen() {
       </section>
 
       <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
+      <RewardsModal open={rewardsOpen} onClose={() => setRewardsOpen(false)} />
       <SuperCoinsBrandModal
         open={superCoinsModalOpen}
         brandId={SUPERCOIN_FEATURED_BRAND_ID}

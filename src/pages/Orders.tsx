@@ -21,6 +21,7 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import { getCardItems } from "@/api/giftingApi";
+import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
 const FALLBACK = FALLBACK_IMAGE;
 const REDEEMED_KEY = "g360_redeemed_vouchers";
@@ -355,6 +356,15 @@ function useCardItemsForOrder(order: any, clientId: string): Record<string, any[
         // rather than breaking the whole card over one bad fetch.
       }
       setCardItemsByOrderItem(next);
+      // The vouchers just arrived from the backend — this is the "fetched"
+      // moment. Prompt for feedback now, before the customer reveals/gifts.
+      const fetchedAny = results.some(
+        (r) =>
+          r.status === "fulfilled" &&
+          Array.isArray(r.value?.cardItems) &&
+          r.value.cardItems.length > 0
+      );
+      if (fetchedAny) promptFeedback("voucher-fetched");
     });
 
     return () => {

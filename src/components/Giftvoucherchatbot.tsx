@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, MessageCircle, X, Minimize2, Maximize2, Bot, AlertCircle, CheckCircle, Package, CreditCard, RotateCcw, Phone, Mail, HelpCircle } from 'lucide-react';
+import { Send, MessageCircle, X, Minimize2, Maximize2, Bot, AlertCircle, CheckCircle, Package, CreditCard, RotateCcw, Phone, Mail, HelpCircle, Coins } from 'lucide-react';
+import RewardsModal from '@/components/RewardsModal';
 
 interface Message {
     id: string;
@@ -28,6 +29,7 @@ const GiftVoucherChatbot: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showTicketForm, setShowTicketForm] = useState(false);
+    const [showRewards, setShowRewards] = useState(false);
     const [conversationContext, setConversationContext] = useState<string[]>([]);
     const [ticketData, setTicketData] = useState({
         subject: '',
@@ -1196,10 +1198,10 @@ Is there anything else I can help you with?`,
         });
     };
 
-    const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void }> = ({ icon, label, onClick }) => (
+    const QuickActionButton: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; className?: string }> = ({ icon, label, onClick, className }) => (
         <button
             onClick={onClick}
-            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 text-sm font-medium text-gray-700 hover:text-blue-600"
+            className={`flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all duration-200 text-sm font-medium text-gray-700 hover:text-blue-600 ${className ?? ''}`}
         >
             {icon}
             <span>{label}</span>
@@ -1220,6 +1222,7 @@ Is there anything else I can help you with?`,
     }
 
     return (
+        <>
         <div
             className={`fixed bottom-20 md:bottom-4 right-4 bg-white rounded-2xl shadow-2xl transition-all duration-300 z-50 flex flex-col ${isMinimized ? 'w-56 h-12' : 'w-72 h-[450px]'
                 }`}
@@ -1289,6 +1292,12 @@ Is there anything else I can help you with?`,
                                     icon={<Phone className="w-4 h-4" />}
                                     label="Support"
                                     onClick={() => handleSendMessage('I need help with an issue')}
+                                />
+                                <QuickActionButton
+                                    icon={<Coins className="w-4 h-4" />}
+                                    label="Rewards"
+                                    onClick={() => setShowRewards(true)}
+                                    className="col-span-2 justify-center border-purple-300 text-purple-700 hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700"
                                 />
                             </div>
                         </div>
@@ -1508,6 +1517,10 @@ Is there anything else I can help you with?`,
                 </>
             )}
         </div>
+        {showRewards && (
+            <RewardsModal open={showRewards} onClose={() => setShowRewards(false)} />
+        )}
+        </>
     );
 };
 
