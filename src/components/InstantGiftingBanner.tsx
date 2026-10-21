@@ -70,7 +70,7 @@ function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
         </div>
       </div>
       <div className="relative w-[90px] h-[140px] flex-shrink-0 flex items-center justify-center">
-        <img
+        <img loading="lazy" decoding="async"
           src={partnerImg}
           alt="Partner With Us"
           className="w-[80px] h-[80px] object-contain drop-shadow-lg"

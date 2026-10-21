@@ -123,7 +123,7 @@ export function MovingBanner({
                                 }}
                             >
                                 <div className="relative rounded-lg overflow-hidden shadow-lg cursor-pointer">
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src={offer.image}
                                         alt={offer.brand}
                                         className="w-full h-[72px] object-contain bg-gray-900"
@@ -176,7 +176,7 @@ export function MovingBanner({
                     }}
                 >
                     <div className="relative rounded-lg overflow-hidden shadow-lg hover:shadow-2xl transition-shadow w-64">
-                        <img
+                        <img loading="lazy" decoding="async"
                             src={offer.image}
                             alt={offer.brand}
                             className="w-full h-40 object-contain bg-gray-900"

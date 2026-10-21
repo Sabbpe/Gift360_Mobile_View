@@ -171,13 +171,13 @@ export default function BrandPaymentPage() {
         </Link>
 
         <section className="relative rounded-2xl bg-white p-4 shadow-[0px_6px_16px_rgba(0,0,0,0.12)]">
-          <span className="absolute right-3 top-3 rounded-full bg-[#EEF2FF] px-3 py-1 text-[11px] font-semibold text-[#4C1D95]">
+          <span className="absolute right-3 top-3 rounded-full bg-[#EEF2FF] px-3 py-1 text-[12px] font-semibold text-[#4C1D95]">
             {brandDetails.Discount > 0 ? `${brandDetails.Discount}% Cashback` : "Voucher"}
           </span>
 
           <div className="flex items-start gap-3">
             <div className="h-20 w-20 overflow-hidden rounded-xl bg-[#F3F4F6] p-2">
-              <img src={imageSrc} alt={brandDetails.BrandName} className="h-full w-full object-contain" />
+              <img loading="lazy" decoding="async" src={imageSrc} alt={brandDetails.BrandName} className="h-full w-full object-contain" />
             </div>
             <div className="min-w-0 pr-24">
               <h1 className="truncate text-lg font-bold text-[#111827]">{brandDetails.BrandName}</h1>

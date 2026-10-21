@@ -8,15 +8,15 @@ import { Onboarding3 } from "@/components/onboarding/Onboarding3";
 import gift360Logo from "@/assets/gift360-logo.png";
 import voucherCover from "@/assets/voucher-cover.png";
 import voucherRevealed from "@/assets/voucher-revealed.png";
-import student from "@/assets/onboard-student.png";
-import businessman from "@/assets/onboard-businessman.png";
-import itEmployee from "@/assets/onboard-itemployee.png";
-import couple from "@/assets/onboard-couple.png";
-import housewife from "@/assets/onboard-housewife.png";
-import collegegirl from "@/assets/onboard-collegegirl.png";
-import senior from "@/assets/onboard-senior.png";
-import shopkeeper from "@/assets/onboard-shopkeeper.png";
-import gigworker from "@/assets/onboard-gigworker.png";
+import student from "@/assets/onboard-student.webp";
+import businessman from "@/assets/onboard-businessman.webp";
+import itEmployee from "@/assets/onboard-itemployee.webp";
+import couple from "@/assets/onboard-couple.webp";
+import housewife from "@/assets/onboard-housewife.webp";
+import collegegirl from "@/assets/onboard-collegegirl.webp";
+import senior from "@/assets/onboard-senior.webp";
+import shopkeeper from "@/assets/onboard-shopkeeper.webp";
+import gigworker from "@/assets/onboard-gigworker.webp";
 
 const ONBOARDING_KEY = "g360_onboarding_v3";
 

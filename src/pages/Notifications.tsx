@@ -77,7 +77,7 @@ export default function Notifications() {
                     {item.message}
                   </p>
                 </div>
-                <span className="shrink-0 text-[10px] leading-[18px] text-[#67657C]">
+                <span className="shrink-0 text-[11px] leading-[18px] text-[#67657C]">
                   {formatDistanceToNow(new Date(item.createdAt), {
                     addSuffix: true,
                   })}

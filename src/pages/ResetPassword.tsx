@@ -226,7 +226,7 @@ export default function ResetPassword() {
                 </button>
               </div>
               {passwordError && <p className="text-red-300 text-xs mt-1.5 font-medium">{passwordError}</p>}
-              <p className="text-[11px] text-white/50 mt-1.5">
+              <p className="text-[12px] text-white/50 mt-1.5">
                 Must be at least 8 characters with uppercase, lowercase, and numbers
               </p>
             </div>

@@ -52,17 +52,17 @@ export default function MobileBottomNav() {
           return (
             <button key={label} onClick={() => setLocation(href)} className="relative flex flex-col items-center justify-center gap-[3px] active:scale-95">
               {label === 'Cart' && cartPulse && (
-                <span className="cart-plus-burst pointer-events-none absolute top-1 text-[11px] font-bold text-emerald-500">
+                <span className="cart-plus-burst pointer-events-none absolute top-1 text-[12px] font-bold text-emerald-500">
                   +1
                 </span>
               )}
               <Icon className="h-[20px] w-[20px]" strokeWidth={2.4} color={active ? "#10aeec" : "#092f82"} fill={label === "Cart" ? (active ? "#10aeec" : "#092f82") : "none"} />
               {label === 'Cart' && totalItems > 0 && (
-                <span className="absolute top-1 right-5 min-w-[16px] h-4 rounded-full bg-primary px-1 text-[9px] font-bold text-white flex items-center justify-center">
+                <span className="absolute top-1 right-5 min-w-[16px] h-4 rounded-full bg-primary px-1 text-[11px] font-bold text-white flex items-center justify-center">
                   {totalItems}
                 </span>
               )}
-              <span className={`text-[7px] font-medium leading-none ${active ? "text-[#10aeec]" : "text-[#092f82]"}`}>{label}</span>
+              <span className={`text-[9px] font-medium leading-none ${active ? "text-[#10aeec]" : "text-[#092f82]"}`}>{label}</span>
             </button>
           );
         })}

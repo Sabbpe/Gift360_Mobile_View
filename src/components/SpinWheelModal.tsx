@@ -119,12 +119,12 @@ export default function SpinWheelModal({ isOpen, onClose }: SpinWheelModalProps)
           {/* Stats Bar - MOBILE: Compact */}
           <div className="grid grid-cols-2 gap-2 sm:gap-3 mb-3 sm:mb-4 max-w-md mx-auto">
             <div className="bg-white/60 rounded-lg p-2 sm:p-3 border border-amber-200/50 text-center">
-              <div className="text-[10px] sm:text-xs text-stone-500 mb-0.5 font-light uppercase tracking-wider">Today's Spins</div>
+              <div className="text-[11px] sm:text-xs text-stone-500 mb-0.5 font-light uppercase tracking-wider">Today's Spins</div>
               <div className="text-xl sm:text-2xl font-serif font-bold text-amber-900">{spinsToday}/{MAX_SPINS_PER_DAY}</div>
             </div>
             
             <div className="bg-white/60 rounded-lg p-2 sm:p-3 border border-amber-200/50 text-center">
-              <div className="text-[10px] sm:text-xs text-stone-500 mb-0.5 font-light uppercase tracking-wider">Total Won</div>
+              <div className="text-[11px] sm:text-xs text-stone-500 mb-0.5 font-light uppercase tracking-wider">Total Won</div>
               <div className="text-xl sm:text-2xl font-serif font-bold text-amber-900">₹{totalWinnings}</div>
             </div>
           </div>
@@ -136,7 +136,7 @@ export default function SpinWheelModal({ isOpen, onClose }: SpinWheelModalProps)
                 🎁 <span className="font-serif">1 Free Spin Daily</span>
               </p>
               {!canSpin && (
-                <p className="text-amber-700 text-[10px] sm:text-xs mt-0.5 font-light">
+                <p className="text-amber-700 text-[11px] sm:text-xs mt-0.5 font-light">
                   Come back tomorrow
                 </p>
               )}
@@ -194,22 +194,22 @@ export default function SpinWheelModal({ isOpen, onClose }: SpinWheelModalProps)
             <div className="grid grid-cols-3 gap-2 sm:gap-4 text-center">
               <div>
                 <div className="text-xl sm:text-2xl mb-1">🛍️</div>
-                <p className="text-[10px] sm:text-xs text-stone-700 font-medium mb-0.5">Shop</p>
-                <p className="text-[9px] sm:text-[10px] text-stone-500 font-light leading-tight hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-stone-700 font-medium mb-0.5">Shop</p>
+                <p className="text-[11px] sm:text-[11px] text-stone-500 font-light leading-tight hidden sm:block">
                   Browse vouchers
                 </p>
               </div>
               <div>
                 <div className="text-xl sm:text-2xl mb-1">🎯</div>
-                <p className="text-[10px] sm:text-xs text-stone-700 font-medium mb-0.5">Spin</p>
-                <p className="text-[9px] sm:text-[10px] text-stone-500 font-light leading-tight hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-stone-700 font-medium mb-0.5">Spin</p>
+                <p className="text-[11px] sm:text-[11px] text-stone-500 font-light leading-tight hidden sm:block">
                   Once daily
                 </p>
               </div>
               <div>
                 <div className="text-xl sm:text-2xl mb-1">🎁</div>
-                <p className="text-[10px] sm:text-xs text-stone-700 font-medium mb-0.5">Win</p>
-                <p className="text-[9px] sm:text-[10px] text-stone-500 font-light leading-tight hidden sm:block">
+                <p className="text-[11px] sm:text-xs text-stone-700 font-medium mb-0.5">Win</p>
+                <p className="text-[11px] sm:text-[11px] text-stone-500 font-light leading-tight hidden sm:block">
                   ₹1 to ₹10
                 </p>
               </div>

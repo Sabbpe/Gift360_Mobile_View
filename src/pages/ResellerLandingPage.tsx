@@ -146,7 +146,7 @@ export default function ResellerLandingPage() {
 
                             {/* Right side - Illustration */}
                             <div className="flex-shrink-0 w-32 h-32 mt-12">
-                                <img
+                                <img loading="lazy" decoding="async"
                                     src={ResellerImage}
                                     alt="Reseller Partnership"
                                     className="w-full h-auto object-contain"

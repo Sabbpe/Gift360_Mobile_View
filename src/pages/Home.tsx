@@ -15,7 +15,6 @@ const SUPERCOIN_PAUSED_MESSAGE = superCoinConversionConfig.pausedMessage;
 import {
   Loader2,
   ChevronLeft,
-  Bell,
   Eye,
   EyeOff,
   AlertCircle,
@@ -82,30 +81,17 @@ function HomeHeader({ onSuperCoinClick }: { onSuperCoinClick: () => void }) {
   const firstName = displayName.split(" ")[0];
 
   return (
-    <header className="relative h-[142px] overflow-hidden rounded-b-[34px] bg-[linear-gradient(135deg,#523da9_0%,#4c42b8_48%,#5365df_100%)] px-[21px] pt-[40px] text-white">
+    <header className="relative h-[128px] rounded-b-[30px] bg-[linear-gradient(135deg,#523da9_0%,#4c42b8_48%,#5365df_100%)] px-[21px] pt-[20px] text-white">
       <div className="flex items-center justify-between">
-        <h1 className="text-[23px] font-bold leading-none tracking-[-0.01em]">Hi {firstName || "User"}!</h1>
-        <div className="flex items-center gap-[14px]">
-          <div className="relative">
-            <SuperCoinHeaderIcon onClick={onSuperCoinClick} frozen={SUPERCOIN_CONVERSION_PAUSED} />
-            <span className="absolute -top-2.5 -right-3 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[6px] font-bold text-white shadow-md overflow-hidden"
-              style={{
-                background: "linear-gradient(90deg, #7C3AED, #EC4899, #3B82F6, #7C3AED)",
-                backgroundSize: "300% 100%",
-                animation: "new-feature-pulse 2s ease-in-out infinite, gradient-shift 3s ease-in-out infinite",
-              }}>
-              <span className="relative z-10">Try Now</span>
-              <span className="absolute inset-0 z-20 overflow-hidden pointer-events-none">
-                <span className="absolute top-0 h-full w-[40%] -skew-x-12 bg-gradient-to-r from-transparent via-white/40 to-transparent"
-                  style={{ animation: "shimmer-sweep 2.5s ease-in-out infinite" }} />
-              </span>
-            </span>
-          </div>
-          <button onClick={() => setLocation("/notifications")} className="grid h-[20px] w-[20px] place-items-center active:scale-95" aria-label="Notifications">
-            <Bell className="h-[18px] w-[18px]" strokeWidth={1.8} />
-          </button>
-          <button onClick={() => setLocation("/profile")} className="grid h-[22px] w-[22px] place-items-center rounded-full bg-[#e99da8] text-white active:scale-95" aria-label="Profile">
-            <User className="h-[14px] w-[14px]" strokeWidth={2.5} />
+        <div className="min-w-0 flex-1 pr-3">
+          <p className="text-[12px] font-medium leading-none text-white/80">Hi,</p>
+          <h1 className="mt-1 truncate text-[22px] font-bold leading-[1.1] tracking-[-0.01em]">{firstName || "User"}</h1>
+        </div>
+        <div className="relative z-40 flex shrink-0 items-center gap-[12px]">
+          <SuperCoinHeaderIcon onClick={onSuperCoinClick} frozen={SUPERCOIN_CONVERSION_PAUSED} />
+          {/* Notifications live in the top bar (Header) -- not duplicated here. */}
+          <button onClick={() => setLocation("/profile")} className="grid h-[36px] w-[36px] place-items-center rounded-full bg-[#e99da8] text-white active:scale-95" aria-label="Profile">
+            <User className="h-[18px] w-[18px]" strokeWidth={2.5} />
           </button>
         </div>
       </div>
@@ -131,9 +117,9 @@ function BalanceCard() {
   const loadFailed = hasClient && !hasBalance && isError;
 
   return (
-    <section className="absolute left-0 right-0 top-[86px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
+    <section className="absolute left-0 right-0 top-[84px] z-30 mx-auto w-[90%] max-w-[350px] overflow-visible">
       <div className="relative h-[130px] overflow-hidden rounded-[18px] shadow-[0_18px_38px_rgba(27,25,75,0.24)] animate-[float-y_4s_ease-in-out_infinite]">
-        <img src={giftCARD} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none scale-110" />
+        <img loading="lazy" decoding="async" src={giftCARD} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none scale-110" />
         <div className="relative h-full px-[24px] py-[14px] text-black">
           <p className="text-[13px] font-normal leading-none tracking-[-0.01em] text-black">Your CashBack points</p>
         <div className="relative mt-[12px] flex items-center gap-[14px]">
@@ -141,7 +127,7 @@ function BalanceCard() {
             <span className="text-[22px]">{visible ? balanceText : "\u20b9 \u2022\u2022\u2022\u2022\u2022\u2022\u2022"}</span>
             {visible ? balanceText : "₹ •••••••"}
           </p>
-          <button onClick={() => setVisible((value) => !value)} className="mt-[4px] active:scale-95" aria-label="Toggle balance">
+          <button onClick={() => setVisible((value) => !value)} className="tap-area mt-[4px] active:scale-95" aria-label="Toggle balance">
             {visible ? <EyeOff className="h-[19px] w-[19px]" strokeWidth={1.7} /> : <Eye className="h-[19px] w-[19px]" strokeWidth={1.7} />}
           </button>
         </div>
@@ -149,7 +135,7 @@ function BalanceCard() {
           <button
             type="button"
             onClick={() => void refetch()}
-            className="mt-[6px] text-[10px] font-semibold text-[#5B3FFF] underline active:opacity-70"
+            className="mt-[6px] text-[11px] font-semibold text-[#5B3FFF] underline active:opacity-70"
           >
             Couldn&apos;t load your balance. Tap to retry
           </button>
@@ -161,9 +147,9 @@ function BalanceCard() {
               50% { filter: drop-shadow(0 0 8px rgba(255,200,0,0.8)) drop-shadow(0 0 16px rgba(255,180,0,0.4)); transform: scale(1.1); }
             }
           `}</style>
-          <img src={superCoinImg} alt="SuperCoin" className="h-[16px] w-[16px] object-contain" style={{ animation: "gold-pulse-badge 1.5s ease-in-out infinite" }} />
-          <span className="text-[8px] font-semibold bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] bg-clip-text text-transparent">SuperCoins now available on</span>
-          <img src={gWord} alt="Gift360" className="h-[12px] w-auto object-contain" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="h-[16px] w-[16px] object-contain" style={{ animation: "gold-pulse-badge 1.5s ease-in-out infinite" }} />
+          <span className="text-[10px] font-semibold bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] bg-clip-text text-transparent">SuperCoins now available on</span>
+          <img loading="lazy" decoding="async" src={gWord} alt="Gift360" className="h-[12px] w-auto object-contain" />
         </div>
         </div>
       </div>
@@ -202,7 +188,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick, onRewards }: { onBuyVouche
         {actions.map(({ label, Icon, href, onClick, isNew }) => (
           <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
             {isNew && (
-              <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[6px] font-bold text-white shadow-md overflow-hidden"
+              <span className="absolute -top-2 left-1/2 -translate-x-1/2 z-10 whitespace-nowrap rounded-full px-1.5 py-0.5 text-[9px] font-bold text-white shadow-md overflow-hidden"
                 style={{
                   background: "linear-gradient(90deg, #7C3AED, #EC4899, #3B82F6, #7C3AED)",
                   backgroundSize: "300% 100%",
@@ -218,7 +204,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick, onRewards }: { onBuyVouche
             <span className="grid h-[43px] w-[43px] place-items-center rounded-[6px] bg-[#f1f2f8] shadow-[4px_5px_7px_rgba(21,28,74,0.19)]">
               <Icon className="h-[27px] w-[27px] text-[#092a92]" strokeWidth={label === "Vouchers" ? 2.2 : 2.4} fill={label === "Buy Voucher" ? "#092a92" : "none"} />
             </span>
-            <span className="mt-[7px] h-[18px] w-full max-w-[65px] text-center text-[8px] font-bold leading-[9px] text-[#161616]">{label}</span>
+            <span className="mt-[6px] h-[26px] w-full max-w-[66px] text-center text-[11px] font-bold leading-[12px] text-[#161616]">{label}</span>
           </button>
         ))}
       </div>
@@ -376,7 +362,7 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
               <div className="flex items-start gap-2" style={{ height: 32 }}>
                 <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                   {imageSrc ? (
-                    <img src={imageSrc} alt={brandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+                    <img loading="lazy" decoding="async" src={imageSrc} alt={brandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
                   ) : (
                     <div style={{ width: 34, height: 28 }} />
                   )}
@@ -384,7 +370,7 @@ function RecommendedList({ onBuy }: { onBuy?: (id: string) => void }) {
                 <div className="min-w-0" style={{ flex: 1 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <span className="text-[12px] font-semibold text-[#111827] truncate">{brandName}</span>
-                    <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `\u20b9${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
+                    <span className="text-[11px] text-[#6B7280] truncate">{priceValue > 0 ? `\u20b9${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
                   </div>
                 </div>
               </div>
@@ -462,18 +448,18 @@ function OccasionPicksSection({
                 className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
               >
                 {discountNum > 0 && (
-                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none shadow-md pointer-events-none">
                     {discountNum}%
                   </span>
                 )}
                 {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-                  <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+                  <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
                 )}
                 <div className="grid h-[40px] w-[40px] place-items-center">
                   {loadingBrandId === brand.BrandId ? (
                     <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
                   ) : image ? (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={image}
                       alt={brand.BrandName}
                       className="h-[40px] w-[40px] object-contain"
@@ -483,10 +469,10 @@ function OccasionPicksSection({
                   )}
                 </div>
                 <div className="mt-2 w-full">
-                  <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+                  <p className="line-clamp-2 text-[12px] font-medium leading-[1.1] text-[#101010]">
                     {brand.BrandName}
                   </p>
-                  <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+                  <p className="mt-1 truncate text-[11px] font-medium text-[#888888]">
                     {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
                   </p>
                 </div>
@@ -553,18 +539,18 @@ function PersonalPicksSection({
                 className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
               >
                 {discountNum > 0 && (
-                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+                  <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none shadow-md pointer-events-none">
                     {discountNum}%
                   </span>
                 )}
                 {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-                  <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+                  <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
                 )}
                 <div className="grid h-[40px] w-[40px] place-items-center">
                   {loadingBrandId === brand.BrandId ? (
                     <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
                   ) : image ? (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={image}
                       alt={brand.BrandName}
                       className="h-[40px] w-[40px] object-contain"
@@ -574,10 +560,10 @@ function PersonalPicksSection({
                   )}
                 </div>
                 <div className="mt-2 w-full">
-                  <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+                  <p className="line-clamp-2 text-[12px] font-medium leading-[1.1] text-[#101010]">
                     {brand.BrandName}
                   </p>
-                  <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+                  <p className="mt-1 truncate text-[11px] font-medium text-[#888888]">
                     {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
                   </p>
                 </div>
@@ -691,18 +677,18 @@ function TopBrandsGrid({
         className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] disabled:cursor-wait disabled:opacity-80 relative"
       >
         {discountNum > 0 && (
-          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none shadow-md pointer-events-none">
             {discountNum}%
           </span>
         )}
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
         )}
         <div className="grid h-[40px] w-[40px] place-items-center">
           {loadingBrandId === brand.BrandId ? (
             <Loader2 className="h-5 w-5 animate-spin text-[#6D28D9]" />
           ) : image ? (
-            <img
+            <img loading="lazy" decoding="async"
               src={image}
               alt={brand.BrandName}
               className="h-[40px] w-[40px] object-contain"
@@ -712,10 +698,10 @@ function TopBrandsGrid({
           )}
         </div>
         <div className="mt-2 w-full">
-          <p className="line-clamp-2 text-[11px] font-medium leading-[1.1] text-[#101010]">
+          <p className="line-clamp-2 text-[12px] font-medium leading-[1.1] text-[#101010]">
             {brand.BrandName}
           </p>
-          <p className="mt-1 truncate text-[9px] font-medium text-[#888888]">
+          <p className="mt-1 truncate text-[11px] font-medium text-[#888888]">
             {discountNum > 0 ? `${discountNum}% Cashback` : brand.Category || "Gift Voucher"}
           </p>
         </div>
@@ -743,7 +729,7 @@ function TopBrandsGrid({
             <AlertCircle className="h-4 w-4" />
             <p className="text-[13px] font-semibold">Unable to load top brands right now.</p>
           </div>
-          <p className="mt-1 text-center text-[11px] text-[#667085]">
+          <p className="mt-1 text-center text-[12px] text-[#667085]">
             Please try again in a moment.
           </p>
         </div>
@@ -818,7 +804,7 @@ function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
             style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}>
             <div className="flex items-start gap-2" style={{ height: 32 }}>
               <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img src={item.image || "/brand-placeholder.png"} alt={item.name} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+                <img loading="lazy" decoding="async" src={item.image || "/brand-placeholder.png"} alt={item.name} style={{ width: 34, height: 28, objectFit: 'contain' }} />
               </div>
               <div className="min-w-0" style={{ flex: 1 }}>
                 <span className="text-[12px] font-semibold text-[#111827] truncate block">{item.name}</span>
@@ -857,7 +843,7 @@ function BottomNav() {
           return (
             <button key={label} onClick={() => setLocation(href)} className="flex flex-col items-center justify-center gap-[3px] active:scale-95">
               <Icon className="h-[20px] w-[20px]" strokeWidth={2.4} color={active ? "#10aeec" : "#092f82"} fill={label === "Cart" ? (active ? "#10aeec" : "#092f82") : "none"} />
-              <span className={`text-[7px] font-medium leading-none ${active ? "text-[#10aeec]" : "text-[#092f82]"}`}>{label}</span>
+              <span className={`text-[9px] font-medium leading-none ${active ? "text-[#10aeec]" : "text-[#092f82]"}`}>{label}</span>
             </button>
           );
         })}
@@ -1004,7 +990,7 @@ function MobileHomeScreen() {
           style={{ backgroundImage: `url(${homebackImg})` }}
         />
         <div className="relative z-10">
-        <div className="relative overflow-visible pb-[70px]">
+        <div className="relative overflow-visible pb-[118px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
           <BalanceCard />
         </div>
@@ -1026,7 +1012,7 @@ function MobileHomeScreen() {
       {/* CERTIFICATION LOGO */}
       <section className="px-[21px] pt-[27px] pb-[10px]">
         <div className="flex items-center justify-center">
-          <img src={certfLogo} alt="Certifications" className="h-10 w-auto object-contain" />
+          <img loading="lazy" decoding="async" src={certfLogo} alt="Certifications" className="h-10 w-auto object-contain" />
         </div>
       </section>
 

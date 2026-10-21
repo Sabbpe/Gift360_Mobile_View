@@ -49,16 +49,16 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
         className="flex h-[96px] min-w-[88px] flex-shrink-0 cursor-pointer flex-col items-center justify-center rounded-[12px] bg-white px-[10px] py-[12px] text-center shadow-[0_4px_10px_rgba(0,0,0,0.05)] active:scale-[0.98] relative"
       >
         {discountNum > 0 && (
-          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold text-white leading-none shadow-md pointer-events-none">
+          <span className="absolute top-0.5 left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[10px] font-bold text-white leading-none shadow-md pointer-events-none">
             {discountNum}%
           </span>
         )}
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-          <img src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1.5 right-1.5 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
         )}
         <div className="grid h-[40px] w-[40px] place-items-center bg-white rounded-lg">
           {imageSrc ? (
-            <img
+            <img loading="lazy" decoding="async"
               src={imageSrc}
               alt={brand.BrandName}
               className="h-[40px] w-[40px] object-contain"
@@ -68,11 +68,11 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
           )}
         </div>
         <div className="mt-1.5 w-full">
-          <p className="line-clamp-1 text-[10px] font-medium leading-[1.1] text-[#101010]">
+          <p className="line-clamp-1 text-[11px] font-medium leading-[1.1] text-[#101010]">
             {brand.BrandName}
           </p>
           {badge && (
-            <span className="mt-1 inline-block rounded-full bg-[#7C3AED]/10 px-1.5 py-px text-[7px] font-semibold text-[#7C3AED]">
+            <span className="mt-1 inline-block rounded-full bg-[#7C3AED]/10 px-1.5 py-px text-[9px] font-semibold text-[#7C3AED]">
               {badge}
             </span>
           )}
@@ -89,7 +89,7 @@ export default function WhatsHotSection({ brands, onOpenBrand }: WhatsHotSection
             Rakhi Special Picks
           </h2>
         </div>
-        <span className="text-[10px] font-medium text-[#7C3AED] bg-[#F3F0FF] px-2 py-0.5 rounded-full">
+        <span className="text-[11px] font-medium text-[#7C3AED] bg-[#F3F0FF] px-2 py-0.5 rounded-full">
           Live
         </span>
       </div>

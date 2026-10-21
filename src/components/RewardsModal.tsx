@@ -145,27 +145,27 @@ export default function RewardsModal({ open, onClose }: Props) {
             style={{ background: "linear-gradient(135deg, #7C3AED 0%, #5B2B99 100%)" }}
           >
             <div className="flex-1 min-w-0 space-y-1.5">
-              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
+              <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
                 QUIZ
               </span>
               {quizEarned ? (
                 <>
                   <h3 className="text-[15px] font-bold text-white leading-tight">Quiz reward earned</h3>
-                  <p className="text-[10px] text-white/85 leading-snug">
+                  <p className="text-[11px] text-white/85 leading-snug">
                     Your {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins have been credited. Thanks for playing.
                   </p>
                 </>
               ) : quizWon ? (
                 <>
                   <h3 className="text-[15px] font-bold text-white leading-tight">You won! Buy now to get {QUIZ_SUPERCOIN_REWARD} SuperCoins</h3>
-                  <p className="text-[10px] text-white/85 leading-snug">
+                  <p className="text-[11px] text-white/85 leading-snug">
                     Complete a purchase before the timer runs out and {QUIZ_SUPERCOIN_REWARD} bonus SuperCoins are credited after your voucher is issued.
                   </p>
                 </>
               ) : (
                 <>
                   <h3 className="text-[15px] font-bold text-white leading-tight">Answer 5 questions, win {QUIZ_SUPERCOIN_REWARD} SuperCoins</h3>
-                  <p className="text-[10px] text-white/85 leading-snug">
+                  <p className="text-[11px] text-white/85 leading-snug">
                     {quizNote || "Get all 5 right, then buy before the timer runs out and we credit 5 bonus SuperCoins."}
                   </p>
                 </>
@@ -175,7 +175,7 @@ export default function RewardsModal({ open, onClose }: Props) {
                   type="button"
                   onClick={handleQuizPlay}
                   disabled={quizBusy}
-                  className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[10px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all disabled:opacity-60"
+                  className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[11px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all disabled:opacity-60"
                 >
                   {quizBusy ? "Opening..." : quizWon ? "Buy now" : "Play now"}
                   <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
@@ -194,13 +194,13 @@ export default function RewardsModal({ open, onClose }: Props) {
           >
             <div className="px-4 py-4 flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1.5">
-                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#4C1D95] bg-[#F7D46B]">
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider text-[#4C1D95] bg-[#F7D46B]">
                   STORY &amp; REEL
                 </span>
                 <h3 className="text-[15px] font-bold text-white leading-tight">
                   Share your Gift360 story, win {STORY_SUPERCOIN_REWARD} SuperCoins
                 </h3>
-                <p className="text-[10px] text-white/85 leading-snug">
+                <p className="text-[11px] text-white/85 leading-snug">
                   Buy a voucher with us, share your experience as a reel or story on Instagram,
                   paste your link below and submit to win <span className="font-bold text-[#F7D46B]">{STORY_SUPERCOIN_REWARD} SuperCoins</span>.
                 </p>
@@ -211,7 +211,7 @@ export default function RewardsModal({ open, onClose }: Props) {
             </div>
 
             <div className="px-4 pb-4 space-y-2">
-              <ol className="space-y-1 text-[10px] text-white/85">
+              <ol className="space-y-1 text-[11px] text-white/85">
                 <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">1.</span> Buy any voucher on Gift360</li>
                 <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">2.</span> Post a reel or story about it on Instagram</li>
                 <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">3.</span> Paste your link here and submit</li>
@@ -220,7 +220,7 @@ export default function RewardsModal({ open, onClose }: Props) {
               {storyDone ? (
                 <div className="flex items-start gap-2 rounded-lg bg-white/95 px-3 py-2.5">
                   <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
-                  <p className="text-[11px] leading-snug text-gray-800 font-medium">
+                  <p className="text-[12px] leading-snug text-gray-800 font-medium">
                     Thanks! Your story link is submitted. Your {STORY_SUPERCOIN_REWARD} SuperCoins will be credited after verification.
                   </p>
                 </div>
@@ -233,20 +233,20 @@ export default function RewardsModal({ open, onClose }: Props) {
                       value={storyUrl}
                       onChange={(e) => setStoryUrl(e.target.value)}
                       placeholder="https://instagram.com/reel/..."
-                      className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/95 border border-white/30 text-[11px] text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-amber-300 outline-none"
+                      className="flex-1 min-w-0 px-3 py-2 rounded-lg bg-white/95 border border-white/30 text-[12px] text-gray-900 placeholder:text-gray-400 focus:ring-2 focus:ring-amber-300 outline-none"
                     />
                     <button
                       type="button"
                       onClick={handleStorySubmit}
                       disabled={!storyUrlValid || storySending}
-                      className="shrink-0 inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-[11px] font-bold text-[#5B2B99] bg-[#F7D46B] shadow-md active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-lg px-3.5 py-2 text-[12px] font-bold text-[#5B2B99] bg-[#F7D46B] shadow-md active:scale-[0.97] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {storySending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Gift className="h-3.5 w-3.5" />}
                       {storySending ? "Submitting..." : "Submit"}
                     </button>
                   </div>
                   {storyError && (
-                    <p className="text-[10px] font-medium text-red-200">{storyError}</p>
+                    <p className="text-[11px] font-medium text-red-200">{storyError}</p>
                   )}
                 </>
               )}
@@ -256,7 +256,7 @@ export default function RewardsModal({ open, onClose }: Props) {
 
         {/* Footer */}
         <div className="flex-shrink-0 p-3 border-t border-gray-100 text-center">
-          <p className="text-[10px] text-gray-400">
+          <p className="text-[11px] text-gray-400">
             SuperCoins are credited after we verify your reel or story is live.
           </p>
         </div>

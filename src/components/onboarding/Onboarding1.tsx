@@ -1,14 +1,14 @@
 import { ChevronRight, Signal, Wifi, BatteryFull } from "lucide-react";
 import gift360Logo from "@/assets/gift360-logo.png";
-import student from "@/assets/onboard-student.png";
-import businessman from "@/assets/onboard-businessman.png";
-import itEmployee from "@/assets/onboard-itemployee.png";
-import couple from "@/assets/onboard-couple.png";
-import housewife from "@/assets/onboard-housewife.png";
-import collegegirl from "@/assets/onboard-collegegirl.png";
-import senior from "@/assets/onboard-senior.png";
-import shopkeeper from "@/assets/onboard-shopkeeper.png";
-import gigworker from "@/assets/onboard-gigworker.png";
+import student from "@/assets/onboard-student.webp";
+import businessman from "@/assets/onboard-businessman.webp";
+import itEmployee from "@/assets/onboard-itemployee.webp";
+import couple from "@/assets/onboard-couple.webp";
+import housewife from "@/assets/onboard-housewife.webp";
+import collegegirl from "@/assets/onboard-collegegirl.webp";
+import senior from "@/assets/onboard-senior.webp";
+import shopkeeper from "@/assets/onboard-shopkeeper.webp";
+import gigworker from "@/assets/onboard-gigworker.webp";
 import { brands } from "@/assets/pp-brands";
 import { StatusBar } from "./StatusBar";
 
@@ -297,7 +297,7 @@ export const Onboarding1 = ({ onNext, onSkip }: Props) => {
                 </div>
                 <div className="px-2.5 pb-1">
                   <div className="text-[7px] text-muted-foreground leading-tight">
-                    300+ top brands
+                    Top brands
                   </div>
                 </div>
 
@@ -336,7 +336,7 @@ export const Onboarding1 = ({ onNext, onSkip }: Props) => {
           Gifting for Everyone
         </h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          From students to seniors, find the perfect voucher from 300+ top
+          From students to seniors, find the perfect voucher from our top
           brands across shopping, food, fitness, travel and more.
         </p>
       </div>

@@ -71,14 +71,14 @@ export default function BrandCard({
     const tileInner = (
       <div className="w-[72px] h-[72px] bg-white rounded-lg flex items-center justify-center mx-auto relative" style={{ boxShadow: '0 6px 18px rgba(2,6,23,0.08)' }}>
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-          <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
         )}
         {isLoading ? (
           <div className="w-12 h-12 g-skeleton" />
         ) : imgSrc === FALLBACK ? (
           <Store className="h-8 w-8 text-muted-foreground/40" />
         ) : (
-          <img src={imgSrc} alt={brand.BrandName} className="w-11 h-11 object-contain" onError={() => setImgSrc(FALLBACK)} />
+          <img loading="lazy" decoding="async" src={imgSrc} alt={brand.BrandName} className="w-11 h-11 object-contain" onError={() => setImgSrc(FALLBACK)} />
         )}
       </div>
     );
@@ -120,7 +120,7 @@ export default function BrandCard({
           style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
         >
           {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-            <img src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
           )}
           <Link href={`/brands/${brand.BrandId}`} className="block">
             <div className="flex items-start gap-2" style={{ height: 32 }}>
@@ -130,14 +130,14 @@ export default function BrandCard({
                 ) : imgSrc === FALLBACK ? (
                   <Store className="h-6 w-6 text-muted-foreground/40" />
                 ) : (
-                  <img src={imgSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} onError={() => setImgSrc(FALLBACK)} />
+                  <img loading="lazy" decoding="async" src={imgSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} onError={() => setImgSrc(FALLBACK)} />
                 )}
               </div>
 
               <div className="min-w-0" style={{ flex: 1 }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                   <span className="text-[12px] font-semibold text-[#111827] truncate">{brand.BrandName}</span>
-                  <span className="text-[10px] text-[#6B7280] truncate">{displayPrice ? `₹${displayPrice.toLocaleString()} Voucher` : 'E-Gift Card'}</span>
+                  <span className="text-[11px] text-[#6B7280] truncate">{displayPrice ? `₹${displayPrice.toLocaleString()} Voucher` : 'E-Gift Card'}</span>
                 </div>
               </div>
             </div>

@@ -23,10 +23,10 @@ export function WalletOdometer({ value, duration = 2000 }: { value: number; dura
 
     return (
         <div className="flex items-baseline justify-center gap-0.5">
-            <span className="font-mono text-[11px] leading-none text-yellow-700 font-semibold">
+            <span className="font-mono text-[12px] leading-none text-yellow-700 font-semibold">
                 {displayValue.toLocaleString("en-IN")}
             </span>
-            <span className="text-[9px] leading-none text-yellow-700 font-semibold">
+            <span className="text-[11px] leading-none text-yellow-700 font-semibold">
                 pts
             </span>
         </div>

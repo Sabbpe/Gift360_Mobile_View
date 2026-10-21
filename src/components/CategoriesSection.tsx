@@ -177,7 +177,7 @@ export default function CategoriesSection() {
           <SlidersHorizontal className="h-3.5 w-3.5" />
           <span className="text-xs font-semibold">Filter</span>
           {activeFiltersCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 h-4 min-w-[16px] px-1 rounded-full bg-primary text-primary-foreground text-[11px] font-bold flex items-center justify-center">
               {activeFiltersCount}
             </span>
           )}

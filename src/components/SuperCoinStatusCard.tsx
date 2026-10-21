@@ -141,13 +141,13 @@ export default function SuperCoinStatusCard({
     <div className="space-y-3">
       {/* Section header */}
       <div className="flex items-center gap-3">
-        <img src={flipkartSuperCoinIcon} alt="" className="h-14 w-auto max-w-[180px] shrink-0 object-contain" />
+        <img loading="lazy" decoding="async" src={flipkartSuperCoinIcon} alt="" className="h-14 w-auto max-w-[180px] shrink-0 object-contain" />
         <div className="flex-1">
           <p className="text-sm font-semibold cart-text-primary leading-tight">
             Save more with{" "}
             <span className="text-[#5B3FFF] font-bold">SuperCoins</span>
           </p>
-          <p className="text-[10px] cart-text-primary opacity-70 mt-0.5">Powered by Flipkart</p>
+          <p className="text-[11px] cart-text-primary opacity-70 mt-0.5">Powered by Flipkart</p>
         </div>
       </div>
 
@@ -198,7 +198,7 @@ export default function SuperCoinStatusCard({
                         : "0.00"}
                   </span>
                   {" "}
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={superCoinIcon}
                     alt=""
                     className="inline h-4 w-4 align-middle -mt-px"

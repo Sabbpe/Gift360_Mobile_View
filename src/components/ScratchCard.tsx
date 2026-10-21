@@ -259,7 +259,7 @@ export function ScratchCard({
             <div className="relative z-10 flex items-start justify-between p-6 pb-0">
               <div className="w-[159px] h-[59px] rounded-lg bg-white/80 flex items-center justify-center overflow-hidden shadow-sm">
                 {logoUrl ? (
-                  <img src={logoUrl} alt="Brand Logo" className="w-full h-full object-contain p-1" />
+                  <img loading="lazy" decoding="async" src={logoUrl} alt="Brand Logo" className="w-full h-full object-contain p-1" />
                 ) : (
                   <div className="flex items-center gap-2">
                     <Sparkles className="w-5 h-5 text-[#C78D2E]" />
@@ -269,7 +269,7 @@ export function ScratchCard({
               </div>
               <div className="w-[70px] h-[70px] rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden border-2 border-[#E4B76C]/30">
                 {profileUrl ? (
-                  <img src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
+                  <img loading="lazy" decoding="async" src={profileUrl} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <User className="w-8 h-8 text-[#C78D2E]/60" />
                 )}

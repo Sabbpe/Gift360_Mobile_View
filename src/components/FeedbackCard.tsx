@@ -30,12 +30,12 @@ export default function FeedbackCard({ onOpen }: FeedbackCardProps) {
             <p className="text-[13px] font-bold text-white leading-tight">
               How are we doing?
             </p>
-            <p className="text-[11px] text-white/75 mt-0.5">
+            <p className="text-[12px] text-white/75 mt-0.5">
               Share quick feedback — takes 30 sec
             </p>
           </div>
           <div className="flex-shrink-0 rounded-full bg-white/20 px-3 py-1.5 backdrop-blur-sm">
-            <span className="text-[11px] font-semibold text-white">Give Feedback</span>
+            <span className="text-[12px] font-semibold text-white">Give Feedback</span>
           </div>
         </div>
       </div>

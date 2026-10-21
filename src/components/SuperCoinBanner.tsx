@@ -37,20 +37,20 @@ export default function SuperCoinBanner({ onOpenGuide }: Props) {
       <div className="relative z-10 h-full flex items-center justify-between gap-2 px-4 py-3">
         {/* Left column */}
         <div className="flex-1 min-w-0 space-y-1.5">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[8px] font-bold tracking-wider text-white">
+          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 backdrop-blur-sm px-2 py-0.5 text-[10px] font-bold tracking-wider text-white">
             NEW · SuperCoins
           </span>
           <h2 className="text-[15px] font-bold text-white leading-tight">
             How to use SuperCoins
           </h2>
           <span
-            className="sc-banner-anim sc-chip inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-[3px] text-[9px] font-extrabold text-[#6D28D9] shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
+            className="sc-banner-anim sc-chip inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-[3px] text-[11px] font-extrabold text-[#6D28D9] shadow-[0_2px_8px_rgba(0,0,0,0.15)]"
             style={{ animationDelay: "0.4s" }}
           >
-            <img src={superCoinImg} alt="" className="w-[11px] h-[11px] object-contain" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-[11px] h-[11px] object-contain" />
             Convert SC to instant savings
           </span>
-          <div className="flex items-center gap-1 pt-0.5 text-[9px] font-semibold text-white">
+          <div className="flex items-center gap-1 pt-0.5 text-[11px] font-semibold text-white">
             <span>See how it works</span>
             <span className="sc-banner-anim sc-arrow inline-block">→</span>
           </div>
@@ -75,7 +75,7 @@ export default function SuperCoinBanner({ onOpenGuide }: Props) {
           <div className="sc-banner-anim sc-float">
             <div className="sc-banner-anim sc-tilt">
               <div className="relative overflow-hidden rounded-full">
-                <img
+                <img loading="lazy" decoding="async"
                   src={superCoinImg}
                   alt="SuperCoin"
                   className="w-[92px] h-[92px] object-contain drop-shadow-[0_8px_18px_rgba(0,0,0,0.3)]"

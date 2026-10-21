@@ -73,7 +73,7 @@ export default function VoucherDetails() {
             {/* IMAGE */}
             <div className="space-y-4 sm:space-y-6">
               <div className="relative aspect-square rounded-3xl overflow-hidden bg-blackcard card-edge p-3">
-                <img
+                <img loading="lazy" decoding="async"
                   src={voucher.image}
                   alt={voucher.title}
                   className="w-full h-full object-cover rounded-2xl"

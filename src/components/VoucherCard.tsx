@@ -23,9 +23,9 @@ export default function VoucherCard({ voucher, showBulkContext = false }: Vouche
           {/* Image Container */}
           <div className="relative aspect-square overflow-hidden bg-muted">
             {!isSuperCoinExcluded(voucher.brand) && (
-              <img src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[22px] h-[22px] object-contain drop-shadow-sm z-10" />
+              <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[22px] h-[22px] object-contain drop-shadow-sm z-10" />
             )}
-            <img
+            <img loading="lazy" decoding="async"
               src={voucher.image}
               alt={voucher.title}
               className="w-full h-full object-cover"
@@ -88,7 +88,7 @@ export default function VoucherCard({ voucher, showBulkContext = false }: Vouche
                   <Package className="h-3.5 w-3.5" />
                   <span className="font-semibold">Min Bulk: 10+</span>
                 </div>
-                <p className="text-[10px] sm:text-xs text-muted-foreground">
+                <p className="text-[11px] sm:text-xs text-muted-foreground">
                   Distributor Discount Available
                 </p>
               </div>
@@ -98,7 +98,7 @@ export default function VoucherCard({ voucher, showBulkContext = false }: Vouche
           {/* FIXED: Responsive footer padding */}
           <CardFooter className="p-3 sm:p-4 pt-0 flex items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] sm:text-xs text-muted-foreground">From</p>
+              <p className="text-[11px] sm:text-xs text-muted-foreground">From</p>
               {/* FIXED: Responsive price text */}
               <p
                 className="text-lg sm:text-xl font-bold text-primary"

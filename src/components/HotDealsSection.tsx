@@ -122,7 +122,7 @@ export default function HotDealsSection() {
                       inline-flex items-center gap-1 
                       px-2 py-0.5 sm:px-3 sm:py-1 
                       bg-primary text-primary-foreground 
-                      text-[10px] sm:text-xs font-semibold rounded-full
+                      text-[11px] sm:text-xs font-semibold rounded-full
                       shadow-lg
                     "
                     >
@@ -134,7 +134,7 @@ export default function HotDealsSection() {
 
                 {/* FIXED: Responsive image height */}
                 <div className="relative h-36 sm:h-40 lg:h-44 overflow-hidden bg-white/50 dark:bg-black/20">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={deal.image}
                     alt={deal.title}
                     className="
@@ -175,7 +175,7 @@ export default function HotDealsSection() {
                   </div>
 
                   {/* FIXED: Responsive description */}
-                  <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed">
+                  <p className="text-[12px] sm:text-xs text-muted-foreground leading-relaxed">
                     {deal.description}
                   </p>
 
@@ -183,7 +183,7 @@ export default function HotDealsSection() {
                   <div
                     className="
                     pt-0.5 sm:pt-1 flex items-center gap-1.5 sm:gap-2 
-                    text-[11px] sm:text-xs font-medium text-primary
+                    text-[12px] sm:text-xs font-medium text-primary
                     opacity-0 group-hover:opacity-100 
                     transform translate-x-0 group-hover:translate-x-2
                     transition-all duration-300

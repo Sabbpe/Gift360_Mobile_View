@@ -68,14 +68,14 @@ export default function SuperCoinExpiryCard({
           <p className="text-[14px] font-bold leading-tight">
             Extend your SuperCoins&apos; expiry by 6&nbsp;months
           </p>
-          <p className="mt-1 text-[11px] leading-snug text-white/80">
+          <p className="mt-1 text-[12px] leading-snug text-white/80">
             Convert them into a voucher, then redeem it for fresh SuperCoins.
           </p>
         </div>
       </div>
 
-      <div className="mt-2.5 flex items-center justify-center gap-1.5 rounded-[10px] bg-white/12 px-2 py-1.5 text-[11px] font-semibold">
-        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+      <div className="mt-2.5 flex items-center justify-center gap-1.5 rounded-[10px] bg-white/12 px-2 py-1.5 text-[12px] font-semibold">
+        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
         <span>{fmt(coinsNeeded)} coins</span>
         <span className="text-white/60">→</span>
         <span>₹{fmt(voucherValue)} voucher</span>
@@ -97,7 +97,7 @@ export default function SuperCoinExpiryCard({
         )}
       </button>
 
-      {hint && <p className="mt-2 text-center text-[10px] leading-snug text-white/80">{hint}</p>}
+      {hint && <p className="mt-2 text-center text-[11px] leading-snug text-white/80">{hint}</p>}
     </div>
   );
 }

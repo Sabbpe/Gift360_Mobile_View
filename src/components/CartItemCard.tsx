@@ -76,7 +76,7 @@ export default function CartItemCard({
         {isLoading ? (
           <div className="w-full h-full bg-gray-200 animate-pulse" />
         ) : (
-          <img
+          <img loading="lazy" decoding="async"
             src={imgSrc}
             alt={brandName}
             className="w-full h-full object-contain p-1"

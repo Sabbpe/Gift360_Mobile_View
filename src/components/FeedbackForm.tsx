@@ -455,8 +455,8 @@ export default function FeedbackForm({ open, onClose, onSubmitted }: Props) {
                   ))}
                 </div>
                 <div className="flex justify-between mt-1 px-0.5">
-                  <span className="text-[9px] text-gray-400">Not likely</span>
-                  <span className="text-[9px] text-gray-400">Very likely</span>
+                  <span className="text-[11px] text-gray-400">Not likely</span>
+                  <span className="text-[11px] text-gray-400">Very likely</span>
                 </div>
               </QuestionBlock>
 
@@ -567,7 +567,7 @@ function QuestionBlock({
         </div>
         <h3 className="text-sm font-semibold text-gray-900 leading-snug">
           {label}
-          {optional && <span className="ml-1 text-[10px] font-normal text-gray-400">(optional)</span>}
+          {optional && <span className="ml-1 text-[11px] font-normal text-gray-400">(optional)</span>}
         </h3>
       </div>
       {children}

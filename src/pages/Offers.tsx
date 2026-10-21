@@ -105,7 +105,7 @@ export default function Offers() {
                       {/* Image */}
                       <div className="relative h-40 overflow-hidden bg-white/5">
                         {getImageUrl(brand) ? (
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={getImageUrl(brand) || FALLBACK_IMAGE}
                             alt={brand.BrandName}
                             className="w-full h-full object-contain p-3 transition-transform duration-300 group-hover:scale-105"
@@ -145,7 +145,7 @@ export default function Offers() {
                         {/* Price Range */}
                         <div className="flex items-center justify-between pt-2.5 border-t border-white/10 mb-2.5">
                           <div>
-                            <p className="text-[10px] text-white/40 mb-0.5">
+                            <p className="text-[11px] text-white/40 mb-0.5">
                               Price Range
                             </p>
                             <p className="text-xs font-semibold text-white">
@@ -153,7 +153,7 @@ export default function Offers() {
                             </p>
                           </div>
                           {brand.Brandtype && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/5 text-white/70 font-medium">
+                            <span className="text-[11px] px-1.5 py-0.5 rounded bg-white/5 text-white/70 font-medium">
                               {brand.Brandtype}
                             </span>
                           )}

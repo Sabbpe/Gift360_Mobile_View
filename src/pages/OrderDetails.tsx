@@ -79,7 +79,7 @@ function BrandImage({ src, alt }: { src?: string; alt: string }) {
       {isLoading ? (
         <div className="animate-pulse bg-neutral-200 dark:bg-neutral-600 w-full h-full" />
       ) : (
-        <img
+        <img loading="lazy" decoding="async"
           src={imgSrc}
           alt={alt}
           className="w-full h-full object-cover"

@@ -214,7 +214,7 @@ export default function MicroQuestionWidget() {
         <button
           type="button"
           onClick={expand}
-          className="fixed right-1.5 top-[32%] z-40 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9747FF] to-[#7C3AED] text-white shadow-[0_6px_16px_rgba(151,71,255,0.35)] active:scale-95 transition-transform"
+          className="micro-widget fixed right-1.5 top-[32%] z-40 flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[#9747FF] to-[#7C3AED] text-white shadow-[0_6px_16px_rgba(151,71,255,0.35)] active:scale-95 transition-transform"
           aria-label="Open a quick feedback question"
         >
           <MessageSquareHeart className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -223,13 +223,14 @@ export default function MicroQuestionWidget() {
 
       {/* Expanded question card — intentionally tiny so it never blocks the page */}
       {visible && question && (
+        <>
         <div
           role="region"
           aria-label="Quick feedback question"
-          className="fixed right-1.5 top-[32%] z-40 w-[172px] overflow-hidden rounded-xl border border-purple-100 bg-white shadow-[0_8px_24px_rgba(23,15,60,0.14)] animate-in fade-in slide-in-from-right-3 duration-200"
+          className="micro-widget fixed right-4 bottom-[132px] z-40 w-[172px] overflow-hidden rounded-xl border border-purple-100 bg-white shadow-[0_8px_24px_rgba(23,15,60,0.14)] animate-in fade-in slide-in-from-right-3 duration-200"
         >
           <div className="flex items-start gap-1 px-2.5 pt-2">
-            <p className="flex-1 text-[11px] font-semibold leading-snug text-gray-800">
+            <p className="flex-1 text-[12px] font-semibold leading-snug text-gray-800">
               {thanks ? "Thanks!" : question.text}
             </p>
             {!thanks && (
@@ -249,20 +250,21 @@ export default function MicroQuestionWidget() {
               <button
                 type="button"
                 onClick={() => answer("yes")}
-                className="flex-1 rounded-full bg-gradient-to-r from-[#9747FF] to-[#7C3AED] py-1 text-[10px] font-bold text-white shadow-sm active:scale-[0.97] transition-all hover:from-[#8A3BFF] hover:to-[#6D28D9]"
+                className="flex-1 rounded-full bg-gradient-to-r from-[#9747FF] to-[#7C3AED] py-1 text-[11px] font-bold text-white shadow-sm active:scale-[0.97] transition-all hover:from-[#8A3BFF] hover:to-[#6D28D9]"
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => answer("no")}
-                className="flex-1 rounded-full border border-gray-200 bg-white py-1 text-[10px] font-bold text-gray-500 hover:border-[#C9A6FF] active:scale-[0.97] transition-all"
+                className="flex-1 rounded-full border border-gray-200 bg-white py-1 text-[11px] font-bold text-gray-500 hover:border-[#C9A6FF] active:scale-[0.97] transition-all"
               >
                 No
               </button>
             </div>
           )}
         </div>
+        </>
       )}
 
       {rewardsOpen && (

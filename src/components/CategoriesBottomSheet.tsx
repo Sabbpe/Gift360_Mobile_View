@@ -33,7 +33,7 @@ function CategoryGrid({
             {category.name}
           </span>
           {typeof category.count === "number" && (
-            <span className="mt-[9px] block text-[11px] font-medium text-[#7a7f8f]">
+            <span className="mt-[9px] block text-[12px] font-medium text-[#7a7f8f]">
               {category.count} brands
             </span>
           )}

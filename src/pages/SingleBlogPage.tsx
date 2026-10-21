@@ -41,7 +41,7 @@ const postData = {
             One of the greatest advantages of digital vouchers is the flexibility they provide. Instead of guessing what someone might want, givers provide the power of choice. This reduces waste and ensures that every gift is something the recipient truly values.
         </p>
         <div class="my-10 rounded-2xl overflow-hidden shadow-2xl">
-            <img src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&q=80&w=1200" alt="Payment visualization" class="w-full h-auto" />
+            <img loading="lazy" decoding="async" src="https://images.unsplash.com/photo-1556742044-3c52d6e88c62?auto=format&fit=crop&q=80&w=1200" alt="Payment visualization" class="w-full h-auto" />
             <p class="text-center text-sm text-muted-foreground py-4 bg-muted/30">Digital payments are becoming more secure and seamless every day.</p>
         </div>
         <h2 class="text-3xl font-display font-bold mt-12 mb-6 text-foreground">Looking Ahead</h2>
@@ -105,7 +105,7 @@ export default function SingleBlogPage() {
 
                         {/* TITLE & META */}
                         <div>
-                            <Badge className="bg-primary/10 text-primary border-primary/20 mb-3 md:mb-4 hover:bg-primary/20 transition-colors text-[10px] md:text-xs">
+                            <Badge className="bg-primary/10 text-primary border-primary/20 mb-3 md:mb-4 hover:bg-primary/20 transition-colors text-[11px] md:text-xs">
                                 {post.category}
                             </Badge>
                             <h1 className="text-3xl md:text-6xl font-display font-bold mb-4 md:mb-6 leading-tight tracking-tight">
@@ -132,7 +132,7 @@ export default function SingleBlogPage() {
 
                         {/* HERO IMAGE */}
                         <div className="rounded-2xl md:rounded-3xl overflow-hidden shadow-2xl aspect-[16/9] mb-10 md:mb-16 relative">
-                            <img
+                            <img loading="lazy" decoding="async"
                                 src={post.image}
                                 alt={post.title}
                                 className="w-full h-full object-cover"
@@ -185,7 +185,7 @@ export default function SingleBlogPage() {
                                     <Link key={blog.id} href={`/blogs/${blog.id}`}>
                                         <div className="group cursor-pointer">
                                             <div className="rounded-2xl overflow-hidden aspect-[4/3] mb-4 relative">
-                                                <img src={blog.image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                <img loading="lazy" decoding="async" src={blog.image} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                                 <div className="absolute inset-0 bg-black/20 group-hover:bg-black/0 transition-colors"></div>
                                             </div>
                                             <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
@@ -215,13 +215,13 @@ export default function SingleBlogPage() {
                                     <Link key={blog.id} href={`/blogs/${blog.id}`}>
                                         <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-2xl overflow-hidden group hover:shadow-xl transition-all duration-300">
                                             <div className="aspect-video relative overflow-hidden">
-                                                <img src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
+                                                <img loading="lazy" decoding="async" src={blog.image} alt={blog.title} className="w-full h-full object-cover" />
                                                 <Badge className="absolute top-4 left-4 bg-background/80 backdrop-blur-md text-foreground border-none">
                                                     {blog.category}
                                                 </Badge>
                                             </div>
                                             <div className="p-5">
-                                                <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">{blog.date}</p>
+                                                <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2">{blog.date}</p>
                                                 <h3 className="font-bold text-lg group-hover:text-primary transition-colors line-clamp-1">
                                                     {blog.title}
                                                 </h3>

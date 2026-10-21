@@ -37,7 +37,7 @@ export function CategoryBanner({ title, offers }: CategoryBannerProps) {
                         >
                             <div className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-2xl transition-shadow duration-300 cursor-pointer group">
                                 <div className="relative h-64 overflow-hidden">
-                                    <img
+                                    <img loading="lazy" decoding="async"
                                         src={offer.image}
                                         alt={offer.brand}
                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"

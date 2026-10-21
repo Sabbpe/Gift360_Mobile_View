@@ -503,7 +503,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
               <ChevronLeft className="h-5 w-5" strokeWidth={2.3} />
             </button>
             <div className="relative z-10 min-w-0 flex-1">
-              <p className="text-[10px] font-bold tracking-[0.24em] text-[#f7d46b]">
+              <p className="text-[11px] font-bold tracking-[0.24em] text-[#f7d46b]">
                 SUPERCOINS
               </p>
               <h3 className="truncate text-[16px] font-bold leading-tight">
@@ -547,7 +547,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   setOrderDetailsCoinsEarned(null);
                   setOrderDetailsLoading(false);
                 }}
-                className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+                className={`shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[12px] font-medium transition-colors ${
                   selectedBrandId === b.id
                     ? "bg-white text-[#7C3AED]"
                     : "bg-white/20 text-white hover:bg-white/30"
@@ -572,7 +572,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
               {burnResultData && (
                 <div className="mt-3 w-full max-w-[320px] rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] p-3 text-left">
                   <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
-                    <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                    <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                     <span>SuperCoin Reward</span>
                   </div>
                   {orderDetailsLoading ? (
@@ -594,13 +594,13 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 <div className="mt-2 w-full max-w-[320px] space-y-1">
                   {burnResultData.balance != null && (
                     <p className="text-[13px] text-black font-bold flex items-center gap-1.5">
-                      <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
                       Balance: {burnResultData.balance} coins
                     </p>
                   )}
                   {burnResultData.coinsRedeemed != null && (
                     <p className="text-[13px] text-black font-bold flex items-center gap-1.5">
-                      <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
                       Redeemed: {burnResultData.coinsRedeemed} coins
                     </p>
                   )}
@@ -610,15 +610,15 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 <p className="text-[12px] font-bold text-[#101828]">Redeem your voucher for fresh SuperCoins</p>
                 <ol className="mt-1.5 space-y-1">
                   {(brand?.RedeemSteps || []).map((step: any, index: number) => (
-                    <li key={index} className="flex gap-2 text-[11px] leading-snug text-[#475467]">
-                      <span className="mt-[1px] grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#EDEAFF] text-[9px] font-bold text-[#7C3AED]">
+                    <li key={index} className="flex gap-2 text-[12px] leading-snug text-[#475467]">
+                      <span className="mt-[1px] grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[#EDEAFF] text-[11px] font-bold text-[#7C3AED]">
                         {index + 1}
                       </span>
                       <span>{step.title || step.name}{step.description ? ` - ${step.description}` : ""}</span>
                     </li>
                   ))}
                 </ol>
-                <p className="mt-1.5 text-[10px] text-[#667085]">Your voucher code and PIN are in Orders.</p>
+                <p className="mt-1.5 text-[11px] text-[#667085]">Your voucher code and PIN are in Orders.</p>
               </div>
               <div className="mt-4 flex w-full max-w-[320px] flex-col gap-3">
                 <a
@@ -627,7 +627,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   rel="noopener noreferrer"
                   className="flex h-11 w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[13px] font-semibold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)]"
                 >
-                  <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                  <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                   Redeem your voucher
                 </a>
                 <button
@@ -659,7 +659,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
               {burnError.balance != null && (
                 <div className="mt-3 w-full max-w-[320px] rounded-lg border bg-[rgba(151,71,255,0.08)] border-[rgba(151,71,255,0.25)] p-3">
                   <div className="flex items-center gap-2 text-sm text-[#7C3AED] font-medium">
-                    <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                    <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                     <span>Your SuperCoins balance: <span className="font-semibold">{burnError.balance}</span></span>
                   </div>
                 </div>
@@ -738,7 +738,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 <div className="sc-top-card overflow-hidden">
                   <div className="flex h-full items-center gap-3 p-3">
                     <div className="h-[70px] w-[120px] shrink-0 overflow-hidden rounded-[10px] bg-white">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={imageSrc}
                         alt={brand.BrandName}
                         className="h-full w-full object-contain"
@@ -752,7 +752,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       <div className="truncate text-[16px] font-semibold leading-[24px] text-black">
                         E-Gift Cards
                       </div>
-                      <div className="mt-1 inline-flex min-h-[20px] min-w-[145px] items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#78DEFF_50%,#488599_100%)] px-3 py-1 text-[10px] font-normal leading-[15px] text-black shadow-[0px_2px_4px_rgba(120,222,255,0.5)]">
+                      <div className="mt-1 inline-flex min-h-[20px] min-w-[145px] items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#78DEFF_50%,#488599_100%)] px-3 py-1 text-[11px] font-normal leading-[15px] text-black shadow-[0px_2px_4px_rgba(120,222,255,0.5)]">
                         {brand.Category || "Gift voucher"}
                       </div>
                     </div>
@@ -769,8 +769,8 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   </div>
                   {isFivePercentEarnSku && (
                     <div className="mt-2 flex items-start gap-2 rounded-[9px] border border-[#E8DCFF] bg-[#F8F4FF] px-2.5 py-2">
-                      <img src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <p className="text-[10px] font-medium leading-[15px] text-[#6B46A5]">
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <p className="text-[11px] font-medium leading-[15px] text-[#6B46A5]">
                         Buy vouchers starting at ₹100 and earn up to 5% cashback in SuperCoins!
                       </p>
                     </div>
@@ -814,7 +814,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                     </div>
                   ) : (
                     <div className="mt-[4px]">
-                      <div className="mb-[6px] flex items-center gap-[4px] text-[11px] font-medium leading-[16px] text-[#555]">
+                      <div className="mb-[6px] flex items-center gap-[4px] text-[12px] font-medium leading-[16px] text-[#555]">
                         <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
                         Enter amount between {formatCurrency(min)} - {formatCurrency(max)}
                       </div>
@@ -839,23 +839,23 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                         }`}
                       />
                       {amount !== 0 && !isAmountValid && (
-                        <p className="mt-1 text-[10px] text-red-500">
+                        <p className="mt-1 text-[11px] text-red-500">
                           Enter an amount from {formatCurrency(min)} to {formatCurrency(max)}.
                         </p>
                       )}
                       {isAmountValid && discountPercent > 0 && !isCashEarn && (
-                        <p className="mt-[4px] text-right text-[9px] font-medium text-[#10B981]">
+                        <p className="mt-[4px] text-right text-[11px] font-medium text-[#10B981]">
                           +{formatCurrency(Math.round(amount * discountPercent / 100))} cashback
                         </p>
                       )}
-                      <div className="mt-[4px] flex justify-between text-[8px] leading-[12px] text-black">
+                      <div className="mt-[4px] flex justify-between text-[10px] leading-[12px] text-black">
                         <span>Min {formatCurrency(min)}</span>
                         <span>Max {formatCurrency(max)}</span>
                       </div>
                       {!isCashEarn && (
-                      <div className="mt-[6px] flex items-center justify-center gap-1.5 text-[10px] font-semibold leading-[15px] text-[#7C3AED]">
+                      <div className="mt-[6px] flex items-center justify-center gap-1.5 text-[11px] font-semibold leading-[15px] text-[#7C3AED]">
                         <span>Earn upto 5% SuperCoins</span>
-                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
                         <span>upto 100 SuperCoins</span>
                       </div>
                       )}
@@ -908,7 +908,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   aria-label="Grab Free SuperCoins — earn up to 1,500 coins"
                   className="mt-3 block overflow-hidden rounded-[12px] shadow-[0_4px_14px_rgba(37,99,235,0.18)] transition-transform active:scale-[0.99]"
                 >
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={scScrollableNewImg}
                     alt="Grab Free SuperCoins. Earn up to 1,500 coins. Start earning now."
                     className="block h-auto w-full object-contain"
@@ -919,29 +919,29 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 {isCashEarn && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
                     <div className="mb-3 flex items-start gap-2 rounded-[9px] border border-[#E8DCFF] bg-[#F8F4FF] px-2.5 py-2">
-                      <img src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                      <p className="text-[10px] font-medium leading-[15px] text-[#6B46A5]">
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                      <p className="text-[11px] font-medium leading-[15px] text-[#6B46A5]">
                         Pay with UPI or card and earn {cashEarnPercent > 0 ? `${cashEarnPercent}% ` : ""}back in SuperCoins.
                         You earn SuperCoins instead of wallet cashback on this order.
                       </p>
                     </div>
                     {cashEarnCoins > 0 && (
                       <div className="mb-3 flex items-center justify-between">
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-[#667085]">
-                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+                        <span className="flex items-center gap-1 text-[12px] font-medium text-[#667085]">
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
                           You earn about {cashEarnCoins.toFixed(2)} SuperCoins
                         </span>
                       </div>
                     )}
                     {!isAmountValid && (
-                      <p className="mb-3 text-[10px] text-red-500">Enter a valid voucher amount to continue.</p>
+                      <p className="mb-3 text-[11px] text-red-500">Enter a valid voucher amount to continue.</p>
                     )}
                     <button
                       onClick={handleCashEarnBuy}
                       disabled={!isAmountValid}
                       className="w-full h-[42px] rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[12px] font-semibold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 whitespace-nowrap px-2"
                     >
-                      <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                       {cashEarnCoins > 0 ? `Buy and earn ${cashEarnCoins.toFixed(2)} SuperCoins` : "Buy and earn SuperCoins"}
                     </button>
                   </div>
@@ -951,35 +951,35 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 {superCoinIdentity && !superCoinAuthorized && !isCashEarn && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[11px] font-medium text-[#667085]">Your balance</span>
+                      <span className="text-[12px] font-medium text-[#667085]">Your balance</span>
                       <span className={`text-[13px] font-bold ${hasEnoughCoins ? "text-emerald-600" : "text-red-500"} flex items-center gap-1`}>
-                        <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                         {superCoinState.balance.toLocaleString("en-IN")}
                       </span>
                     </div>
 
                     {!isAmountValid ? (
-                      <p className="mb-3 text-[10px] text-red-500">
+                      <p className="mb-3 text-[11px] text-red-500">
                         Enter a valid voucher amount to continue.
                       </p>
                     ) : !hasEnoughCoins ? (
-                      <p className="text-[10px] text-red-500 mb-3">
+                      <p className="text-[11px] text-red-500 mb-3">
                         You don&apos;t have enough SuperCoins for this voucher.
                       </p>
                     ) : null}
 
                     {superCoinsEarnPotential > 0 && (
                       <div className="mb-3 flex items-center justify-between">
-                        <span className="flex items-center gap-1 text-[11px] font-medium text-[#667085]">
-                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+                        <span className="flex items-center gap-1 text-[12px] font-medium text-[#667085]">
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
                           Earn up to {superCoinsEarnPotential.toFixed(2)} SC
                         </span>
                       </div>
                     )}
                     {showSuperCoinEarnThreshold && (
                       <div aria-live="polite" className="mb-3 flex items-start gap-2 rounded-[9px] border border-[#E8DCFF] bg-[#F8F4FF] px-2.5 py-2">
-                        <img src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <p className="text-[10px] leading-[15px] text-[#6B46A5]">
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <p className="text-[11px] leading-[15px] text-[#6B46A5]">
                           This denomination is below ₹100, so it won’t earn SuperCoins. Choose ₹100 or more to qualify.
                         </p>
                       </div>
@@ -997,7 +997,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                         </>
                       ) : (
                         <>
-                          <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                           Convert your Supercoins
                         </>
                       )}
@@ -1007,7 +1007,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
 
                 {!superCoinIdentity && !superCoinAuthorized && !isCashEarn && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
-                    <p className="mb-3 text-[11px] font-medium leading-snug text-[#667085]">
+                    <p className="mb-3 text-[12px] font-medium leading-snug text-[#667085]">
                       Login to convert your SuperCoins into vouchers.
                     </p>
                     <button
@@ -1015,7 +1015,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       onClick={() => setLocation("/login")}
                       className="flex w-full items-center justify-center gap-2 rounded-[10px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] py-2.5 text-[12px] font-bold text-white shadow-[0_4px_12px_rgba(151,71,255,0.3)] active:scale-[0.98] transition-transform"
                     >
-                      <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                       Login/Register to Convert
                     </button>
                   </div>
@@ -1027,11 +1027,11 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                     <div className="flex items-center justify-between">
                       <span className="text-[13px] font-medium text-[#7C3AED] flex items-center gap-1.5">
                         SuperCoins applied
-                        <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                       </span>
                       <button
                         type="button"
-                        className="text-[11px] font-medium text-[#7C3AED] underline"
+                        className="text-[12px] font-medium text-[#7C3AED] underline"
                         onClick={() => {
                           setSuperCoinAuthorized(false);
                           setSuperCoinHoldContext(null);
@@ -1042,24 +1042,24 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       </button>
                     </div>
                     {transactionTime && !countdown.expired && (
-                      <p className="mt-1 text-[11px] font-medium text-[#7C3AED] flex items-center gap-1">
+                      <p className="mt-1 text-[12px] font-medium text-[#7C3AED] flex items-center gap-1">
                         <Clock className="h-3 w-3" />
                         Use within {countdown.display}
                       </p>
                     )}
                     {countdown.expired && (
-                      <p className="mt-1 text-[11px] font-medium text-red-500">
+                      <p className="mt-1 text-[12px] font-medium text-red-500">
                         Hold expired. Please apply again.
                       </p>
                     )}
                     {superCoinsEarnPotential > 0 && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-[#7C3AED]">
-                        <img src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
+                      <p className="mt-1 flex items-center gap-1 text-[12px] font-medium text-[#7C3AED]">
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5" />
                         Earn up to {superCoinsEarnPotential.toFixed(2)} SC
                       </p>
                     )}
                     {showSuperCoinEarnThreshold && (
-                      <p aria-live="polite" className="mt-1 text-[10px] leading-[15px] text-[#6B46A5]">
+                      <p aria-live="polite" className="mt-1 text-[11px] leading-[15px] text-[#6B46A5]">
                         This denomination is below ₹100, so it won’t earn SuperCoins.
                       </p>
                     )}

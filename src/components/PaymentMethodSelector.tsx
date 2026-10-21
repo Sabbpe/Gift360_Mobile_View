@@ -66,7 +66,7 @@ export function PaymentMethodSelector({ methods, value, onChange, cashAmount, di
               <span className="flex items-center gap-2 text-sm font-semibold cart-text-primary">
                 {m.label}
                 {fees[i] === lowest && methods.length > 1 && (
-                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400">
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                     Lowest fee
                   </span>
                 )}
@@ -75,7 +75,7 @@ export function PaymentMethodSelector({ methods, value, onChange, cashAmount, di
             </span>
             <span className="text-right shrink-0">
               <span className="block text-sm font-semibold cart-text-primary">+₹{fees[i].toFixed(2)}</span>
-              <span className="block text-[11px] cart-text-secondary">{feeLabel(m)}</span>
+              <span className="block text-[12px] cart-text-secondary">{feeLabel(m)}</span>
             </span>
           </button>
         );

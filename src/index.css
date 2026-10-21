@@ -904,3 +904,23 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
   background: #fd79a8;
   border-radius: 0 4px 4px 0;
 }
+
+/* Hide the floating support bubble while a purchase sheet is open */
+body[data-hide-support-fab] .support-fab {
+  display: none !important;
+}
+
+/* While the support chat is open, hide the quick-question bubble */
+body[data-support-chat-open] .micro-widget {
+  display: none !important;
+}
+
+/* Invisible 44px touch area for small icon buttons */
+.tap-area {
+  position: relative;
+}
+.tap-area::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}

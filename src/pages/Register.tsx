@@ -164,7 +164,7 @@ export default function Register() {
       <div className="relative z-10 flex flex-col h-full px-5 pt-6 pb-4">
         {/* Logo */}
         <div className="flex justify-center mb-2">
-          <img src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
+          <img loading="lazy" decoding="async" src={gift360Logo} alt="Gift360" className="w-[140px] h-auto object-contain" />
         </div>
 
         {/* Spacer */}
@@ -175,14 +175,14 @@ export default function Register() {
           <h2 className="text-[16px] font-semibold text-black mb-0.5">
             {fromSuperCoin ? "One step to redeem" : "Get Started"}
           </h2>
-          <p className="text-[9px] text-[#4E4E4E] mb-3">
+          <p className="text-[11px] text-[#4E4E4E] mb-3">
             {fromSuperCoin
               ? "Create your account to turn SuperCoins into gift vouchers"
               : "Create your account to start gifting"}
           </p>
 
           {error && (
-            <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-red-300 bg-red-50 text-red-600 text-[10px] font-medium">
+            <div className="flex items-center gap-2 p-2 mb-3 rounded-xl border border-red-300 bg-red-50 text-red-600 text-[11px] font-medium">
               <AlertCircle size={14} className="shrink-0" />
               <span>{error}</span>
             </div>
@@ -196,9 +196,9 @@ export default function Register() {
               value={fullName}
               onChange={(e) => { setFullName(e.target.value); setNameError(""); setError(""); }}
               disabled={otpSent}
-              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
+              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[12px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
             />
-            {nameError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{nameError}</p>}
+            {nameError && <p className="text-red-500 text-[11px] mt-0.5 font-medium">{nameError}</p>}
           </div>
 
           {/* Email input */}
@@ -209,9 +209,9 @@ export default function Register() {
               value={email}
               onChange={(e) => { setEmail(e.target.value); setEmailError(""); setError(""); }}
               disabled={otpSent}
-              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
+              className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[12px] placeholder:text-[#A6A4A4] focus-visible:ring-[#7C3AED]/50 focus-visible:border-[#7C3AED]"
             />
-            {emailError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{emailError}</p>}
+            {emailError && <p className="text-red-500 text-[11px] mt-0.5 font-medium">{emailError}</p>}
           </div>
 
           {/* Mobile input */}
@@ -219,7 +219,7 @@ export default function Register() {
             <div className="flex items-center rounded-[10px] border border-[#D9D9D9] bg-white overflow-hidden">
               <div className="flex items-center gap-1 px-2.5 h-9 bg-[#F7F7FA] border-r border-[#EBEBEB] shrink-0">
                 <span className="text-[13px] leading-none">🇮🇳</span>
-                <span className="text-[11px] font-medium text-black">+91</span>
+                <span className="text-[12px] font-medium text-black">+91</span>
                 <svg className="w-2.5 h-2.5 text-[#A1A1A1]" viewBox="0 0 12 12" fill="none">
                   <path d="M3 5L6 8L9 5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
@@ -234,10 +234,10 @@ export default function Register() {
                   setMobile(e.target.value); setMobileError(""); setError("");
                 }}
                 disabled={otpSent}
-                className="h-9 border-0 bg-transparent text-black text-[11px] placeholder:text-[#A6A4A4] focus-visible:ring-0 focus-visible:border-0"
+                className="h-9 border-0 bg-transparent text-black text-[12px] placeholder:text-[#A6A4A4] focus-visible:ring-0 focus-visible:border-0"
               />
             </div>
-            {mobileError && <p className="text-red-500 text-[9px] mt-0.5 font-medium">{mobileError}</p>}
+            {mobileError && <p className="text-red-500 text-[11px] mt-0.5 font-medium">{mobileError}</p>}
           </div>
 
           {/* Send OTP / OTP verify */}
@@ -246,7 +246,7 @@ export default function Register() {
               type="button"
               onClick={handleSendOtp}
               disabled={!validateMobile(mobile) || !validateEmail(email) || !fullName.trim() || registerSendOtpMutation.isPending}
-              className="w-full h-9 rounded-[10px] font-semibold text-[11px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
+              className="w-full h-9 rounded-[10px] font-semibold text-[12px] text-white flex items-center justify-center gap-2 active:scale-[0.98] transition-all disabled:opacity-50"
               style={{
                 background: "linear-gradient(180deg, #7B3DC3 0%, #5537BE 100%)",
                 boxShadow: "2px 4px 8px rgba(183, 138, 243, 0.25)",
@@ -294,7 +294,7 @@ export default function Register() {
                   </svg>
                 )}
               </button>
-              <p className="text-center text-[10px] text-[#4E4E4E]">
+              <p className="text-center text-[11px] text-[#4E4E4E]">
                 Didn't Receive?{" "}
                 <button type="button" onClick={handleSendOtp} className="font-semibold text-[#7C3AED] underline">
                   Resend OTP
@@ -303,18 +303,18 @@ export default function Register() {
             </div>
           )}
 
-          {otpMsg && otpSent && <p className="text-emerald-600 text-[9px] mt-1 font-medium text-center">✓ {otpMsg}</p>}
+          {otpMsg && otpSent && <p className="text-emerald-600 text-[11px] mt-1 font-medium text-center">✓ {otpMsg}</p>}
 
           {/* Secure note */}
           <div className="flex items-center justify-center gap-1.5 mt-2.5">
             <ShieldCheck className="w-3 h-3 text-[#7C3AED]" />
-            <p className="text-[8px] font-medium text-[#4E4E4E]">we'll send a secure OTP to verify your number</p>
+            <p className="text-[10px] font-medium text-[#4E4E4E]">we'll send a secure OTP to verify your number</p>
           </div>
         </div>
 
         {/* Sign in link */}
         <div className="w-full max-w-[342px] mx-auto text-center mt-2 mb-1">
-          <p className="inline-block rounded-full bg-white px-4 py-1.5 text-[11px] font-semibold text-black shadow-sm">
+          <p className="inline-block rounded-full bg-white px-4 py-1.5 text-[12px] font-semibold text-black shadow-sm">
             Already have an account?{" "}
             <Link href="/login">
               <button className="font-bold text-black underline text-[12px]">Sign in</button>
@@ -326,7 +326,7 @@ export default function Register() {
         <div className="w-full max-w-[342px] mx-auto mb-1.5">
           <div className="flex items-center gap-2">
             <div className="flex-1 h-px bg-[#C9C9C9]" />
-            <span className="rounded-full bg-white px-3 py-1 text-[10px] font-medium text-black whitespace-nowrap shadow-sm">TRUSTED BY 400+ BRANDS</span>
+            <span className="rounded-full bg-white px-3 py-1 text-[11px] font-medium text-black whitespace-nowrap shadow-sm">TRUSTED BY 400+ BRANDS</span>
             <div className="flex-1 h-px bg-[#C9C9C9]" />
           </div>
         </div>
@@ -336,14 +336,14 @@ export default function Register() {
           <div className="flex w-max anim-marquee-ltr" style={{ animationDuration: "20s" }}>
             {[...brandLogos, ...brandLogos].map((brand, i) => (
               <div key={i} className="flex items-center justify-center mx-2.5 shrink-0">
-                <img src={brand.src} alt={brand.name} className="h-[22px] w-auto object-contain opacity-70" />
+                <img loading="lazy" decoding="async" src={brand.src} alt={brand.name} className="h-[22px] w-auto object-contain opacity-70" />
               </div>
             ))}
           </div>
         </div>
 
         {/* Terms */}
-        <p className="text-center text-[7px] text-[#4E4E4E] px-4">
+        <p className="text-center text-[9px] text-[#4E4E4E] px-4">
           By continuing, you agree to our{" "}
           <Link href="/terms"><button className="underline">Terms & Conditions</button></Link>{" "}
           and{" "}

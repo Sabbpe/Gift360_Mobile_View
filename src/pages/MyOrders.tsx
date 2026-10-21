@@ -69,7 +69,7 @@ function OrderRow({
       style={{ boxShadow: "0px 4px 16px -6px rgba(0, 0, 0, 0.12)" }}
     >
       <div className="w-[56px] h-[56px] shrink-0 rounded-xl bg-muted overflow-hidden flex items-center justify-center">
-        <img
+        <img loading="lazy" decoding="async"
           src={imageUrl}
           alt={brandName}
           className="w-full h-full object-contain"
@@ -81,14 +81,14 @@ function OrderRow({
           <p className="font-semibold text-sm leading-5 text-black truncate">
             {brandName}
             {extraItems > 0 && (
-              <span className="ml-1.5 inline-block align-middle text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
+              <span className="ml-1.5 inline-block align-middle text-[11px] font-bold px-1.5 py-0.5 rounded-full bg-primary/10 text-primary">
                 +{extraItems} more
               </span>
             )}
           </p>
           {isSuperCoin && coinsRedeemed > 0 ? (
             <p className="shrink-0 font-bold text-[13px] text-[#7C3AED] flex items-center gap-1">
-              {coinsRedeemed} <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
+              {coinsRedeemed} <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
             </p>
           ) : (
             <p className="shrink-0 font-bold text-[13px] text-black">
@@ -97,26 +97,26 @@ function OrderRow({
           )}
         </div>
         {order?.order_number && (
-          <p className="font-mono text-[10px] leading-4 mt-0.5 truncate" style={{ color: "#888888" }}>
+          <p className="font-mono text-[11px] leading-4 mt-0.5 truncate" style={{ color: "#888888" }}>
             Order #{order.order_number}
           </p>
         )}
         <div className="flex items-center justify-between gap-2 mt-1.5">
           <div className="flex items-center gap-1.5 min-w-0">
             <span
-              className="shrink-0 inline-flex items-center text-[9px] font-bold px-2 py-0.5 rounded-full"
+              className="shrink-0 inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-full"
               style={{ background: badge.bg, color: badge.color, border: `1px solid ${badge.border}` }}
             >
               {badge.label}
             </span>
             {dateStr && (
-              <span className="text-[9px] truncate" style={{ color: "#5E5E5E" }}>{dateStr}</span>
+              <span className="text-[11px] truncate" style={{ color: "#5E5E5E" }}>{dateStr}</span>
             )}
           </div>
           {status === "PENDING" && order?.order_number && (
             <button
               onClick={() => onViewNow(order.order_number)}
-              className="shrink-0 h-[28px] px-3 rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
+              className="shrink-0 h-[28px] px-3 rounded-[16px] font-semibold text-[12px] text-white flex items-center justify-center gap-1"
               style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
             >
               <Eye size={12} />
@@ -298,7 +298,7 @@ export default function MyOrders() {
                 <button
                   key={id}
                   onClick={() => setTab(id)}
-                  className={`flex-1 flex items-center justify-center gap-1 h-9 rounded-full font-semibold text-[10px] transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1 h-9 rounded-full font-semibold text-[11px] transition-all ${
                     tab === id ? "text-white shadow-sm" : "text-[#6B7280]"
                   }`}
                   style={
@@ -311,7 +311,7 @@ export default function MyOrders() {
                   <span className="truncate">{label}</span>
                   {count > 0 && (
                     <span
-                      className={`inline-flex items-center justify-center min-w-[16px] h-[16px] rounded-full text-[9px] px-1 ${
+                      className={`inline-flex items-center justify-center min-w-[16px] h-[16px] rounded-full text-[11px] px-1 ${
                         tab === id ? "bg-white/20" : "bg-primary/10 text-primary"
                       }`}
                     >
@@ -341,7 +341,7 @@ export default function MyOrders() {
           {!loading && !error && (
             <>
               {tab === "payment-pending" && paymentPendingOrders.length > 0 && (
-                <div className="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[11px] font-medium text-amber-800">
+                <div className="mb-4 p-3 rounded-2xl bg-amber-50 border border-amber-200 text-[12px] font-medium text-amber-800">
                   These orders are awaiting payment. Tap{" "}
                   <span className="font-bold">Pay Now</span> to review this order and complete payment.
                 </div>

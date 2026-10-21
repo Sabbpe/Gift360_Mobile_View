@@ -51,7 +51,7 @@ export const SplashScreen = ({ onNext, onSkip }: Props) => {
 
       {/* Soft white fade overlay that ramps up near end → dissolves into Welcome */}
       <div
-        className="absolute left-1/2 top-[26%] z-20 flex -translate-x-1/2 flex-col items-center px-6 text-center"
+        className="absolute left-1/2 top-[24%] z-20 flex w-[84%] max-w-[320px] -translate-x-1/2 flex-col items-center rounded-3xl bg-white/90 px-6 py-6 text-center shadow-[0_12px_40px_rgba(76,29,149,0.18)] backdrop-blur-md"
       >
         <div className="relative flex items-center justify-center">
           <div
@@ -78,7 +78,7 @@ export const SplashScreen = ({ onNext, onSkip }: Props) => {
           loading="eager"
           fetchPriority="high"
         />
-        <p className="mt-2 text-sm font-medium text-foreground/80 anim-fade-up delay-300">
+        <p className="mt-2 text-sm font-medium text-foreground/90 anim-fade-up delay-300">
           Swipe left or tap next to continue
         </p>
       </div>
@@ -91,7 +91,7 @@ export const SplashScreen = ({ onNext, onSkip }: Props) => {
           <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
         </div>
         <div className="flex items-center justify-between">
-          <button onClick={onSkip} className="text-base font-medium text-foreground/80">
+          <button onClick={onSkip} className="-ml-3 min-h-[44px] min-w-[44px] px-3 text-base font-medium text-foreground/80">
             Skip
           </button>
           <button

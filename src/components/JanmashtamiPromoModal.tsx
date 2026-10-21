@@ -13,7 +13,7 @@ export default function JanmashtamiPromoModal({ open, onClose }: Props) {
       <DialogContent className="w-[92vw] max-w-sm rounded-2xl p-0 overflow-hidden border-0 shadow-2xl">
         {/* Backdrop image */}
         <div className="relative h-[280px] overflow-hidden">
-          <img
+          <img loading="lazy" decoding="async"
             src={krsnaImg}
             alt="Dussehra"
             className="absolute inset-0 h-full w-full object-cover"
@@ -29,7 +29,7 @@ export default function JanmashtamiPromoModal({ open, onClose }: Props) {
 
           {/* Decorative sparkle */}
           <div className="absolute top-3 right-3 z-10">
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#1a237e]/70 backdrop-blur-sm px-2.5 py-1 text-[9px] font-bold text-white tracking-wide">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[#1a237e]/70 backdrop-blur-sm px-2.5 py-1 text-[11px] font-bold text-white tracking-wide">
               <Sparkles className="h-3 w-3" strokeWidth={2.5} />
               DUSSEHRA SPECIAL
             </span>

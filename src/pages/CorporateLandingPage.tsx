@@ -153,7 +153,7 @@ export default function CorporateLandingPage() {
 
                             {/* Right side - Illustration */}
                             <div className="flex-shrink-0 w-32 h-32">
-                                <img
+                                <img loading="lazy" decoding="async"
                                     src={CorporateImage}
                                     alt="Corporate Partnership"
                                     className="w-full h-auto object-contain"

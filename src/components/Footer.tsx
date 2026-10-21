@@ -35,7 +35,7 @@ export default function Footer() {
 
         {/* CERTIFICATION LOGO */}
         <div className="flex items-center justify-center mt-6 pt-6 border-t">
-          <img src={certfLogo} alt="Certifications" className="h-10 sm:h-12 w-auto object-contain" />
+          <img loading="lazy" decoding="async" src={certfLogo} alt="Certifications" className="h-10 sm:h-12 w-auto object-contain" />
         </div>
       </div>
     </footer>

@@ -29,7 +29,7 @@ export default function JanmashtamiQuizCallout({ onClick }: Props) {
       >
         {/* Background image */}
         <div className="relative h-[140px]">
-          <img
+          <img loading="lazy" decoding="async"
             src={krishnaImg}
             alt="Janmashtami"
             className="absolute inset-0 h-full w-full object-cover object-center"

@@ -236,7 +236,7 @@ export default function JanmashtamiQuizModal({
         {phase === "language" && (
           <div className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-[#D97706]">Dussehra Quiz</span>
+              <span className="text-[12px] font-bold uppercase tracking-wide text-[#D97706]">Dussehra Quiz</span>
               <span className="flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2.5 py-1 text-[12px] font-bold text-[#B45309]">
                 <Clock className="h-3.5 w-3.5" /> <Countdown seconds={secondsLeft} />
               </span>
@@ -269,7 +269,7 @@ export default function JanmashtamiQuizModal({
         {phase === "playing" && current && (
           <div className="p-5">
             <div className="flex items-center justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wide text-[#D97706]">
+              <span className="text-[12px] font-bold uppercase tracking-wide text-[#D97706]">
                 Dussehra · {LANG_FLAGS[selectedLang]} {LANG_LABELS[selectedLang]}
               </span>
               <span className="flex items-center gap-1 rounded-full bg-[#FEF3C7] px-2.5 py-1 text-[12px] font-bold text-[#B45309]">

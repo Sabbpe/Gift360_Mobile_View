@@ -61,17 +61,17 @@ export default function SuperCoinsConversionBanner({
 
           <div className="relative flex h-[92px] w-[92px] shrink-0 items-center justify-center">
             <div className="absolute inset-0 rounded-full bg-[#f7d46b]/15 blur-2xl" />
-            <img
+            <img loading="lazy" decoding="async"
               src={flipkartSuperCoinImg}
               alt="Flipkart SuperCoin"
               className="relative z-10 h-[64px] w-[64px] object-contain drop-shadow-[0_8px_16px_rgba(0,0,0,0.28)]"
             />
-            <img
+            <img loading="lazy" decoding="async"
               src={superCoinImg}
               alt=""
               className="absolute left-1 top-2 h-4 w-4 object-contain opacity-80"
             />
-            <img
+            <img loading="lazy" decoding="async"
               src={superCoinImg}
               alt=""
               className="absolute bottom-3 right-2 h-3.5 w-3.5 object-contain opacity-70"

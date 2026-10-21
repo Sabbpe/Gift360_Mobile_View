@@ -103,7 +103,7 @@ function CategoryChips({
             key={cat}
             type="button"
             onClick={() => onSelect(cat)}
-            className={`rounded-full px-[13px] py-[8px] text-[11px] font-semibold tracking-[-0.01em] transition-all active:scale-[0.98] ${
+            className={`rounded-full px-[13px] py-[8px] text-[12px] font-semibold tracking-[-0.01em] transition-all active:scale-[0.98] ${
               active
                 ? "bg-[#6a53ff] text-white shadow-[0_8px_18px_rgba(106,83,255,0.22)]"
                 : "bg-[#eef0ff] text-[#404555]"
@@ -135,7 +135,7 @@ function NearbyBrandCard({
     <article className="flex items-center gap-3 rounded-[18px] bg-white px-3 py-3 shadow-[0_12px_24px_rgba(36,43,77,0.08)]">
       <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-[14px] bg-[#f1f3fb]">
         {imgSrc ? (
-          <img src={imgSrc} alt={brand.brandName} className="h-full w-full object-contain p-1" />
+          <img loading="lazy" decoding="async" src={imgSrc} alt={brand.brandName} className="h-full w-full object-contain p-1" />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#eef0ff_0%,#dde4ff_100%)] text-[12px] font-bold text-[#5f6380]">
             {brand.brandName.slice(0, 2).toUpperCase()}
@@ -147,15 +147,15 @@ function NearbyBrandCard({
         <p className="truncate text-[15px] font-semibold leading-[19px] text-[#171a24]">
           {brand.brandName}
         </p>
-        <p className="mt-0.5 text-[11px] font-medium text-[#8b90a4]">{brand.category}</p>
+        <p className="mt-0.5 text-[12px] font-medium text-[#8b90a4]">{brand.category}</p>
         {distance && (
           <div className="mt-1 flex items-center gap-1">
             <MapPin className="h-3 w-3 text-[#6a53ff] shrink-0" strokeWidth={2.2} />
-            <span className="text-[11px] font-semibold text-[#6a53ff]">{distance}</span>
+            <span className="text-[12px] font-semibold text-[#6a53ff]">{distance}</span>
           </div>
         )}
         {(brand.minPrice > 0 || brand.maxPrice > 0) && (
-          <p className="mt-0.5 text-[10px] text-[#9aa1b4]">
+          <p className="mt-0.5 text-[11px] text-[#9aa1b4]">
             ₹{brand.minPrice.toLocaleString("en-IN")}
             {brand.maxPrice > brand.minPrice && ` – ₹${brand.maxPrice.toLocaleString("en-IN")}`}
           </p>
@@ -164,7 +164,7 @@ function NearbyBrandCard({
 
       <button
         onClick={() => onBuy(brand.brandId)}
-        className="shrink-0 flex items-center gap-1 rounded-full bg-[#6a53ff] px-3 py-1.5 text-[11px] font-bold text-white shadow-[0_4px_12px_rgba(106,83,255,0.3)] active:scale-95 transition-all"
+        className="shrink-0 flex items-center gap-1 rounded-full bg-[#6a53ff] px-3 py-1.5 text-[12px] font-bold text-white shadow-[0_4px_12px_rgba(106,83,255,0.3)] active:scale-95 transition-all"
       >
         <ShoppingBag className="h-3 w-3" />
         Buy
@@ -280,7 +280,7 @@ function MapCard({ userLocation }: { userLocation: { lat: number; lng: number } 
           </div>
         ))}
         <div className="absolute bottom-3 right-3">
-          <span className="rounded-full bg-white/80 backdrop-blur-sm px-2.5 py-1 text-[10px] font-semibold text-[#6a53ff] shadow-sm">
+          <span className="rounded-full bg-white/80 backdrop-blur-sm px-2.5 py-1 text-[11px] font-semibold text-[#6a53ff] shadow-sm">
             Live location
           </span>
         </div>
@@ -394,7 +394,7 @@ function NearbyStoresPage() {
               Offers Near You
             </h1>
             {locationStatus === "granted" && userLocation && (
-              <p className="text-[11px] text-[#6a53ff] font-medium flex items-center gap-1">
+              <p className="text-[12px] text-[#6a53ff] font-medium flex items-center gap-1">
                 <MapPin className="h-3 w-3" />
                 {detectedAddress ? detectedAddress.split(",")[0] : "Location active"}
               </p>

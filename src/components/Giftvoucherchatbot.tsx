@@ -1241,7 +1241,7 @@ Is there anything else I can help you with?`,
                         <h3 className="font-semibold text-base">Gift360 Assistant</h3>
                         <div className="flex items-center gap-1.5 text-xs text-white/90">
                             <div className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse"></div>
-                            <span className='text-[10px]'>Online</span>
+                            <span className='text-[11px]'>Online</span>
                         </div>
                     </div>
                 </div>

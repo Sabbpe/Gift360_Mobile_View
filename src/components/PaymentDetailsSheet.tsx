@@ -17,6 +17,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useNotification } from "@/contexts/NotificationContext";
 import { getImageUrl } from "@/utils/imageUrl";
 
+import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 const MAX_QUANTITY_PER_ITEM = 3;
 
 type Props = {
@@ -40,6 +41,7 @@ export default function PaymentDetailsSheet({
   initialBrandDetails,
   initialTab = null,
 }: Props) {
+  useHideSupportFab(open);
   const cashbackPercent = 15;
   const { data: fetchedBrand } = useBrandDetails(brandId || "", {
     enabled: !!brandId && open && !initialBrandDetails,
@@ -505,7 +507,7 @@ export default function PaymentDetailsSheet({
             <div className="top-card overflow-hidden">
               <div className="flex h-full items-center gap-3 p-3">
                 <div className="h-[60px] w-[60px] shrink-0 overflow-hidden rounded-[8px] bg-[#F3F4F6]">
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={getImageUrl(brand) || "/brand-placeholder.png"}
                     alt={brand?.BrandName}
                     className="h-full w-full object-contain"
@@ -529,7 +531,7 @@ export default function PaymentDetailsSheet({
                     E-Gift Cards
                   </div>
                   <div
-                    className="mt-1 inline-flex h-[20px] min-w-[145px] items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#78DEFF_50%,#488599_100%)] px-3 text-[10px] font-normal leading-[15px] text-black shadow-[0px_2px_4px_rgba(120,222,255,0.5)]"
+                    className="mt-1 inline-flex h-[20px] min-w-[145px] items-center justify-center rounded-[10px] bg-[linear-gradient(180deg,#78DEFF_50%,#488599_100%)] px-3 text-[11px] font-normal leading-[15px] text-black shadow-[0px_2px_4px_rgba(120,222,255,0.5)]"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     {brand?.Category || "E-Commerce & Shopping"}
@@ -539,7 +541,7 @@ export default function PaymentDetailsSheet({
 
               <div className="absolute right-0 top-0 flex h-[30px] items-center rounded-bl-[20px] rounded-tl-[20px] bg-[linear-gradient(129.26deg,#9747FF_20.69%,#5B2B99_72.49%)] px-[10px] text-white">
                 <div
-                  className="text-center text-[8px] font-normal leading-[12px]"
+                  className="text-center text-[10px] font-normal leading-[12px]"
                   style={{ fontFamily: "Poppins, sans-serif" }}
                 >
                   Cashback
@@ -634,7 +636,7 @@ export default function PaymentDetailsSheet({
               ) : (
                 <div className="mt-[4px]">
                   <div
-                    className="mb-[6px] flex items-center gap-[4px] text-[11px] font-medium leading-[16px] text-[#555]"
+                    className="mb-[6px] flex items-center gap-[4px] text-[12px] font-medium leading-[16px] text-[#555]"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   >
                     <span className="inline-block h-[4px] w-[4px] rounded-full bg-[#9747FF]" />
@@ -658,7 +660,7 @@ export default function PaymentDetailsSheet({
                     className="w-full rounded-[8px] border-2 border-[#DAD5FF] bg-white px-3 py-2 text-[12px] font-medium text-[#3E3E3E] outline-none transition-colors focus:border-[#9747FF] focus:ring-1 focus:ring-[#9747FF]"
                     style={{ fontFamily: "Poppins, sans-serif" }}
                   />
-                  <div className="mt-[4px] text-[9px] leading-[14px] text-[#10B981] font-medium text-right">
+                  <div className="mt-[4px] text-[11px] leading-[14px] text-[#10B981] font-medium text-right">
                     +₹{Math.round(amount * discountPercent / 100)} cashback
                   </div>
                 </div>
@@ -833,7 +835,7 @@ export default function PaymentDetailsSheet({
                       <span className="pay-text">Processing...</span>
                     </>
                   ) : (
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={payOnSabbpe}
                       alt="Pay on Sabbpe"
                       className="h-[22px] w-auto object-contain"

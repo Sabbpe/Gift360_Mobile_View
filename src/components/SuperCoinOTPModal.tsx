@@ -305,7 +305,7 @@ export default function SuperCoinOTPModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <img src={flipkartSuperCoinIcon} alt="" className="h-6 w-auto" />
+                <img loading="lazy" decoding="async" src={flipkartSuperCoinIcon} alt="" className="h-6 w-auto" />
                 SuperCoins
               </DialogTitle>
               <DialogDescription>Loading your SuperCoin balance...</DialogDescription>
@@ -320,7 +320,7 @@ export default function SuperCoinOTPModal({
           <>
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <img src={flipkartSuperCoinIcon} alt="" className="h-6 w-auto" />
+                <img loading="lazy" decoding="async" src={flipkartSuperCoinIcon} alt="" className="h-6 w-auto" />
                 Use SuperCoins
               </DialogTitle>
             </DialogHeader>
@@ -332,7 +332,7 @@ export default function SuperCoinOTPModal({
                 </p>
                 <p className="text-muted-foreground">
                   You can use{" "}
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={superCoinIcon}
                     alt=""
                     className="inline h-4 w-4 align-middle -mt-px"

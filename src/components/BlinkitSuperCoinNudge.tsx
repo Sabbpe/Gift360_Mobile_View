@@ -118,7 +118,7 @@ export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
       `}</style>
 
       {/* Blinkit backdrop */}
-      <img src={blinkitBg} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none" />
+      <img loading="lazy" decoding="async" src={blinkitBg} alt="" className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none" />
 
       {/* Soft overlay */}
       <div className="absolute inset-0 pointer-events-none" style={{ background: "linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.05) 100%)" }} />
@@ -129,7 +129,7 @@ export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
           <span key={label} className="inline-flex items-center gap-0.5">
             {i > 0 && <span className="text-[7px] text-[#B45309]/50 font-extrabold">→</span>}
             <span className="inline-flex items-center gap-[2px] rounded-full bg-white/80 backdrop-blur-sm px-1.5 py-[2px] shadow-[0_1px_4px_rgba(180,83,9,0.12)]">
-              <img src={superCoinImg} alt="" className="w-[7px] h-[7px] object-contain" />
+              <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-[7px] h-[7px] object-contain" />
               <span className="text-[7px] font-extrabold text-[#B45309] leading-none whitespace-nowrap">{label}</span>
             </span>
           </span>
@@ -146,7 +146,7 @@ export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
 
           {/* Top right: SC balance */}
           <div className="flex items-center justify-end gap-1 mb-0.5">
-            <img src={superCoinImg} alt="" className="w-3 h-3 object-contain" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-3 h-3 object-contain" />
             <span className="text-[7px] font-bold text-gray-500">{toggleOn ? STATIC_SC_BALANCE - 100 : STATIC_SC_BALANCE} SC available</span>
           </div>
 
@@ -201,7 +201,7 @@ export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
         </button>
       ) : (
         <div className="absolute right-4 bottom-3 z-10 flex items-center gap-1" style={{ animation: "nudge-pulse 2s ease-in-out infinite" }}>
-          <img src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-2.5 h-2.5 object-contain flex-shrink-0" />
           <span className="text-[7px] font-semibold text-[#B45309] leading-tight drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">Try the toggle — see {DISCOUNT_PERCENT}% off</span>
         </div>
       )}

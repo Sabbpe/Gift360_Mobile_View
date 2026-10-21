@@ -53,7 +53,7 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
           style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8, position: 'relative' }}
         >
           {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-            <img src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-1 right-1 w-[16px] h-[16px] object-contain drop-shadow-sm z-10" />
           )}
           <div className="flex items-start gap-2" style={{ height: 32 }}>
             <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -62,14 +62,14 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
               ) : imgSrc === FALLBACK ? (
                 <div style={{ width: 34, height: 28 }} />
               ) : (
-                <img src={imgSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
+                <img loading="lazy" decoding="async" src={imgSrc} alt={brand.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} />
               )}
             </div>
 
             <div className="min-w-0" style={{ flex: 1 }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                 <span className="text-[12px] font-semibold text-[#111827] truncate">{brand.BrandName}</span>
-                <span className="text-[10px] text-[#6B7280] truncate">{priceValue > 0 ? `₹${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
+                <span className="text-[11px] text-[#6B7280] truncate">{priceValue > 0 ? `₹${priceValue.toLocaleString()} Voucher` : 'Voucher'}</span>
               </div>
             </div>
           </div>
@@ -96,7 +96,7 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
     <>
       <article className="bg-white rounded-[12px] shadow-md w-[120px] min-w-[120px] h-[130px] min-h-[130px] p-4 flex flex-col justify-between h-full flex-none relative">
         {!isSuperCoinExcludedById(brand.BrandId) && !isSuperCoinExcluded(brand.BrandName) && (
-          <img src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute top-2 right-2 w-[18px] h-[18px] object-contain drop-shadow-sm z-10" />
         )}
         <div className="flex items-center gap-2 mb-2">
           <div className="w-9 h-9 rounded-[8px] bg-gray-100 flex items-center justify-center overflow-hidden flex-none">
@@ -105,12 +105,12 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
             ) : imgSrc === FALLBACK ? (
               <div className="w-6 h-6 bg-gray-300" />
             ) : (
-              <img src={imgSrc} alt={brand.BrandName} className="w-full h-full object-contain" />
+              <img loading="lazy" decoding="async" src={imgSrc} alt={brand.BrandName} className="w-full h-full object-contain" />
             )}
           </div>
           <div className="flex-1 min-w-0">
-            <div className="text-[11px] font-medium text-gray-900 truncate">{brand.BrandName}</div>
-            <div className="text-[10px] font-normal text-gray-400">E-Gift Card</div>
+            <div className="text-[12px] font-medium text-gray-900 truncate">{brand.BrandName}</div>
+            <div className="text-[11px] font-normal text-gray-400">E-Gift Card</div>
           </div>
         </div>
 
@@ -119,7 +119,7 @@ export default function ProductCard({ brand, onBuy, variant = 'category' }: { br
         <div className="flex justify-between items-center mt-1">
           <div className="font-semibold text-base">{price > 0 ? `₹${price.toLocaleString()}` : '-'}</div>
           <BuyButton
-            className="py-1.5 px-2.5 text-[11px] font-semibold rounded-full bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] text-white flex-shrink-0"
+            className="py-1.5 px-2.5 text-[12px] font-semibold rounded-full bg-gradient-to-r from-[#7C3AED] to-[#3B82F6] text-white flex-shrink-0"
             onClick={() => {
               if (onBuy) onBuy(brand.BrandId);
               else setShowQuickBuy(true);

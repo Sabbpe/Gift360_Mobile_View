@@ -586,7 +586,7 @@ return (
                         className="flex flex-col items-center text-center p-4 rounded-xl bg-gradient-to-br from-gray-50 to-gray-100/50 dark:from-gray-800/50 dark:to-gray-900/30 border border-border/50 space-y-3"
                       >
                         {step.image ? (
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={step.image}
                             alt={step.title}
                             className="w-16 h-16 object-cover rounded-lg border border-border shadow-sm"
@@ -614,7 +614,7 @@ return (
                         className="flex flex-col items-center text-center space-y-3"
                       >
                         {step.image ? (
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={step.image}
                             alt={step.title}
                             className="w-20 h-20 lg:w-24 lg:h-24 object-cover rounded-lg border border-border"
@@ -658,8 +658,8 @@ return (
                     <div className="flex items-start gap-1">
                       <FileText className="h-3 w-3 text-primary flex-shrink-0 mt-0.5" />
                       <div className="space-y-0 flex-1 min-w-0">
-                        <p className="text-[10px] font-semibold text-foreground mb-0.5">Key Highlights</p>
-                        <ul className="space-y-0 text-[10px] text-muted-foreground">
+                        <p className="text-[11px] font-semibold text-foreground mb-0.5">Key Highlights</p>
+                        <ul className="space-y-0 text-[11px] text-muted-foreground">
                           <li className="flex items-center gap-1">
                             <span className="w-0.5 h-0.5 rounded-full bg-primary flex-shrink-0"></span>
                             <span className="flex-1"><strong className="text-foreground">Validity:</strong> Check expiry before use</span>
@@ -692,12 +692,12 @@ return (
                           
                           return (
                             <li key={i} className="flex gap-1 items-start">
-                              <span className="w-3.5 h-3.5 flex-shrink-0 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-[8px] font-semibold flex items-center justify-center mt-0.5 shadow-sm">
+                              <span className="w-3.5 h-3.5 flex-shrink-0 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5 shadow-sm">
                                 {i + 1}
                               </span>
                               <div className="flex-1 min-w-0 pl-0">
                                 <span 
-                                  className="text-[11px] leading-[1.3] text-foreground/90 dark:text-foreground/85 block break-words"
+                                  className="text-[12px] leading-[1.3] text-foreground/90 dark:text-foreground/85 block break-words"
                                   dangerouslySetInnerHTML={{ __html: enhancedText }}
                                 />
                               </div>
@@ -735,12 +735,12 @@ return (
 
                           return (
                             <li key={i} className="flex gap-1 items-start">
-                              <span className="w-3.5 h-3.5 flex-shrink-0 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-[8px] font-semibold flex items-center justify-center mt-0.5 shadow-sm">
+                              <span className="w-3.5 h-3.5 flex-shrink-0 rounded-full bg-primary/10 dark:bg-primary/20 text-primary text-[10px] font-semibold flex items-center justify-center mt-0.5 shadow-sm">
                                 {i + 1}
                               </span>
                               <div className="flex-1 min-w-0 pl-0">
                                 <span 
-                                  className="text-[11px] leading-[1.3] text-foreground/90 dark:text-foreground/85 block break-words"
+                                  className="text-[12px] leading-[1.3] text-foreground/90 dark:text-foreground/85 block break-words"
                                   dangerouslySetInnerHTML={{ __html: enhancedPoint }}
                                 />
                               </div>
@@ -797,7 +797,7 @@ return (
 
                   <div className="flex gap-4 items-start">
                     <div className="relative w-20 h-20 sm:w-24 sm:h-24 bg-white/5 rounded-2xl flex items-center justify-center border border-white/10 flex-shrink-0 p-3">
-                      <img
+                      <img loading="lazy" decoding="async"
                         src={imgSrc}
                         alt={brand.BrandName}
                         className="w-full h-full object-contain"
@@ -1105,7 +1105,7 @@ return (
               <div className="text-xl font-black text-emerald-700 dark:text-emerald-300">
                 {cashbackCalculation.percentage}%
               </div>
-              <div className="text-[8px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+              <div className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                 CASHBACK
               </div>
             </div>
@@ -1625,7 +1625,7 @@ return (
               <div className="text-2xl font-black text-emerald-700 dark:text-emerald-300">
                 {cashbackCalculation.percentage}%
               </div>
-              <div className="text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+              <div className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
                 CASHBACK
               </div>
             </div>

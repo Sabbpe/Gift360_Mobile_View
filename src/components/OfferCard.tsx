@@ -15,7 +15,7 @@ export default function OfferCard({ voucher }: OfferCardProps) {
       <Link href={`/voucher/${voucher.id}`}>
         <button className="w-full text-left">
           <div className="relative aspect-video overflow-hidden bg-muted">
-            <img
+            <img loading="lazy" decoding="async"
               src={voucher.image}
               alt={voucher.title}
               className="w-full h-full object-cover"

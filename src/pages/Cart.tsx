@@ -125,7 +125,7 @@ function CartItemImage({ src, alt }: { src?: string; alt: string }) {
       {isLoading ? (
         <div className="animate-pulse bg-neutral-200 dark:bg-neutral-600 w-full h-full" />
       ) : (
-        <img
+        <img loading="lazy" decoding="async"
           src={imgSrc}
           alt={alt}
           className="w-full h-full object-contain p-2"
@@ -2147,7 +2147,7 @@ useEffect(() => {
                           <span className="text-xs sm:text-sm cart-text-secondary">
                             {data.brand}
                             {data.discount > 0 && (
-                              <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-green-600 dark:text-green-400">
+                              <span className="ml-1.5 inline-flex items-center gap-0.5 rounded-full bg-green-500/10 px-1.5 py-0.5 text-[11px] font-semibold text-green-600 dark:text-green-400">
                                 {data.discount}% Cashback
                               </span>
                             )}
@@ -2167,7 +2167,7 @@ useEffect(() => {
                       {pendingQuizReward?.status === "PENDING" && (
                         <div className="rounded-xl border border-violet-200 bg-violet-50 p-3 sm:p-4">
                           <div className="flex items-center gap-2 font-semibold text-violet-950">
-                            <img src={superCoinIcon} alt="" className="h-5 w-5" />
+                            <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-5 w-5" />
                             Dussehra quiz bonus: 5 SuperCoins
                           </div>
                           <p className="mt-1 text-xs leading-relaxed text-violet-800">
@@ -2209,7 +2209,7 @@ useEffect(() => {
                                 : 'text-muted-foreground hover:text-foreground'
                             }`}
                           >
-                            <img src={superCoinIcon} alt="" className="h-4 w-4" />
+                            <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
                             SuperCoins
                           </button>
                           )}
@@ -2321,7 +2321,7 @@ useEffect(() => {
                                 <div className="space-y-2 rounded-lg border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.06)] px-3 py-3">
                                   <div className="flex items-center justify-between gap-3">
                                     <span className="text-sm font-medium text-[#7C3AED] flex items-center gap-1.5">
-                                      <img src={superCoinIcon} alt="" className="h-4 w-4 inline" />
+                                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 inline" />
                                       Coins to use
                                     </span>
                                     <span className="text-sm font-bold text-[#7C3AED]">
@@ -2375,7 +2375,7 @@ useEffect(() => {
                               <div className="flex items-center justify-between gap-3 px-3 py-2 rounded-lg bg-[rgba(151,71,255,0.08)] border border-[rgba(151,71,255,0.25)]">
                                 <span className="text-sm font-medium text-[#7C3AED] flex items-center gap-1.5">
                                   SuperCoins active
-                                  <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
+                                  <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                                 </span>
                                 <button
                                   type="button"
@@ -2543,7 +2543,7 @@ useEffect(() => {
                       <div className="flex items-center justify-between text-emerald-500 dark:text-emerald-400">
                         <span className="text-sm sm:text-base flex items-center gap-1.5">
                           SuperCoins discount
-                          <img src={superCoinIcon} alt="" className="h-5 w-5 inline" />
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-5 w-5 inline" />
                         </span>
                         <span className="font-medium text-sm sm:text-base">
                           -₹{superCoinDeduction.toFixed(2)}
@@ -2573,7 +2573,7 @@ useEffect(() => {
                       </span>
                       {estimatedEarn > 0 && rewardMode === 'superCoins' && (
                         <p className="flex items-center justify-end gap-1 text-xs font-semibold cart-text-primary mt-0.5">
-                          <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline" />
                           Earn {estimatedEarn.toFixed(2)} SuperCoins
                         </p>
                       )}
@@ -2581,7 +2581,7 @@ useEffect(() => {
                   </div>
 
                   {estimatedEarn > 0 && rewardMode === 'superCoins' && (
-                    <p className="text-center text-[10px] text-muted-foreground -mt-2">
+                    <p className="text-center text-[11px] text-muted-foreground -mt-2">
                       Fractional SuperCoins are added to your next purchase.
                     </p>
                   )}
@@ -2678,7 +2678,7 @@ useEffect(() => {
               >
                 <div className="flex h-full items-center gap-4">
                   <div className="h-[96px] w-[78px] overflow-hidden rounded-[6px] border border-black/10 bg-[#0E2D73]">
-                    <img src={getImageUrl(item) || FALLBACK} alt={item.brandName} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = FALLBACK; }} />
+                    <img loading="lazy" decoding="async" src={getImageUrl(item) || FALLBACK} alt={item.brandName} className="h-full w-full object-cover" onError={(e) => { e.currentTarget.src = FALLBACK; }} />
                   </div>
                   <div className="h-[96px] w-[1px] bg-black/20" />
                   <div className="flex flex-1 flex-col justify-between">

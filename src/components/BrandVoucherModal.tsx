@@ -140,12 +140,12 @@ export default function BrandVoucherModal({
                     <h5 className="text-[15px] font-semibold text-[#101828]">
                       Available Vouchers
                     </h5>
-                    <p className="mt-1 text-[11px] text-[#667085]">
+                    <p className="mt-1 text-[12px] text-[#667085]">
                       Choose a voucher to continue to payment
                     </p>
                   </div>
                   {vouchers.length > 0 && (
-                    <span className="rounded-full bg-white px-3 py-1 text-[10px] font-semibold text-[#475467] shadow-sm">
+                    <span className="rounded-full bg-white px-3 py-1 text-[11px] font-semibold text-[#475467] shadow-sm">
                       {vouchers.length} options
                     </span>
                   )}
@@ -172,7 +172,7 @@ export default function BrandVoucherModal({
                           className="voucher-card"
                           onClick={() => onVoucherSelect(item)}
                         >
-                          <img
+                          <img loading="lazy" decoding="async"
                             src={imageSrc}
                             alt={item.brandName}
                             className="voucher-img object-contain bg-white"

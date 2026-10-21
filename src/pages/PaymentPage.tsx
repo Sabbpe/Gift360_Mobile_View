@@ -161,7 +161,7 @@ export default function PaymentPage() {
                 >
                   {/* Brand Image */}
                   <div className="w-16 h-16 rounded-lg bg-white flex items-center justify-center flex-shrink-0 border border-gray-200">
-                    <img
+                    <img loading="lazy" decoding="async"
                       src={getImageUrl(item) || FALLBACK_IMAGE}
                       alt={item.brandName}
                       className="w-12 h-12 object-contain"
@@ -212,7 +212,7 @@ export default function PaymentPage() {
                 </>
               ) : (
                 <>
-                  <img
+                  <img loading="lazy" decoding="async"
                     src={payOnSabbpe}
                     alt="Pay on SabbPe"
                     className="h-6 object-contain"

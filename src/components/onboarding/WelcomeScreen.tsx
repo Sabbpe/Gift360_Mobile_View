@@ -62,7 +62,7 @@ export const WelcomeScreen = ({ onNext, onSkip }: Props) => (
         <span className="w-1.5 h-1.5 rounded-full bg-primary/30" />
       </div>
       <div className="flex items-center justify-between">
-        <button onClick={onSkip} className="text-base font-medium text-foreground/80">
+        <button onClick={onSkip} className="-ml-3 min-h-[44px] min-w-[44px] px-3 text-base font-medium text-foreground/80">
           Skip
         </button>
         <button

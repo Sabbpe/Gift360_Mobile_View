@@ -249,7 +249,7 @@ function ChannelPicker({ channel, setChannel, isLoading }: {
           }`}>
           <div className="flex items-center gap-0.5">{o.icon}</div>
           <span className="text-xs font-semibold">{o.label}</span>
-          <span className="text-[10px] text-black/60 leading-tight">{o.sub}</span>
+          <span className="text-[11px] text-black/60 leading-tight">{o.sub}</span>
         </button>
       ))}
     </div>

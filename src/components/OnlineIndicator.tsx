@@ -59,7 +59,7 @@ export default function OnlineIndicator({ compact = false }: OnlineIndicatorProp
 
       {/* Count + label */}
       <span
-        className={`${compact ? "text-[10px] font-medium text-emerald-700/90 dark:text-emerald-400/90" : "text-[11px] font-semibold text-emerald-700 dark:text-emerald-400"} whitespace-nowrap`}
+        className={`${compact ? "text-[11px] font-medium text-emerald-700/90 dark:text-emerald-400/90" : "text-[12px] font-semibold text-emerald-700 dark:text-emerald-400"} whitespace-nowrap`}
       >
         {count.toLocaleString("en-IN")} online
       </span>

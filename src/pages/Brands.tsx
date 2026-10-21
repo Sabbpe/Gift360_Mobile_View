@@ -611,7 +611,7 @@ const sortedDisplayBrands = useMemo(() => {
       >
         {discountNum > 0 && (
           <span
-            className="absolute -top-0.5 -left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[8px] font-bold !text-white leading-none shadow-md pointer-events-none"
+            className="absolute -top-0.5 -left-0.5 z-20 rounded-full bg-gradient-to-r from-[#6C5CE7] to-[#5A4BD1] px-1.5 py-0.5 text-[10px] font-bold !text-white leading-none shadow-md pointer-events-none"
           >
             {discountNum}%
           </span>
@@ -619,7 +619,7 @@ const sortedDisplayBrands = useMemo(() => {
         <div className="relative inline-block">
           <img src={imageUrl} alt={brandName} loading="lazy" className="brand-logo" onError={(e) => { const target = e.target as HTMLImageElement; if (!target.dataset.fallback) { target.dataset.fallback = "1"; target.src = `https://images.gift360.io/${brandId}.png`; } else { target.src = "/brand-placeholder.png"; } }} />
           {!isSuperCoinExcludedById(brandId) && !isSuperCoinExcluded(brandName) && (
-            <img src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10 pointer-events-none" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="SuperCoin" className="absolute -top-1 -right-1 w-[18px] h-[18px] object-contain drop-shadow-sm z-10 pointer-events-none" />
           )}
         </div>
         <span>{brandName}</span>
@@ -849,7 +849,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
             >
               <SlidersHorizontal className="h-5 w-5" strokeWidth={2.2} />
               {activeFiltersCount > 0 && (
-                <span className="absolute -bottom-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-white px-0.5 text-[8px] font-bold leading-[14px] text-center text-[#6C5CE7] shadow-sm translate-x-0 translate-y-0">
+                <span className="absolute -bottom-0.5 -right-0.5 min-w-[14px] h-[14px] rounded-full bg-white px-0.5 text-[10px] font-bold leading-[14px] text-center text-[#6C5CE7] shadow-sm translate-x-0 translate-y-0">
                   {activeFiltersCount}
                 </span>
               )}
@@ -1085,9 +1085,9 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
               {sortedDisplayBrands.length > 0 && (
                 <div className="mb-6 -ml-2">
                   <p className="text-sm font-medium text-[#374151]">
-                    Showing <span className="font-semibold text-[#111827]">{sortedDisplayBrands.length}</span> brands
+                    
                     {superCoinsOnly && (
-                      <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-900">
+                      <span className="ml-2 inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[12px] font-semibold text-amber-900">
                         SuperCoins eligible only
                       </span>
                     )}
@@ -1116,7 +1116,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                           if (el) el.scrollBy({ left: -(100 + 12) * 2, behavior: "smooth" });
                         });
                       }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold"
                       style={{ background: "#6C5CE7", color: "white" }}
                     >
                       &lt;-
@@ -1127,7 +1127,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                           if (el) el.scrollBy({ left: (100 + 12) * 2, behavior: "smooth" });
                         });
                       }}
-                      className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold"
+                      className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] font-bold"
                       style={{ background: "#6C5CE7", color: "white" }}
                     >
                       -&gt;

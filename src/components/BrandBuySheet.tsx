@@ -7,6 +7,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { useLocation } from "wouter";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
+import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 function getImage(b: BrandDetailsParsed | null) {
   if (!b) return FALLBACK_IMAGE;
   return getImageUrl(b) || FALLBACK_IMAGE;
@@ -23,6 +24,7 @@ export default function BrandBuySheet({
   open: boolean;
   onClose: () => void;
 }) {
+  useHideSupportFab(open);
   const { data } = useBrandDetails(brandId || "", { enabled: !!brandId && open });
   const [brand, setBrand] = useState<BrandDetailsParsed | null>(null);
   const [amount, setAmount] = useState<number>(0);
@@ -107,7 +109,7 @@ export default function BrandBuySheet({
           {/* Brand Card */}
           <div className="flex items-center gap-3 rounded-xl p-4 shadow-md bg-white">
             <div className="w-20 h-20 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center">
-              <img src={getImage(brand)} alt={brand?.BrandName} className="w-full h-full object-contain p-2" />
+              <img loading="lazy" decoding="async" src={getImage(brand)} alt={brand?.BrandName} className="w-full h-full object-contain p-2" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">

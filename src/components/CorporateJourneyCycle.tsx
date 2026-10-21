@@ -64,7 +64,7 @@ export default function CorporateJourneyCycle() {
           </div>
           
           <div className="relative z-10">
-            <img 
+            <img loading="lazy" decoding="async" 
               src="/corporate-journey-logo.jpg" 
               alt="Corporate Journey" 
               className="w-48 h-48 md:w-56 md:h-56 object-contain drop-shadow-xl"

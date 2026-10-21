@@ -148,7 +148,7 @@ function StepToggleIllustration({ reduced }: { reduced: boolean }) {
         ].map((row) => (
           <div key={row.label} className="flex items-center justify-between rounded-xl bg-white px-3 py-2 shadow-[0_4px_12px_rgba(124,58,237,0.10)] border border-purple-50">
             <div className="flex items-center gap-1.5">
-              <img src={superCoinImg} alt="" className="w-[14px] h-[14px] object-contain" />
+              <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-[14px] h-[14px] object-contain" />
               <span className="text-[9px] font-semibold text-gray-600">{row.label}</span>
               <span className="rounded-full bg-[#F3F1FE] px-1.5 py-[1px] text-[7px] font-bold text-[#7C3AED]">example</span>
             </div>
@@ -179,7 +179,7 @@ function StepApplyIllustration({ reduced }: { reduced: boolean }) {
         className="pointer-events-none inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[11px] font-bold text-white shadow-[0_6px_16px_rgba(124,58,237,0.35)]"
         style={{ background: "#7C3AED" }}
       >
-        <img src={superCoinImg} alt="" className="w-[14px] h-[14px] object-contain" />
+        <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="w-[14px] h-[14px] object-contain" />
         Apply SC
       </motion.button>
 
@@ -413,7 +413,7 @@ export default function SuperCoinGuideSheet({ open, onClose }: Props) {
 
             {/* Header */}
             <div className="flex shrink-0 items-start gap-3 px-5 pt-2 pb-3">
-              <img src={superCoinImg} alt="" className="mt-0.5 w-8 h-8 object-contain flex-shrink-0" />
+              <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="mt-0.5 w-8 h-8 object-contain flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <h2 id="sc-guide-title" className="text-[17px] font-bold leading-tight text-[#11131d]">
                   How to use SuperCoins

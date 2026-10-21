@@ -137,7 +137,7 @@ function ProfileForm({
           <label className="block">
             <span className="block text-[14px] font-normal leading-none text-white">SuperCoin Balance</span>
             <div className="mt-[8px] h-[44px] w-full rounded-[7px] border-0 bg-white px-[13px] flex items-center gap-2">
-              <img src={superCoinIcon} alt="" className="h-[18px] w-[18px]" />
+              <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-[18px] w-[18px]" />
               <span className="text-[14px] font-semibold text-[#7C3AED]">
                 {profile.superCoinBalance.toLocaleString("en-IN")} coins
               </span>

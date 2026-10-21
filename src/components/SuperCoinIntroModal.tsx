@@ -79,12 +79,12 @@ export default function SuperCoinIntroModal({ open, onClose }: Props) {
       >
         <div className="w-[min(92vw,380px)] overflow-hidden rounded-[24px] bg-[#f4f5fa] shadow-[0_24px_60px_rgba(22,22,44,0.35)]">
           <div className="flex items-center gap-2.5 bg-[linear-gradient(135deg,#9747FF_0%,#7C3AED_45%,#5B2B99_100%)] px-4 py-3.5">
-            <img src={superCoinImg} alt="" className="h-8 w-8 object-contain" />
+            <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-8 w-8 object-contain" />
             <div className="min-w-0 flex-1">
               <h2 className="text-[15px] font-bold leading-tight text-white">
                 SuperCoins, made simple
               </h2>
-              <p className="text-[10px] text-white/70">
+              <p className="text-[11px] text-white/70">
                 Two ways to put your coins to work
               </p>
             </div>
@@ -104,7 +104,7 @@ export default function SuperCoinIntroModal({ open, onClose }: Props) {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id)}
-                className={`flex-1 rounded-full px-3 py-2 text-[11px] font-bold transition-colors ${
+                className={`flex-1 rounded-full px-3 py-2 text-[12px] font-bold transition-colors ${
                   tab === t.id
                     ? "bg-[#7C3AED] text-white shadow-[0_4px_12px_rgba(124,58,237,0.3)]"
                     : "bg-white text-[#7C3AED] border border-[#E2D9FF]"
@@ -119,7 +119,7 @@ export default function SuperCoinIntroModal({ open, onClose }: Props) {
             {tab === "brands" ? (
               <div>
                 <SuperCoinBanner onOpenGuide={() => setGuideOpen(true)} />
-                <p className="mt-2 text-center text-[10px] text-gray-500">
+                <p className="mt-2 text-center text-[11px] text-gray-500">
                   Tap the card for the step-by-step walkthrough.
                 </p>
               </div>
@@ -132,7 +132,7 @@ export default function SuperCoinIntroModal({ open, onClose }: Props) {
                   >
                     <div className="relative grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#F3F1FE]">
                       <step.Icon className="h-5 w-5 text-[#7C3AED]" strokeWidth={2} />
-                      <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-[#7C3AED] text-[9px] font-extrabold text-white">
+                      <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-[#7C3AED] text-[11px] font-extrabold text-white">
                         {i + 1}
                       </span>
                     </div>
@@ -147,7 +147,7 @@ export default function SuperCoinIntroModal({ open, onClose }: Props) {
                   onClick={goTryNow}
                   className="mt-1 flex w-full items-center justify-center gap-2 rounded-[12px] bg-[linear-gradient(90deg,#9747FF,#5B2B99)] py-2.5 text-[12px] font-bold text-white shadow-[0_6px_16px_rgba(151,71,255,0.3)] active:scale-[0.98] transition-transform"
                 >
-                  <img src={superCoinImg} alt="" className="h-4 w-4" />
+                  <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-4 w-4" />
                   Try Now
                 </button>
               </div>

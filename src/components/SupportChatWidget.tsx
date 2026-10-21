@@ -42,6 +42,16 @@ export default function SupportChatWidget() {
   const { user } = useAuthContext();
   const [open, setOpen] = useState(false);
 
+  // Tell the rest of the app the support panel is open so the quick-question
+  // bubble stays out of the way (one floating element at a time).
+  useEffect(() => {
+    if (open) document.body.dataset.supportChatOpen = "1";
+    else delete document.body.dataset.supportChatOpen;
+    return () => {
+      delete document.body.dataset.supportChatOpen;
+    };
+  }, [open]);
+
   const [ticketId, setTicketId] = useState<string | null>(() =>
     sessionStorage.getItem(storageKeyFor(user))
   );
@@ -253,7 +263,7 @@ export default function SupportChatWidget() {
 
   return (
     <>
-      <div className="fixed bottom-[72px] right-4 z-40">
+      <div className="support-fab fixed bottom-[72px] right-4 z-40">
         <button
           onClick={toggleOpen}
           className={`relative flex items-center justify-center active:scale-90 transition-all duration-500 ease-in-out ${
@@ -407,7 +417,7 @@ export default function SupportChatWidget() {
                         }`}
                       >
                         {m.senderType !== "USER" && (
-                          <p className="text-[10px] font-semibold text-blue-600 mb-0.5">
+                          <p className="text-[11px] font-semibold text-blue-600 mb-0.5">
                             {m.senderType === "BOT" ? "Sahil" : "Gift360 Support"}
                           </p>
                         )}
@@ -440,7 +450,7 @@ export default function SupportChatWidget() {
                           </div>
                         )}
                         <p
-                          className={`mt-1 text-[10px] ${
+                          className={`mt-1 text-[11px] ${
                             m.senderType === "USER" ? "text-blue-100" : "text-gray-400"
                           }`}
                         >

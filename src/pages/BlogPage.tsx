@@ -190,13 +190,13 @@ export default function BlogPage() {
                                     {displayedNews.map((news, idx) => (
                                         <Card key={idx} className="group overflow-hidden border-none shadow-lg hover:shadow-xl transition-all duration-300 bg-card/50 backdrop-blur-sm rounded-2xl md:rounded-[2rem]">
                                             <div className="relative h-40 md:h-48 overflow-hidden">
-                                                <img
+                                                <img loading="lazy" decoding="async"
                                                     src={news.image}
                                                     alt={news.title}
                                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                                 />
                                                 <div className="absolute top-3 left-3 md:top-4 md:left-4">
-                                                    <Badge variant="secondary" className="bg-primary/90 text-white border-none shadow-md text-[10px] md:text-xs">
+                                                    <Badge variant="secondary" className="bg-primary/90 text-white border-none shadow-md text-[11px] md:text-xs">
                                                         {news.category}
                                                     </Badge>
                                                 </div>
@@ -294,7 +294,7 @@ export default function BlogPage() {
                                                         <div>
                                                             <h4 className="font-bold text-base md:text-lg line-clamp-1">{update.title}</h4>
                                                             <p className="text-xs md:text-sm text-muted-foreground">{update.date}</p>
-                                                            <Badge variant="outline" className="mt-1.5 md:mt-2 text-[9px] md:text-[10px] uppercase border-primary/20 bg-primary/5">
+                                                            <Badge variant="outline" className="mt-1.5 md:mt-2 text-[11px] md:text-[11px] uppercase border-primary/20 bg-primary/5">
                                                                 {update.status}
                                                             </Badge>
                                                         </div>
@@ -320,7 +320,7 @@ export default function BlogPage() {
                                             <div>
                                                 <h4 className="font-bold text-lg">{update.title}</h4>
                                                 <p className="text-sm text-muted-foreground">{update.date}</p>
-                                                <Badge variant="outline" className="mt-2 text-[10px] uppercase border-primary/20 bg-primary/5">
+                                                <Badge variant="outline" className="mt-2 text-[11px] uppercase border-primary/20 bg-primary/5">
                                                     {update.status}
                                                 </Badge>
                                             </div>

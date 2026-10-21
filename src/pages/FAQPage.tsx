@@ -237,7 +237,7 @@ export default function FAQPage() {
                                                     >
                                                         <AccordionTrigger className="hover:no-underline py-4 md:py-6 text-left font-bold text-base md:text-lg group">
                                                             <div className="flex flex-col gap-1">
-                                                                <span className="text-[10px] uppercase tracking-wider text-primary font-bold">
+                                                                <span className="text-[11px] uppercase tracking-wider text-primary font-bold">
                                                                     {item.category}
                                                                 </span>
                                                                 <span className="group-data-[state=open]:text-primary transition-colors">{item.q}</span>

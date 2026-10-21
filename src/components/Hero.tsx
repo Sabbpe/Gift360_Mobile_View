@@ -170,7 +170,7 @@ export default function Hero() {
               <div style={S.primarySoft} className="hover:scale-105 transition-transform">
                 <Icon className="w-6 h-6" style={{ color: "hsl(252,80%,58%)" }} strokeWidth={2.2} />
               </div>
-              <span className="text-[11px] text-foreground text-center font-medium leading-tight">{label}</span>
+              <span className="text-[12px] text-foreground text-center font-medium leading-tight">{label}</span>
             </button>
           ))}
         </div>
@@ -231,15 +231,15 @@ export default function Hero() {
                   className="text-left bg-card p-3 flex items-center gap-3 active:scale-[0.98] transition-transform"
                   style={{ width: 140, borderRadius: 12, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }}>
                   <div className="w-12 h-12 rounded-xl bg-muted flex items-center justify-center p-1.5">
-                    {img ? <img src={img} alt={brand.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+                    {img ? <img loading="lazy" decoding="async" src={img} alt={brand.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
                       : <div className="w-full h-full bg-accent rounded-lg" />}
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold">{brand.BrandName}</p>
-                    <p className="text-[11px] text-muted-foreground">{brand.Category || "E-Gift Card"}</p>
+                    <p className="text-[12px] text-muted-foreground">{brand.Category || "E-Gift Card"}</p>
                     <div className="flex items-center justify-between mt-1">
                       <span className="text-sm font-bold">₹{brand.MinPrice || (brand as any).minPrice || "50"}</span>
-                      <span className="px-3 py-1 rounded-full text-white text-[11px] font-semibold" style={{ background: "hsl(252,80%,58%)" }}>Buy</span>
+                      <span className="px-3 py-1 rounded-full text-white text-[12px] font-semibold" style={{ background: "hsl(252,80%,58%)" }}>Buy</span>
                     </div>
                   </div>
                 </button>
@@ -255,7 +255,7 @@ export default function Hero() {
               <h3 className="text-lg font-bold title-magic">Top Brands</h3>
               <span className="text-base anim-twinkle" style={{ animationDelay: "0s" }}>✨</span>
             </div>
-            <span className="text-[10px] font-semibold uppercase tracking-wider" style={{ color: "hsl(252,80%,58%,0.7)" }}>Trending</span>
+            <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "hsl(252,80%,58%,0.7)" }}>Trending</span>
           </div>
 
           <div className="relative brand-stage py-3 overflow-hidden">
@@ -280,10 +280,10 @@ export default function Hero() {
                       <div className="absolute -inset-[2px] rounded-2xl brand-ring opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[1px]" />
                       <div className="relative w-[88px] bg-card rounded-2xl p-2.5 flex flex-col items-center gap-1.5" style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
                         <div className="w-14 h-14 rounded-xl bg-card flex items-center justify-center p-1.5">
-                          {img ? <img src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+                          {img ? <img loading="lazy" decoding="async" src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
                             : <div className="w-full h-full bg-accent rounded-xl" />}
                         </div>
-                        <p className="text-[10px] font-semibold text-foreground text-center truncate w-full">{b.BrandName?.slice(0, 12)}</p>
+                        <p className="text-[11px] font-semibold text-foreground text-center truncate w-full">{b.BrandName?.slice(0, 12)}</p>
                       </div>
                     </button>
                   );
@@ -302,10 +302,10 @@ export default function Hero() {
                       <div className="absolute -inset-[2px] rounded-2xl brand-ring opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-[1px]" />
                       <div className="relative w-[78px] bg-card rounded-2xl p-2 flex flex-col items-center gap-1" style={{ boxShadow: "0 4px 16px -6px rgba(0,0,0,0.12)" }}>
                         <div className="w-12 h-12 rounded-xl bg-card flex items-center justify-center p-1">
-                          {img ? <img src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+                          {img ? <img loading="lazy" decoding="async" src={img} alt={b.BrandName} className="w-full h-full object-contain" onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
                             : <div className="w-full h-full bg-accent rounded-xl" />}
                         </div>
-                        <p className="text-[9px] font-semibold text-foreground text-center truncate w-full">{b.BrandName?.slice(0, 10)}</p>
+                        <p className="text-[11px] font-semibold text-foreground text-center truncate w-full">{b.BrandName?.slice(0, 10)}</p>
                       </div>
                     </button>
                   );
@@ -330,7 +330,7 @@ export default function Hero() {
                   style={{ boxShadow: '0 4px 10px rgba(0,0,0,0.08)', padding: 8 }}>
                   <div className="flex items-start gap-2" style={{ height: 32 }}>
                     <div className="flex-shrink-0" style={{ width: 40, height: 32, borderRadius: 8, background: '#F8FAFC', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      {img ? <img src={img} alt={b.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
+                      {img ? <img loading="lazy" decoding="async" src={img} alt={b.BrandName} style={{ width: 34, height: 28, objectFit: 'contain' }} onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
                         : <div style={{ width: 34, height: 28 }} />}
                     </div>
                     <div className="min-w-0" style={{ flex: 1 }}>

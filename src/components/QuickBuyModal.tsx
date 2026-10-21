@@ -11,6 +11,7 @@ import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
 import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 
+import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 const MAX_QUANTITY_PER_ITEM = 3;
 
 interface QuickBuyModalProps {
@@ -26,6 +27,7 @@ export default function QuickBuyModal({
   onClose,
   brandImage,
 }: QuickBuyModalProps) {
+  useHideSupportFab(isOpen);
   const [amount, setAmount] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [error, setError] = useState("");
@@ -343,7 +345,7 @@ const isProcessing =
           {/* Header */}
           <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
             <div className="flex items-center gap-3">
-              <img
+              <img loading="lazy" decoding="async"
                 src={brandImage}
                 alt={brand.BrandName}
                 className="w-12 h-12 object-contain rounded-lg bg-muted/30"

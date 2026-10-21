@@ -224,13 +224,13 @@ function RedeemSheet({
                       <div className="flex items-center justify-between">
                         <p className="text-xs font-bold uppercase tracking-wide" style={{ color: "#888888" }}>Voucher {vouchers.length > 1 ? i + 1 : ""}</p>
                         {isLocked ? (
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🎁 Gifted</span>
+                          <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">🎁 Gifted</span>
                         ) : bal !== undefined ? (
-                          <span className={`text-[10px] font-extrabold px-2 py-0.5 rounded-full ${isUsed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
+                          <span className={`text-[11px] font-extrabold px-2 py-0.5 rounded-full ${isUsed ? "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}`}>
                             {isUsed ? "✓ USED" : `Balance: ₹${bal}`}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-primary/10 text-primary">₹{v.amount}</span>
+                          <span className="text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-primary/10 text-primary">₹{v.amount}</span>
                         )}
                       </div>
                       {isLocked ? (
@@ -246,12 +246,12 @@ function RedeemSheet({
                       ) : (
                         <>
                           <div className="bg-muted rounded-xl p-3">
-                            <div className="flex items-center gap-1.5 mb-1"><CreditCard size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>Card Number</p></div>
+                            <div className="flex items-center gap-1.5 mb-1"><CreditCard size={12} style={{ color: "#7b5cff" }} /><p className="text-[11px] font-semibold" style={{ color: "#888888" }}>Card Number</p></div>
                             <p className="font-mono font-black text-lg tracking-widest text-foreground break-all">{v.cardNumber || "—"}</p>
                           </div>
                           {v.cardPin && (
                             <div className="bg-muted rounded-xl p-3">
-                              <div className="flex items-center gap-1.5 mb-1"><Lock size={12} style={{ color: "#7b5cff" }} /><p className="text-[10px] font-semibold" style={{ color: "#888888" }}>PIN</p></div>
+                              <div className="flex items-center gap-1.5 mb-1"><Lock size={12} style={{ color: "#7b5cff" }} /><p className="text-[11px] font-semibold" style={{ color: "#888888" }}>PIN</p></div>
                               <p className="font-mono font-black text-lg tracking-widest text-foreground">{v.cardPin}</p>
                             </div>
                           )}
@@ -412,11 +412,11 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
        >
         <div className="p-2 flex flex-col items-center text-center">
           <div className="w-[64px] h-[64px] flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2">
-            <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
+            <img loading="lazy" decoding="async" src={imageUrl} alt={brandName} className="w-full h-full object-contain"
               onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
           </div>
-          <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
-          <p className="font-normal text-[10px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
+          <p className="font-semibold text-[12px] leading-4 text-black truncate w-full">{brandName}</p>
+          <p className="font-normal text-[11px] text-black mt-0.5">₹{paidAmount.toFixed(0)}</p>
           {/* Only show Redeem once at least one card has actually been
               revealed - opening "Mark as Redeemed" / redeem instructions
               before the customer has even seen a real code is premature and
@@ -424,20 +424,20 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
           {vouchers.some(v => v.isScratched) && (
             <button
               onClick={() => setShowSheet(true)}
-              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[11px] text-white flex items-center justify-center"
               style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
             >
               Redeem
             </button>
           )}
           {dateStr && (
-            <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+            <p className="text-[9px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
         </div>
       </div>
       <button
         onClick={onToggle}
-        className="w-full text-center text-[10px] font-medium py-1.5 flex items-center justify-center gap-1"
+        className="w-full text-center text-[11px] font-medium py-1.5 flex items-center justify-center gap-1"
         style={{ color: "#7b5cff" }}
       >
         {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -465,11 +465,11 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
               ))}
             </div>
           ) : issueMessage ? (
-            <div className="p-2 bg-red-50 rounded-xl border border-red-200 text-[9px] text-red-700 font-medium">
+            <div className="p-2 bg-red-50 rounded-xl border border-red-200 text-[11px] text-red-700 font-medium">
               {issueMessage}
             </div>
           ) : (
-            <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[9px] text-amber-800 font-medium">
+            <div className="p-2 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-800 font-medium">
               ⏳ Voucher is being issued by the brand — most orders complete in 2–5 minutes.
               Tap "View Vouchers" again or refresh to check.
             </div>
@@ -512,13 +512,13 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
        >
         <div className="p-2 flex flex-col items-center text-center">
           <div className="w-[64px] h-[64px] flex items-center justify-center bg-muted rounded-lg overflow-hidden mb-2">
-            <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
+            <img loading="lazy" decoding="async" src={imageUrl} alt={brandName} className="w-full h-full object-contain"
               onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
           </div>
-          <p className="font-semibold text-[11px] leading-4 text-black truncate w-full">{brandName}</p>
+          <p className="font-semibold text-[12px] leading-4 text-black truncate w-full">{brandName}</p>
           {coinsRedeemed > 0 && (
             <p className="font-bold text-[12px] text-[#7C3AED] mt-0.5 flex items-center gap-1">
-              {coinsRedeemed} <img src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
+              {coinsRedeemed} <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
             </p>
           )}
           {/* Only show Redeem once at least one card has actually been
@@ -526,20 +526,20 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
           {vouchers.some(v => v.isScratched) && (
             <button
               onClick={() => setShowSheet(true)}
-              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[10px] text-white flex items-center justify-center"
+              className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[11px] text-white flex items-center justify-center"
               style={{ background: "linear-gradient(90deg, #6354D3 0%, #7b5cff 100%)" }}
             >
               Redeem
             </button>
           )}
           {dateStr && (
-            <p className="text-[7px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+            <p className="text-[9px] leading-2.5 font-normal mt-1" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
         </div>
       </div>
       <button
         onClick={onToggle}
-        className="w-full text-center text-[10px] font-medium py-1.5 flex items-center justify-center gap-1"
+        className="w-full text-center text-[11px] font-medium py-1.5 flex items-center justify-center gap-1"
         style={{ color: "#7b5cff" }}
       >
         {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
@@ -610,15 +610,15 @@ function PendingCard({ order }: { order: any }) {
     >
       <div className="flex items-start p-3 gap-2.5" style={{ minHeight: 90 }}>
         <div className="w-[50px] h-[70px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-          <img src={imageUrl} alt={brandName} className="w-full h-full object-contain"
+          <img loading="lazy" decoding="async" src={imageUrl} alt={brandName} className="w-full h-full object-contain"
             onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
         </div>
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
             <p className="font-semibold text-sm leading-5 text-black truncate">{brandName}</p>
-            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
+            <p className="font-normal text-[12px] leading-[16px] text-black mt-0.5">₹{amount.toFixed(0)}</p>
             <div className="flex items-center gap-1 mt-0.5">
-              <Badge variant="outline" className="text-[9px] py-0 flex items-center gap-1"
+              <Badge variant="outline" className="text-[11px] py-0 flex items-center gap-1"
                 style={{
                   background: isTampered ? "#fef2f2" : "#fef3c7",
                   color: isTampered ? "#991b1b" : "#92400e",
@@ -629,20 +629,20 @@ function PendingCard({ order }: { order: any }) {
             </div>
           </div>
           {isTampered ? (
-            <p className="text-[9px] font-medium text-red-600 mt-1 leading-4">
+            <p className="text-[11px] font-medium text-red-600 mt-1 leading-4">
               Please write to <span className="font-bold">gift360@gift360.io</span> regarding this order.
             </p>
           ) : (
             <button
               onClick={handleRetry}
-              className="w-[80px] h-[26px] rounded-[16px] font-semibold text-[11px] text-white flex items-center justify-center gap-1"
+              className="w-[80px] h-[26px] rounded-[16px] font-semibold text-[12px] text-white flex items-center justify-center gap-1"
               style={{ background: "linear-gradient(90deg, #FD79A8 0%, #B96BC6 50%, #6C5CE7 100%)" }}
             >
               <RotateCcw size={11} />Retry
             </button>
           )}
           {dateStr && (
-            <p className="text-[7px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
+            <p className="text-[9px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>{dateStr}</p>
           )}
         </div>
       </div>
@@ -665,26 +665,26 @@ function RedeemedCard({ item }: { item: any }) {
     >
       <div className="flex items-start p-3 gap-2.5" style={{ minHeight: 90 }}>
         <div className="w-[50px] h-[70px] shrink-0 flex items-center justify-center bg-muted rounded-lg overflow-hidden">
-          <img src={item.image || getImageUrl(item.meta)} alt={item.brandName} className="w-full h-full object-contain"
+          <img loading="lazy" decoding="async" src={item.image || getImageUrl(item.meta)} alt={item.brandName} className="w-full h-full object-contain"
             onError={e => { (e.target as HTMLImageElement).src = FALLBACK; }} />
         </div>
         <div className="flex-1 min-w-0 self-stretch flex flex-col justify-between">
           <div>
             <p className="font-semibold text-sm leading-5 text-black truncate">{item.brandName}</p>
-            <p className="font-normal text-[11px] leading-[16px] text-black mt-0.5">₹{item.amount?.toLocaleString("en-IN")}</p>
-            <span className="inline-block mt-0.5 bg-green-100 text-green-700 text-[9px] font-bold px-1.5 py-0 rounded-full">REDEEMED</span>
+            <p className="font-normal text-[12px] leading-[16px] text-black mt-0.5">₹{item.amount?.toLocaleString("en-IN")}</p>
+            <span className="inline-block mt-0.5 bg-green-100 text-green-700 text-[11px] font-bold px-1.5 py-0 rounded-full">REDEEMED</span>
           </div>
           {vouchers.length > 0 && (
             <div className="space-y-0.5">
               {vouchers.map((v, i) => (
-                <p key={i} className="font-mono text-[9px] font-medium truncate" style={{ color: "#888888" }}>
+                <p key={i} className="font-mono text-[11px] font-medium truncate" style={{ color: "#888888" }}>
                   {v.cardNumber || "—"}
                 </p>
               ))}
             </div>
           )}
           {dateStr && (
-            <p className="text-[7px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>Redeemed {dateStr}</p>
+            <p className="text-[9px] leading-2.5 font-normal" style={{ color: "#5E5E5E" }}>Redeemed {dateStr}</p>
           )}
         </div>
       </div>
@@ -702,20 +702,20 @@ function RedeemedVoucherCard({ entry, expanded, onToggle }: {
       onClick={onToggle}>
       <div className="relative overflow-hidden">
         <div className="h-28 sm:h-36 bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center p-3">
-          <img src={entry.image || FALLBACK} alt={entry.brandName}
+          <img loading="lazy" decoding="async" src={entry.image || FALLBACK} alt={entry.brandName}
             className="max-h-full max-w-full object-contain drop-shadow-md"
             onError={(e) => { (e.target as HTMLImageElement).src = FALLBACK; }} />
         </div>
         <div className="absolute top-2 right-2">
-          <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[9px] font-bold px-2 py-0.5 rounded-full">
+          <span className="inline-flex items-center gap-1 bg-green-100 text-green-700 text-[11px] font-bold px-2 py-0.5 rounded-full">
             <CheckCircle size={10} /> Redeemed
           </span>
         </div>
       </div>
       <div className="px-3 py-3">
         <p className="text-xs font-extrabold truncate" style={{ color: "#1a1a1a" }}>{entry.brandName}</p>
-        <p className="text-[11px] font-semibold" style={{ color: "#7b5cff" }}>₹{entry.amount}</p>
-        <p className="text-[10px] font-medium mt-1" style={{ color: "#888888" }}>
+        <p className="text-[12px] font-semibold" style={{ color: "#7b5cff" }}>₹{entry.amount}</p>
+        <p className="text-[11px] font-medium mt-1" style={{ color: "#888888" }}>
           Redeemed {entry.redeemedAt ? format(new Date(entry.redeemedAt), "dd MMM") : ""}
         </p>
       </div>
@@ -894,7 +894,7 @@ export default function Orders() {
                 <button
                   key={id}
                   onClick={() => setOrderTab(id)}
-                  className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-full font-semibold text-[11px] transition-all ${
+                  className={`flex-1 flex items-center justify-center gap-1.5 h-10 rounded-full font-semibold text-[12px] transition-all ${
                     orderTab === id ? "text-white shadow-sm" : "text-[#6B7280]"
                   }`}
                   style={
@@ -936,7 +936,7 @@ export default function Orders() {
                     <button
                       key={sub}
                       onClick={() => setVoucherSubTab(sub)}
-                      className={`flex items-center gap-1.5 h-9 px-4 rounded-full text-[11px] font-semibold transition-all ${
+                      className={`flex items-center gap-1.5 h-9 px-4 rounded-full text-[12px] font-semibold transition-all ${
                         voucherSubTab === sub ? "text-white shadow-sm" : "text-[#6B7280] bg-white"
                       }`}
                       style={
@@ -945,10 +945,10 @@ export default function Orders() {
                           : { border: "1px solid #F0F0F0" }
                       }
                     >
-                      {sub === "cash" ? <CreditCard className="w-3.5 h-3.5" /> : <img src={superCoinIcon} alt="" className="w-4 h-4" />}
+                      {sub === "cash" ? <CreditCard className="w-3.5 h-3.5" /> : <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="w-4 h-4" />}
                       <span>{sub === "cash" ? "Cash Orders" : "SuperCoins Orders"}</span>
                       {subCount > 0 && (
-                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-white/20 text-[10px] px-1">
+                        <span className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-white/20 text-[11px] px-1">
                           {subCount}
                         </span>
                       )}
