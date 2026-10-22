@@ -6,7 +6,7 @@
 // endpoints (/brands/getallnames, /brands/search, /brands/getall) only return
 // ids/names -- the code is kept here so the SKU is documented in one place.
 
-export const HIDDEN_CATALOG_BRAND_CODES = ["EGCGBFKSCR001"];
+export const HIDDEN_CATALOG_BRAND_CODES = ["EGCGBFKC002", "EGCGBFKSCR001"];
 
 export const HIDDEN_CATALOG_BRAND_IDS = [
   "c1ae829e-0e78-4dfe-8432-c4c1ac9360e1", // EGCGBFKSCR001 - SuperCoin E-Gift Voucher

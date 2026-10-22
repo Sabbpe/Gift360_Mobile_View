@@ -149,7 +149,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const superCoinsRequired = calculateSuperCoinsRequired(totalVoucherValue);
   const isAmountValid = amount >= min && amount <= max;
   const isFivePercentEarnSku =
-    String(brand?.BrandCode || "").trim().toUpperCase() === "EGCGBFKSCR001";
+    ["EGCGBFKC002", "EGCGBFKSCR001"].includes(String(brand?.BrandCode || "").trim().toUpperCase());
   const qualifiesForSuperCoinEarn = isFivePercentEarnSku
     && amount >= SUPERCOIN_EARN_MIN_DENOMINATION;
   const showSuperCoinEarnThreshold = isFivePercentEarnSku

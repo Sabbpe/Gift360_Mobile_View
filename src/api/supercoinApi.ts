@@ -238,7 +238,7 @@ export const fetchSuperCoinConfig = async (sku?: string): Promise<SuperCoinConfi
   // SKU sent in the POST body. Explicit argument wins, else the VITE_ env var,
   // else empty -- the backend then falls back to its own
   // sabbpe.supercoin.voucher-sku property, so a blank value can never hard-fail.
-  const skuToSend = sku?.trim() || import.meta.env.VITE_SUPERCOIN_VOUCHER_SKU?.trim() || "EGCGBFKSCR001";
+  const skuToSend = sku?.trim() || import.meta.env.VITE_SUPERCOIN_VOUCHER_SKU?.trim() || "EGCGBFKC002";
   const response = await brandApi.post<SuperCoinConfigResponse>(
     "/v1/supercoin/config",
     skuToSend ? { sku: skuToSend } : {}
