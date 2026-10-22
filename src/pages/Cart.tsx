@@ -1639,13 +1639,13 @@ useEffect(() => {
     console.log("ðŸ” Validating order:", orderNumber);
     console.log("Payment breakdown", paymentBreakdown);
 
-    validateOrderMutation.mutate(
-      {
-        orderNumber: orderNumber,
-        cartTotal: paymentBreakdown.subtotal,
-        walletAmount: paymentBreakdown.walletDeduction,
-        walletUsed: useWalletBalance,
-      },
+      validateOrderMutation.mutate(
+        {
+          orderNumber: orderNumber,
+          cartTotal: paymentBreakdown.subtotal,
+          walletAmount: paymentBreakdown.walletDeduction,
+          walletUsed: useWalletBalance,
+        },
       {
         onSuccess: (validationResponse) => {
           console.log("âœ… Validation response:", validationResponse);
@@ -2011,6 +2011,21 @@ useEffect(() => {
     }
   }, [location]);
 
+  // Deep link from PaymentDetailsSheet: /cart?tab=cart&payopen=1 opens the
+  // pay-mode sheet once the cart has items (reward mode comes from the
+  // gift360.cartRewardMode sessionStorage flag set by the caller).
+  const payOpenTriggeredRef = useRef(false);
+  useEffect(() => {
+    const search = location.includes("?") ? location.split("?")[1] : "";
+    if (new URLSearchParams(search).get("payopen") !== "1") return;
+    if (payOpenTriggeredRef.current) return;
+    if (cartLoading) return;
+    if (!cart || cart.items.length === 0) return;
+    payOpenTriggeredRef.current = true;
+    setPayOpen(true);
+    setLocation("/cart?tab=cart");
+  }, [location, cart, cartLoading, setLocation]);
+
   const handleTabChange = (tab: "cart" | "voucher") => {
     setActiveTab(tab);
     setLocation(`/cart?tab=${tab}`);
@@ -2230,7 +2245,7 @@ useEffect(() => {
                   </div>
                 </div>
               ))}
-              <Link href="/brands">
+              <Link href="/">
                 <span className="mt-1 inline-flex cursor-pointer items-center gap-1.5 px-1 py-2 text-sm font-semibold text-[var(--cart-primary)]">
                   <Plus className="h-4 w-4" /> Add more vouchers
                 </span>
@@ -2270,7 +2285,7 @@ useEffect(() => {
                       } ${allItemsSuperCoinExcluded ? 'col-span-2' : ''}`}
                     >
                       <Sparkles className="h-4 w-4" />
-                      Pay by Cash
+                      Pay via cash/wallet
                     </button>
                     {!allItemsSuperCoinExcluded && (
                       <button
@@ -2282,8 +2297,9 @@ useEffect(() => {
                           rewardMode === 'superCoins' ? 'bg-[#34D399] text-white shadow-sm' : 'text-muted-foreground'
                         }`}
                       >
+                        <span>Pay via Cash+</span>
                         <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
-                        SuperCoins + Cash
+                        <span>SuperCoins</span>
                       </button>
                     )}
                   </div>
