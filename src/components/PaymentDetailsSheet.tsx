@@ -18,6 +18,7 @@ import SuperCoinOTPModal, {
   type SuperCoinHoldContext,
 } from "@/components/SuperCoinOTPModal";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
+import SuperCoinRedeemedModal from "@/components/SuperCoinRedeemedModal";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import {
   AlertDialog,
@@ -106,9 +107,12 @@ export default function PaymentDetailsSheet({
   const [isVisible, setIsVisible] = useState(open);
   const [amount, setAmount] = useState<number>(0);
   const [quantity, setQuantity] = useState<number>(1);
+  // One info card at a time under the About / How to Use / Terms pills
+  // (same as before), but open by default when the sheet opens.
   const [activeTab, setActiveTab] = useState<null | "about" | "how" | "terms">(
     null
   );
+  const infoScrollRef = useRef<HTMLDivElement | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const { user } = useAuthContext();
@@ -229,6 +233,8 @@ export default function PaymentDetailsSheet({
     useState<SuperCoinHoldContext | null>(null);
   const scHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
   const [scOTPModalOpen, setScOTPModalOpen] = useState(false);
+  // Post-OTP "redeemed · continue payment in 3…2…1" countdown modal.
+  const [scRedeemedOpen, setScRedeemedOpen] = useState(false);
   const [scOrderNumber, setScOrderNumber] = useState("");
   const [scCountdownDisplay, setScCountdownDisplay] = useState("");
   // Leaving SuperCoins mode while coins are on hold asks first (Cart's
@@ -396,6 +402,7 @@ export default function PaymentDetailsSheet({
   // Amount/quantity edits invalidate the order and release any hold.
   useEffect(() => {
     orderRef.current = null;
+    setScRedeemedOpen(false);
     if (scHoldContextRef.current || scAuthorized) {
       void unholdSuperCoin();
       setScPreviewOff(false);
@@ -419,8 +426,11 @@ export default function PaymentDetailsSheet({
 
   // If the tab closes mid-flow, release an unspent hold.
   useEffect(() => {
-    if (!open && (scHoldContextRef.current || scAuthorized)) {
-      void unholdSuperCoin();
+    if (!open) {
+      setScRedeemedOpen(false);
+      if (scHoldContextRef.current || scAuthorized) {
+        void unholdSuperCoin();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -685,8 +695,8 @@ export default function PaymentDetailsSheet({
     setScHoldContext(context);
     setScAuthorized(true);
     setScOTPModalOpen(false);
-    // Same as Cart's payAfterSC: continue straight into payment.
-    void doPay();
+    // Redeemed countdown first; it calls doPay when the timer hits zero.
+    setScRedeemedOpen(true);
   };
 
   // Back out of SuperCoins mode: if coins are already on hold, confirm first
@@ -699,11 +709,66 @@ export default function PaymentDetailsSheet({
     setPayMode(next);
   };
 
+  // Every time the sheet opens: start collapsed (so the card slides down
+  // into view), then open `initialTab` — defaulting to About.
   useEffect(() => {
-    if (initialTab) {
-      setActiveTab(initialTab);
-    }
-  }, [initialTab]);
+    if (!open) return;
+    setActiveTab(null);
+    const t = window.setTimeout(
+      () => setActiveTab(initialTab ?? "about"),
+      150
+    );
+    return () => window.clearTimeout(t);
+  }, [open, initialTab]);
+
+  // Hint animation: after the info card has finished opening, scroll its
+  // content down and back to the top so the user sees there's more info.
+  useEffect(() => {
+    if (!open || !activeTab) return;
+    let raf: number | null = null;
+    let timer: number | null = null;
+    const stop = () => {
+      if (raf !== null) cancelAnimationFrame(raf);
+      raf = null;
+      if (timer !== null) window.clearTimeout(timer);
+      timer = null;
+    };
+    const start = window.setTimeout(() => {
+      const el = infoScrollRef.current;
+      if (!el) return;
+      const max = el.scrollHeight - el.clientHeight;
+      if (max <= 8) return;
+      const ease = (t: number) =>
+        t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      const duration = 850;
+      let t0 = 0;
+      const down = (now: number) => {
+        if (!t0) t0 = now;
+        const p = Math.min((now - t0) / duration, 1);
+        el.scrollTop = max * ease(p);
+        if (p < 1) {
+          raf = requestAnimationFrame(down);
+        } else {
+          timer = window.setTimeout(() => {
+            const up0 = performance.now();
+            const up = (now2: number) => {
+              const p2 = Math.min((now2 - up0) / duration, 1);
+              el.scrollTop = max * (1 - ease(p2));
+              if (p2 < 1) raf = requestAnimationFrame(up);
+              else raf = null;
+            };
+            raf = requestAnimationFrame(up);
+          }, 450);
+        }
+      };
+      raf = requestAnimationFrame(down);
+    }, 400); // let the max-height open transition (~300ms) finish first
+
+    return () => {
+      window.clearTimeout(start);
+      stop();
+    };
+  }, [activeTab, open]);
 
   useEffect(() => {
     if (!brand) return;
@@ -1227,6 +1292,7 @@ export default function PaymentDetailsSheet({
           <div className="info-section mx-auto flex h-[44px] w-[342px] items-center justify-between rounded-[10px] bg-white px-2 shadow-[0px_6px_20px_rgba(0,0,0,0.15)]">
             <button
               type="button"
+              aria-expanded={activeTab === "about"}
               onClick={() =>
                 setActiveTab(activeTab === "about" ? null : "about")
               }
@@ -1237,6 +1303,7 @@ export default function PaymentDetailsSheet({
             </button>
             <button
               type="button"
+              aria-expanded={activeTab === "how"}
               onClick={() => setActiveTab(activeTab === "how" ? null : "how")}
               className="inline-flex h-[30px] w-[102px] items-center justify-center gap-2 rounded-[10px] bg-[#EDEAFF] text-[12px] font-normal leading-[18px] text-[#9747FF]"
             >
@@ -1245,6 +1312,7 @@ export default function PaymentDetailsSheet({
             </button>
             <button
               type="button"
+              aria-expanded={activeTab === "terms"}
               onClick={() =>
                 setActiveTab(activeTab === "terms" ? null : "terms")
               }
@@ -1255,7 +1323,10 @@ export default function PaymentDetailsSheet({
             </button>
           </div>
 
-          <div className={`expandable ${activeTab ? "open" : ""}`}>
+          <div
+            ref={infoScrollRef}
+            className={`expandable ${activeTab ? "open" : ""}`}
+          >
             {activeTab === "about" && (
               <div className="info-section mx-auto w-[342px] rounded-[10px] bg-white p-4 text-[12px] leading-5 text-[#4B5563] shadow-[4px_4px_4px_rgba(0,0,0,0.25)]">
                 {aboutContent}
@@ -1790,6 +1861,15 @@ export default function PaymentDetailsSheet({
             initialCoinAmount={selectedSCCoins}
           />
         )}
+
+        {/* Redeemed → 3·2·1 → payment (cosmetic; always continues) */}
+        <SuperCoinRedeemedModal
+          open={scRedeemedOpen}
+          onContinue={() => {
+            setScRedeemedOpen(false);
+            void doPay();
+          }}
+        />
 
         {/* Apply SuperCoins? — exact copy of Cart's scPromptOpen dialog */}
         <AlertDialog open={scPromptOpen} onOpenChange={setScPromptOpen}>

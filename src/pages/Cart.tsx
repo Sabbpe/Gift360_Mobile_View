@@ -47,6 +47,7 @@ import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, {
   type SuperCoinHoldContext,
 } from "@/components/SuperCoinOTPModal";
+import SuperCoinRedeemedModal from "@/components/SuperCoinRedeemedModal";
 import {
   cancelSuperCoinHold,
   normalizeMobileToE164,
@@ -380,6 +381,8 @@ useEffect(() => {
   const [payOpen, setPayOpen] = useState(false);
   const [scPromptOpen, setScPromptOpen] = useState(false);
   const [payAfterSC, setPayAfterSC] = useState(false);
+  // Post-OTP "redeemed · continue payment in 3…2…1" countdown modal.
+  const [scRedeemedOpen, setScRedeemedOpen] = useState(false);
   // Slider dragged to 0 / "pay without coins": keep the preview total honest.
   const [scPreviewOff, setScPreviewOff] = useState(false);
   const superCoinHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
@@ -1614,11 +1617,12 @@ useEffect(() => {
     void handlePayNow("easebuzz");
   };
 
-  // After the Flipkart OTP succeeds, continue straight into payment for the balance.
+  // After the Flipkart OTP succeeds, show the redeemed countdown; it calls
+  // handlePayNow when the 3-2-1 timer hits zero.
   useEffect(() => {
     if (payAfterSC && superCoinAuthorized && superCoinHoldContext) {
       setPayAfterSC(false);
-      void handlePayNow("easebuzz");
+      setScRedeemedOpen(true);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payAfterSC, superCoinAuthorized, superCoinHoldContext]);
@@ -2278,14 +2282,19 @@ useEffect(() => {
                       role="tab"
                       aria-selected={rewardMode === 'cashbackWallet' || allItemsSuperCoinExcluded}
                       onClick={() => requestSwitchToCashback()}
-                      className={`flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 text-[12px] font-semibold transition-colors ${
+                      className={`flex h-9 min-w-0 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center transition-colors ${
                         rewardMode === 'cashbackWallet' || allItemsSuperCoinExcluded
                           ? 'bg-[#34D399] text-white shadow-sm'
                           : 'text-muted-foreground'
                       } ${allItemsSuperCoinExcluded ? 'col-span-2' : ''}`}
                     >
-                      <Sparkles className="h-4 w-4" />
-                      Pay via cash/wallet
+                      <span className="text-[10px] font-medium leading-none">
+                        Pay via
+                      </span>
+                      <span className="flex items-center gap-1 text-[11px] font-bold leading-none">
+                        <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                        cash/wallet
+                      </span>
                     </button>
                     {!allItemsSuperCoinExcluded && (
                       <button
@@ -2293,13 +2302,18 @@ useEffect(() => {
                         role="tab"
                         aria-selected={rewardMode === 'superCoins'}
                         onClick={() => { setScPreviewOff(false); setUseWalletBalance(false); setRewardMode('superCoins'); }}
-                        className={`flex h-9 items-center justify-center gap-1 whitespace-nowrap rounded-full px-1 text-[12px] font-semibold transition-colors ${
+                        className={`flex h-9 min-w-0 flex-col items-center justify-center gap-0.5 rounded-full px-1 text-center transition-colors ${
                           rewardMode === 'superCoins' ? 'bg-[#34D399] text-white shadow-sm' : 'text-muted-foreground'
                         }`}
                       >
-                        <span>Pay via Cash+</span>
-                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4" />
-                        <span>SuperCoins</span>
+                        <span className="text-[10px] font-medium leading-none">
+                          Pay via
+                        </span>
+                        <span className="flex items-center gap-1 text-[11px] font-bold leading-none">
+                          Cash+
+                          <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 shrink-0" />
+                          SuperCoins
+                        </span>
                       </button>
                     )}
                   </div>
@@ -2702,6 +2716,15 @@ useEffect(() => {
       <MobileBottomNav />
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
+
+      {/* Redeemed → 3·2·1 → payment (cosmetic; always continues) */}
+      <SuperCoinRedeemedModal
+        open={scRedeemedOpen}
+        onContinue={() => {
+          setScRedeemedOpen(false);
+          void handlePayNow("easebuzz");
+        }}
+      />
 
       <PaymentDetailsSheet
         brandId={sheetBrandId}
