@@ -249,6 +249,23 @@ export const fetchSuperCoinConfig = async (sku?: string): Promise<SuperCoinConfi
   return response.data;
 };
 
+// Per-brand SuperCoin share of the price (giftvouchers_brands.supercoin_share_percent, V51), keyed by brand_id.
+// Only brands with a share > 0 are returned. 100 = SuperCoins only; 1..99 = mandatory SuperCoin/cash split.
+// Any failure returns an empty map, i.e. every brand is a normal cash order.
+export const fetchSuperCoinBrandShares = async (): Promise<Record<string, number>> => {
+  try {
+    const response = await ordersApiClient.get<{ shares?: Record<string, number | string> }>("/v1/supercoin/brand-shares");
+    const out: Record<string, number> = {};
+    Object.entries(response.data?.shares ?? {}).forEach(([brandId, value]) => {
+      const n = Number(value);
+      if (Number.isFinite(n) && n > 0) out[brandId] = Math.min(n, 100);
+    });
+    return out;
+  } catch {
+    return {};
+  }
+};
+
 export type SuperCoinPayMode = "SC_ONLY" | "CASH_EARN";
 
 export interface SuperCoinModalBrand {
