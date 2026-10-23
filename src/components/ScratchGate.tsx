@@ -12,6 +12,7 @@ import {
   Mail, MessageCircle,
 } from "lucide-react";
 import { getMediaUploadUrl } from "@/api/giftingApi";
+import { useAuthContext } from "@/contexts/AuthContext";
 import type { DeliveryChannel } from "@/types/order";
 
 type GateStep = "choice" | "gift_form";
@@ -39,11 +40,16 @@ export function ScratchGate({
   open, onClose, onConfirmScratch, onConfirmGift,
   isScratchLoading, isGiftLoading, brandName, voucherAmount, orderItemId,
 }: ScratchGateProps) {
+  const { user } = useAuthContext();
+  // The gift's "From" name defaults to the logged-in username (honours the
+  // Profile page's editable displayName override) — user can still edit it.
+  const defaultSenderName = () =>
+    localStorage.getItem("displayName") || user?.name || "";
   const [step,             setStep]             = useState<GateStep>("choice");
   const [channel,          setChannel]          = useState<DeliveryChannel>("WHATSAPP");
   const [recipientEmail,   setRecipientEmail]   = useState("");
   const [recipientMobile,  setRecipientMobile]  = useState("");
-  const [senderName,       setSenderName]       = useState("");
+  const [senderName,       setSenderName]       = useState(defaultSenderName);
   const [personalMessage,  setPersonalMessage]  = useState("");
   const [emailError,       setEmailError]       = useState("");
   const [mobileError,      setMobileError]      = useState("");
@@ -61,7 +67,7 @@ export function ScratchGate({
   const handleClose = () => {
     setStep("choice"); setChannel("WHATSAPP");
     setRecipientEmail(""); setRecipientMobile("");
-    setSenderName(""); setPersonalMessage("");
+    setSenderName(defaultSenderName()); setPersonalMessage("");
     setEmailError(""); setMobileError("");
     setMediaFile(null); setMediaPreview(null); setMediaType(null); setMediaError("");
     onClose();

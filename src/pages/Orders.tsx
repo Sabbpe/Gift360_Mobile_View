@@ -21,6 +21,10 @@ import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import { getCardItems } from "@/api/giftingApi";
+import {
+  readCardTerminalState,
+  readOrderItemTerminalState,
+} from "@/lib/voucherStateStore";
 import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
 const FALLBACK = FALLBACK_IMAGE;
@@ -128,6 +132,16 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
           // stayed is_scratched=0 after a "successful" scratch() call,
           // proving the per-card branch was never actually reached.
           const matchingCardItem = cardItems.find((ci2: any) => ci2?.cardIndex === vi);
+          // Terminal-state union across ALL sources: the shared order-item
+          // flag (written by the legacy no-itemId path), the per-card flag
+          // (written when an itemId was known), AND the local floor recorded
+          // on every confirmed reveal/gift. The write path picks ONE server
+          // table while a later read can land on the OTHER (card-items fetch
+          // failed vs succeeded) - previously that flip reset a
+          // revealed/gifted voucher back to PENDING.
+          const localState = matchingCardItem
+            ? readCardTerminalState(matchingCardItem.itemId)
+            : readOrderItemTerminalState(item.order_item_id);
           results.push({
             key: `${item.order_item_id}-${ci}-${vi}`,
             orderItemId: item.order_item_id || "",
@@ -138,12 +152,14 @@ const extractVouchers = (order: any, cardItemsByOrderItem?: Record<string, any[]
             amount: v?.balanceTotal || "",
             activationCode: c?.activation_code || "",
             activationUrl: c?.activation_url || "",
-            isScratched: matchingCardItem
-              ? Boolean(matchingCardItem.isScratched)
-              : Boolean(item.is_scratched),
-            isGift: matchingCardItem
-              ? Boolean(matchingCardItem.isGift)
-              : Boolean(item.is_gift),
+            isScratched:
+              Boolean(item.is_scratched) ||
+              Boolean(matchingCardItem?.isScratched) ||
+              localState === "SCRATCHED",
+            isGift:
+              Boolean(item.is_gift) ||
+              Boolean(matchingCardItem?.isGift) ||
+              localState === "GIFTED",
             itemId: matchingCardItem?.itemId,
           });
         });

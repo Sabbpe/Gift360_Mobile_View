@@ -2,7 +2,7 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { ArrowLeft, LogOut, Check, Pencil, Mail, X } from "lucide-react";
+import { ArrowLeft, LogOut, Check, Pencil, Mail, X, Store } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
@@ -88,6 +88,7 @@ function ProfileForm({
   onLogout,
   onUsernameSave,
   onContactUs,
+  onPartnerUs,
 }: {
   profile: { username: string; email: string; phone: string; balance: number; superCoinBalance: number; isSuperCoinUser: boolean };
   clientId: string | undefined;
@@ -96,6 +97,7 @@ function ProfileForm({
   onLogout: () => void;
   onUsernameSave: (name: string) => void;
   onContactUs: () => void;
+  onPartnerUs: () => void;
 }) {
   const [activeTab, setActiveTab] = useState<"profile" | "rewards">(initialTab);
 
@@ -147,8 +149,23 @@ function ProfileForm({
       </div>
       )}
 
+      {/* Partner with us */}
+      <div className="mt-[16px] rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[14px]">
+        <p className="text-[14px] font-semibold text-white">Partner with us</p>
+        <p className="mt-[4px] text-[12px] leading-[1.4] text-white/70">
+          Grow as a reseller — sell gift vouchers at your own margins.
+        </p>
+        <button
+          onClick={onPartnerUs}
+          className="mt-[12px] flex h-[40px] w-full items-center justify-center gap-[6px] rounded-[9px] bg-white text-[13px] font-semibold text-[#7C3AED] active:scale-95"
+        >
+          <Store className="h-[14px] w-[14px] text-[#7C3AED]" strokeWidth={2.2} />
+          Partner with us
+        </button>
+      </div>
+
       {/* Support Section */}
-      <div className="mt-[28px] rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[14px]">
+      <div className="mt-[16px] rounded-[12px] border border-white/25 bg-white/12 px-[16px] py-[14px]">
         <p className="text-[14px] font-semibold text-white">Need help?</p>
         <p className="mt-[4px] text-[12px] leading-[1.4] text-white/70">
           Having a voucher or payment issue? We're here to help.
@@ -275,6 +292,7 @@ export default function ProfilePage() {
         onLogout={handleLogout}
         onUsernameSave={handleUsernameSave}
         onContactUs={() => setShowContactModal(true)}
+        onPartnerUs={() => setLocation("/reseller")}
       />
 
       {showContactModal && (

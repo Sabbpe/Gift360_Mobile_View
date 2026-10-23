@@ -26,6 +26,10 @@ import { format } from "date-fns";
 import { getVoucherState } from "@/types/order";
 import type { CardItem } from "@/types/order";
 import { getCardItems } from "@/api/giftingApi";
+import {
+  readCardTerminalState,
+  readOrderItemTerminalState,
+} from "@/lib/voucherStateStore";
 
 const FALLBACK_IMAGE = "/brand-placeholder.png";
 
@@ -389,12 +393,24 @@ export default function OrderDetails() {
                               // completed yet or failed for this item -
                               // degraded but not broken.
                               const cardItem = cardItemsByOrderItem[item.order_item_id]?.[idx];
-                              const cardState = cardItem
-                                ? getVoucherState({
-                                    is_scratched: cardItem.isScratched,
-                                    is_gift: cardItem.isGift,
-                                  })
-                                : getVoucherState(item);
+                              // Terminal-state union (same as Orders.tsx):
+                              // shared flag + per-card flag + local floor, so
+                              // a revealed/gifted card can never fall back to
+                              // PENDING when the read lands on the table the
+                              // write didn't touch (fetch success flip).
+                              const localState = cardItem
+                                ? readCardTerminalState(cardItem.itemId)
+                                : readOrderItemTerminalState(item.order_item_id);
+                              const cardState = getVoucherState({
+                                is_scratched:
+                                  Boolean(item.is_scratched) ||
+                                  Boolean(cardItem?.isScratched) ||
+                                  localState === "SCRATCHED",
+                                is_gift:
+                                  Boolean(item.is_gift) ||
+                                  Boolean(cardItem?.isGift) ||
+                                  localState === "GIFTED",
+                              });
 
                               return (
                                 <ScratchCard

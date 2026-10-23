@@ -3,6 +3,7 @@ import { useState } from "react";
 import { scratchVoucher, giftVoucher } from "@/api/giftingApi";
 import { useToast } from "@/hooks/use-toast";
 import { useSendEmail } from "@/hooks/useSendEmail";
+import { recordVoucherTerminalState } from "@/lib/voucherStateStore";
 import type { GiftActionResponse, VoucherState, DeliveryChannel } from "@/types/order";
 
 interface UseGiftingOptions {
@@ -44,11 +45,20 @@ export function useGifting({
   const [isScratchLoading, setIsScratchLoading] = useState(false);
   const [isGiftLoading,    setIsGiftLoading]    = useState(false);
 
+  // Every confirmed terminal outcome (success OR 409-already-terminal) is
+  // also persisted in localStorage so the voucher can never render as
+  // PENDING again even when a later read misses the server flag (shared vs
+  // per-card table flip - see voucherStateStore for the full story).
+  const applyTerminal = (state: "SCRATCHED" | "GIFTED") => {
+    recordVoucherTerminalState(orderItemId, itemId, state);
+    onStateChange(orderItemId, state);
+  };
+
   const confirmScratch = async () => {
     setIsScratchLoading(true);
     try {
       const result: GiftActionResponse = await scratchVoucher({ clientId, orderItemId, itemId });
-      onStateChange(orderItemId, "SCRATCHED");
+      applyTerminal("SCRATCHED");
       toast({
         title:       "Voucher revealed! 🎉",
         description: result.message,
@@ -68,7 +78,7 @@ export function useGifting({
         // the word "gifted", which previously caused an already-SCRATCHED
         // card (re-tapped/retried) to be incorrectly displayed as "Gifted".
         const errorCode = err?.response?.data?.errorCode;
-        onStateChange(orderItemId, errorCode === "ALREADY_GIFTED" ? "GIFTED" : "SCRATCHED");
+        applyTerminal(errorCode === "ALREADY_GIFTED" ? "GIFTED" : "SCRATCHED");
       } else {
         toast({
           title:       "Could not reveal voucher",
@@ -109,7 +119,7 @@ export function useGifting({
         senderName,
         mediaUrl,
       });
-      onStateChange(orderItemId, "GIFTED");
+      applyTerminal("GIFTED");
 
       // Fire gifting confirmation email to the buyer (non-blocking fire-and-forget).
       // Only when email channel is used.
@@ -146,7 +156,7 @@ export function useGifting({
         // the word "scratched", which previously caused an already-GIFTED
         // card to be incorrectly displayed as "SCRATCHED" on a retry.
         const errorCode = err?.response?.data?.errorCode;
-        onStateChange(orderItemId, errorCode === "ALREADY_SCRATCHED" ? "SCRATCHED" : "GIFTED");
+        applyTerminal(errorCode === "ALREADY_SCRATCHED" ? "SCRATCHED" : "GIFTED");
       } else {
         toast({
           title:       "Could not gift voucher",

@@ -5,6 +5,9 @@ import Register from "@/pages/Register";
 import Home from "./pages/Home";
 import DistributorLandingPage from "./pages/DistributorLandingPage";
 import ResellerLandingPage from "./pages/ResellerLandingPage";
+import ResellerDashboard from "./pages/ResellerDashboard";
+import ResellerCatalog from "./pages/ResellerCatalog";
+import ResellerCart from "./pages/ResellerCart";
 import CorporateLandingPage from "./pages/CorporateLandingPage";
 import Brands from "./pages/Brands";
 import Categories from "./pages/Categories";
@@ -45,6 +48,7 @@ import FAQTopicPage from "./pages/FAQTopicPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import SuperCoinVoucherPreview from "./pages/SuperCoinVoucherPreview";
+import RewardsPage from "./pages/RewardsPage";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { trackPageView } from "./lib/analytics";
@@ -107,6 +111,9 @@ function AppRoutes() {
       <Route path="/" component={Home} />
       <Route path="/distributor" component={DistributorLandingPage} />
       <Route path="/reseller" component={ResellerLandingPage} />
+      <Route path="/reseller/dashboard" component={ResellerDashboard} />
+      <Route path="/reseller/catalog" component={ResellerCatalog} />
+      <Route path="/reseller/cart" component={ResellerCart} />
       <Route path="/corporate" component={CorporateLandingPage} />
       <Route path="/login" component={Login} />
       <Route path="/register" component={Register} />
@@ -137,6 +144,7 @@ function AppRoutes() {
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
       <Route path="/supercoin-voucher" component={SuperCoinVoucherPreview} />
+      <Route path="/rewards" component={RewardsPage} />
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

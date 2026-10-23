@@ -41,7 +41,6 @@ import PaymentDetailsSheet from "@/components/PaymentDetailsSheet";
 import BrandVoucherModal from "@/components/BrandVoucherModal";
 import CategoriesBottomSheet from "../components/CategoriesBottomSheet.tsx";
 import InstantGiftingBanner from "@/components/InstantGiftingBanner";
-import RewardsModal from "@/components/RewardsModal";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
@@ -157,14 +156,14 @@ function BalanceCard() {
   );
 }
 
-function ActionGrid({ onBuyVoucher, onSuperCoinClick, onRewards }: { onBuyVoucher: () => void; onSuperCoinClick?: () => void; onRewards: () => void }) {
+function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => void; onSuperCoinClick?: () => void }) {
   const [, setLocation] = useLocation();
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
     { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
     { label: "Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
-    { label: "Rewards", Icon: Coins, href: "", onClick: onRewards },
+    { label: "Rewards", Icon: Coins, href: "/rewards" },
   ];
 
   return (
@@ -856,7 +855,6 @@ function MobileHomeScreen() {
   const { toast } = useToast();
   const { user } = useAuthContext();
   const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [rewardsOpen, setRewardsOpen] = useState(false);
   const [buySheetOpen, setBuySheetOpen] = useState(false);
   const [sheetBrandId, setSheetBrandId] = useState<string | null>(null);
   const [sheetInitialAmount, setSheetInitialAmount] = useState<number | undefined>(
@@ -994,7 +992,7 @@ function MobileHomeScreen() {
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />
           <BalanceCard />
         </div>
-      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} onRewards={() => setRewardsOpen(true)} />
+      <ActionGrid onBuyVoucher={() => setCategoriesOpen(true)} onSuperCoinClick={openSuperCoinsModal} />
       <SearchSection onBrandSelect={openStandardPaymentSheet} />
       <PromoCard onBuyNow={openStandardPaymentSheet} />
       {/* PersonalPicksSection hidden */}
@@ -1050,7 +1048,6 @@ function MobileHomeScreen() {
       </section>
 
       <CategoriesBottomSheet open={categoriesOpen} onClose={() => setCategoriesOpen(false)} />
-      <RewardsModal open={rewardsOpen} onClose={() => setRewardsOpen(false)} />
       <SuperCoinsBrandModal
         open={superCoinsModalOpen}
         brandId={SUPERCOIN_FEATURED_BRAND_ID}

@@ -14,7 +14,19 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: parseInt(process.env.VITE_PORT || "7788")
+    port: parseInt(process.env.VITE_PORT || "7788"),
+    // Local dev: forward /api to the UAT backend so browser requests are
+    // same-origin. UAT Apache's CORS allow-list doesn't yet include
+    // `Idempotency-Key` (required by POST /v1/reseller/orders), and a
+    // cross-origin request would fail preflight. In dev the Vite proxy
+    // removes CORS from the equation entirely. (`.env.development.local`
+    // sets VITE_BRAND_API_URL=/api — dev-only, never used at build time.)
+    proxy: {
+      "/api": {
+        target: "https://vdspbck.sabbpe.com",
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     host: "0.0.0.0",

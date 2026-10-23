@@ -4,12 +4,15 @@ import { useState } from 'react';
 import { useLocation } from 'wouter';
 import StepCircle from '@/components/StepCircle';
 import ResellerContactModal from '@/components/ResellerContactModal';
+import ResellerLoginModal from '@/components/ResellerLoginModal';
+import { getResellerSession } from '@/api/resellerApi';
 import ResellerImage from '@/assets/Resell.png';
 import { Wand2, Grid3X3, Zap, Wallet, LogIn, Tag, ShoppingCart, TrendingUp, UserPlus, Mail, Home, ArrowLeft } from "lucide-react";
 
 export default function ResellerLandingPage() {
     const [, setLocation] = useLocation();
     const [showContactModal, setShowContactModal] = useState(false);
+    const [showLoginModal, setShowLoginModal] = useState(false);
     const [showMenu, setShowMenu] = useState(false);
 
     // Highlight chips data for resellers
@@ -18,6 +21,12 @@ export default function ResellerLandingPage() {
         { icon: Grid3X3, text: "Flexible Pricing", iconBg: "bg-[#FFF4E6]" },
         { icon: Zap, text: "Fast Processing", iconBg: "bg-[#E9FBF1]" }
     ];
+
+    // Logged-in resellers jump straight into the flow; others start login.
+    const requireLogin = (path: string) => {
+        if (getResellerSession()?.token) setLocation(path);
+        else setShowLoginModal(true);
+    };
 
     // Instruction steps - 6-step reseller flow
     const steps = [
@@ -33,31 +42,44 @@ export default function ResellerLandingPage() {
             id: 2,
             title: "Login & Access Dashboard",
             description: "Login to your reseller dashboard to manage inventory and orders.",
-            icon: <LogIn className="h-5 w-5 text-indigo-600" />
+            icon: <LogIn className="h-5 w-5 text-indigo-600" />,
+            onClick: () => {
+                if (getResellerSession()?.token) setLocation('/reseller/dashboard');
+                else setShowLoginModal(true);
+            },
+            actionText: "Already a member? Login"
         },
         {
             id: 3,
             title: "Select Vouchers & Denominations",
             description: "Choose brand vouchers and pick resale-friendly denomination values.",
-            icon: <Tag className="h-5 w-5 text-blue-600" />
+            icon: <Tag className="h-5 w-5 text-blue-600" />,
+            onClick: () => requireLogin('/reseller/catalog'),
+            actionText: "Browse brands"
         },
         {
             id: 4,
             title: "Add to Cart & Fund Wallet",
             description: "Review your inventory selection and top up your SabbPe wallet.",
-            icon: <ShoppingCart className="h-5 w-5 text-purple-600" />
+            icon: <ShoppingCart className="h-5 w-5 text-purple-600" />,
+            onClick: () => requireLogin('/reseller/cart'),
+            actionText: "Open cart"
         },
         {
             id: 5,
             title: "Receive Vouchers",
             description: "Instantly access vouchers in your dashboard after wallet funding.",
-            icon: <Mail className="h-5 w-5 text-blue-600" />
+            icon: <Mail className="h-5 w-5 text-blue-600" />,
+            onClick: () => requireLogin('/reseller/dashboard'),
+            actionText: "View orders"
         },
         {
             id: 6,
             title: "Start Selling",
             description: "Begin reselling vouchers on your platform and earn margins.",
-            icon: <TrendingUp className="h-5 w-5 text-orange-600" />
+            icon: <TrendingUp className="h-5 w-5 text-orange-600" />,
+            onClick: () => requireLogin('/reseller/catalog'),
+            actionText: "Start with brands"
         }
     ];
 
@@ -161,6 +183,15 @@ export default function ResellerLandingPage() {
                         >
                             <span style={{ fontFamily: 'Poppins, sans-serif' }}>Get Started</span>
                         </button>
+
+                        {/* Existing member login — starts the reseller login flow */}
+                        <button
+                            onClick={() => setShowLoginModal(true)}
+                            className="mx-auto mt-3 flex h-9 items-center justify-center rounded-full bg-white/80 px-5 text-[13px] font-semibold text-purple-600 shadow-sm ring-1 ring-purple-200 transition-all hover:bg-white hover:shadow active:scale-95"
+                            style={{ fontFamily: 'Poppins, sans-serif' }}
+                        >
+                            Already a member? <span className="ml-1 underline">Login</span>
+                        </button>
                     </section>
 
                     {/* Features Section */}
@@ -198,6 +229,12 @@ export default function ResellerLandingPage() {
             <ResellerContactModal 
                 isOpen={showContactModal}
                 onClose={() => setShowContactModal(false)}
+            />
+
+            {/* Reseller Login Modal — "Already a member? Login" */}
+            <ResellerLoginModal
+                isOpen={showLoginModal}
+                onClose={() => setShowLoginModal(false)}
             />
         </div>
     );
