@@ -36,6 +36,7 @@ import {
   cancelSuperCoinHold,
   normalizeMobileToE164,
   fetchSuperCoinConfig,
+  fetchSuperCoinBrandShares,
 } from "@/api/supercoinApi";
 import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -297,6 +298,19 @@ export default function OrderCheckout() {
   const [superCoinAuthorized, setSuperCoinAuthorized] = useState(false);
   const [showSuperCoinRemoveDialog, setShowSuperCoinRemoveDialog] = useState(false);
   const [superCoinCapPercent, setSuperCoinCapPercent] = useState(20);
+  // Per-brand SuperCoin share from the DB: 0 = excluded, 1..99 = that cap, none = global cap + built-in list.
+  const [brandShareMap, setBrandShareMap] = useState<Record<string, number>>({});
+  useEffect(() => {
+    fetchSuperCoinBrandShares().then(setBrandShareMap);
+  }, []);
+  const brandCapShare = (brandId: string): number | null => {
+    const s = brandShareMap[brandId];
+    return typeof s === "number" && s > 0 && s < 100 ? s : null;
+  };
+  const isScExcluded = (brandId: string, brandName: string): boolean => {
+    const s = brandShareMap[brandId];
+    return typeof s === "number" && s < 100 ? s <= 0 : isSuperCoinExcluded(brandName);
+  };
   useEffect(() => {
     if (rewardMode === "superCoins") {
       setUseWalletBalance(false);
@@ -420,7 +434,7 @@ export default function OrderCheckout() {
   const walletBalance = walletData?.totalBalance || 0;
 
   const allItemsSuperCoinExcluded =
-    cartItems.length > 0 && cartItems.every((item) => isSuperCoinExcluded(item.brandName));
+    cartItems.length > 0 && cartItems.every((item) => isScExcluded(item.brandId, item.brandName));
 
   const cartCashbackValueScale4 = cartItems.reduce((sum, item) => {
     const pct = brandDiscountMap[item.brandId] ?? 0;
@@ -442,11 +456,11 @@ export default function OrderCheckout() {
   let totalCoinCap = 0;
   if (discountsLoaded) {
     cartItems
-      .filter((item) => !isSuperCoinExcluded(item.brandName))
+      .filter((item) => !isScExcluded(item.brandId, item.brandName))
       .forEach((item) => {
         const itemTotal = item.quantity * item.unitValue;
         const multiplier = brandSupercoinMultiplierMap[item.brandId] ?? 1.25;
-        const itemRupeeCap = itemTotal * (superCoinCapPercent / 100);
+        const itemRupeeCap = itemTotal * ((brandCapShare(item.brandId) ?? superCoinCapPercent) / 100);
         const itemCoinCap = Math.ceil(itemRupeeCap * multiplier);
         totalRupeeCap += itemRupeeCap;
         totalCoinCap += itemCoinCap;

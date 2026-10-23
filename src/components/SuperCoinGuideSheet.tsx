@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useDragControls } from "framer-motion";
 import { ChevronLeft, ChevronRight, Hand, ShoppingCart, User, X } from "lucide-react";
 import { useLocation } from "wouter";
+import { useSuperCoinCaps } from "@/hooks/useSuperCoinCaps";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 
 const TOTAL_SCREENS = 4;
@@ -268,6 +269,7 @@ function TipIllustration({ reduced }: { reduced: boolean }) {
 /* ---------------- Sheet ---------------- */
 
 export default function SuperCoinGuideSheet({ open, onClose }: Props) {
+  const { globalCap } = useSuperCoinCaps();
   const reduced = usePrefersReducedMotion();
   const [, setLocation] = useLocation();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -349,7 +351,7 @@ export default function SuperCoinGuideSheet({ open, onClose }: Props) {
     {
       title: "Switch to SuperCoins",
       text: "Toggle from Cashback to SuperCoins in your cart to see your coins and how many you can use.",
-      badge: "20% of voucher value",
+      badge: `up to ${globalCap}% of voucher value`,
     },
     { title: 'Tap "Apply SC" and save', text: "Tap 'Apply SC' and the coins are deducted from your total. Then tap 'Pay' to continue your voucher journey.", badge: "" },
     { title: "Check your balance anytime", text: "Want to know how many SuperCoins you have? Tap your profile icon at the top right.", badge: "" },

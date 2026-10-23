@@ -1714,7 +1714,7 @@ export default function PaymentDetailsSheet({
                           </span>
                           <span>
                             ₹1 = {Number(scMultiplier.toFixed(2))} SC · up to{" "}
-                            {scCapPercent}% of voucher value
+                            {brandCapShare ?? scCapPercent}% of voucher value
                           </span>
                         </div>
                       </>

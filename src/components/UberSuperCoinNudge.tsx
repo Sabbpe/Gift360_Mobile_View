@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Coins } from "lucide-react";
+import { useSuperCoinCaps } from "@/hooks/useSuperCoinCaps";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import uberBg from "@/assets/uber (2).png";
 
 const UBER_BRAND_ID = "3e4245c1-a17c-48e4-aa41-e8657d2886e4";
 const BASE_PRICE = 500;
-const DISCOUNTED_PRICE = 400;
-const DISCOUNT_PERCENT = 20;
 const STATIC_SC_BALANCE = 250;
 const MAX_DEMO_PLAYS = 3;
 const DEMO_STORAGE_KEY = "sc_nudge_seen";
@@ -38,7 +37,17 @@ function usePrefersReducedMotion(): boolean {
 
 type Props = { onExplore?: () => void; onBuyNow?: () => void };
 
-export default function UberSuperCoinNudge({ onExplore, onBuyNow }: Props) {
+export default function UberSuperCoinNudge(props: Props) {
+  const { percentFor } = useSuperCoinCaps();
+  const pct = percentFor(UBER_BRAND_ID);
+  // Brand disabled for SuperCoin mode in the DB (share = 0): nothing to promote.
+  if (pct <= 0) return null;
+  return <UberSuperCoinNudgeInner {...props} pct={pct} />;
+}
+
+function UberSuperCoinNudgeInner({ onExplore, onBuyNow, pct }: Props & { pct: number }) {
+  const DISCOUNT_PERCENT = pct;
+  const DISCOUNTED_PRICE = Math.round(BASE_PRICE * (1 - pct / 100));
   const reduced = usePrefersReducedMotion();
   const { user } = useAuthContext();
 
@@ -167,7 +176,7 @@ export default function UberSuperCoinNudge({ onExplore, onBuyNow }: Props) {
               </span>
             </div>
             {toggleOn && (
-              <span key="redeemed" className="absolute -top-0.5 -right-1 text-[6px] font-bold text-[#10B981] leading-tight whitespace-nowrap" style={{ animation: "badge-in 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>max 20% redeemable</span>
+              <span key="redeemed" className="absolute -top-0.5 -right-1 text-[6px] font-bold text-[#10B981] leading-tight whitespace-nowrap" style={{ animation: "badge-in 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>max {DISCOUNT_PERCENT}% redeemable</span>
             )}
           </div>
 

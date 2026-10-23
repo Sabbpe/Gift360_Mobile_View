@@ -1,13 +1,12 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { Coins } from "lucide-react";
+import { useSuperCoinCaps } from "@/hooks/useSuperCoinCaps";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import blinkitBg from "@/assets/blinkit.png";
 
 const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
 const BASE_PRICE = 500;
-const DISCOUNTED_PRICE = 400;
-const DISCOUNT_PERCENT = 20;
 const STATIC_SC_BALANCE = 150;
 const MAX_DEMO_PLAYS = 3;
 const DEMO_STORAGE_KEY = "sc_nudge_seen_blinkit";
@@ -38,7 +37,17 @@ function usePrefersReducedMotion(): boolean {
 
 type Props = { onExplore?: () => void; onBuyNow?: () => void };
 
-export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
+export default function BlinkitSuperCoinNudge(props: Props) {
+  const { percentFor } = useSuperCoinCaps();
+  const pct = percentFor(BLINKIT_BRAND_ID);
+  // Brand disabled for SuperCoin mode in the DB (share = 0): nothing to promote.
+  if (pct <= 0) return null;
+  return <BlinkitSuperCoinNudgeInner {...props} pct={pct} />;
+}
+
+function BlinkitSuperCoinNudgeInner({ onExplore, onBuyNow, pct }: Props & { pct: number }) {
+  const DISCOUNT_PERCENT = pct;
+  const DISCOUNTED_PRICE = Math.round(BASE_PRICE * (1 - pct / 100));
   const reduced = usePrefersReducedMotion();
   const { user } = useAuthContext();
 
@@ -167,7 +176,7 @@ export default function BlinkitSuperCoinNudge({ onExplore, onBuyNow }: Props) {
               </span>
             </div>
             {toggleOn && (
-              <span key="redeemed" className="absolute -top-0.5 -right-1 text-[6px] font-bold text-[#10B981] leading-tight whitespace-nowrap" style={{ animation: "badge-in 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>max 20% redeemable</span>
+              <span key="redeemed" className="absolute -top-0.5 -right-1 text-[6px] font-bold text-[#10B981] leading-tight whitespace-nowrap" style={{ animation: "badge-in 0.3s cubic-bezier(0.34,1.56,0.64,1)" }}>max {DISCOUNT_PERCENT}% redeemable</span>
             )}
           </div>
 
