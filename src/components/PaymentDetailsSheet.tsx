@@ -1897,7 +1897,7 @@ export default function PaymentDetailsSheet({
                   void openSuperCoinFlow();
                 }}
               >
-                Use coins &amp; pay
+                Burn coins and pay
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

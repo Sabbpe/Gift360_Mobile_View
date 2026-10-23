@@ -10,7 +10,7 @@ type SuperCoinRedeemedModalProps = {
 
 /**
  * Purely cosmetic bridge shown right after the Flipkart OTP confirms the
- * SuperCoin hold: "Your SuperCoins are redeemed — continue payment in
+ * SuperCoin hold: "Your SuperCoins are Burned — continue payment in
  * 3…2…1". It has no interactive elements; when the timer hits zero it
  * hands off to the payment flow via `onContinue`, every time.
  */
@@ -48,9 +48,9 @@ export default function SuperCoinRedeemedModal({
     <div className="fixed inset-0 z-[12000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" />
       <motion.div
-        initial={{ opacity: 0, scale: 0.9, y: 16 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 340, damping: 26 }}
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2, ease: "easeOut" }}
         role="dialog"
         aria-modal="true"
         aria-live="polite"
@@ -92,7 +92,7 @@ export default function SuperCoinRedeemedModal({
             alt="SuperCoins"
             className="inline-block h-5 w-5 align-[-3px]"
           />{" "}
-          SuperCoins are redeemed
+          SuperCoins are Burned
         </p>
         <p className="mt-1 text-xs font-medium text-[#6B7280]">
           Continue payment in
@@ -103,10 +103,10 @@ export default function SuperCoinRedeemedModal({
           <AnimatePresence mode="wait">
             <motion.span
               key={shown}
-              initial={{ scale: 0.4, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 1.8, opacity: 0 }}
-              transition={{ duration: 0.3, ease: "easeOut" }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.15, ease: "easeOut" }}
               className="bg-gradient-to-r from-[#9747FF] to-[#5B2B99] bg-clip-text text-[64px] font-extrabold leading-none text-transparent"
             >
               {shown}
