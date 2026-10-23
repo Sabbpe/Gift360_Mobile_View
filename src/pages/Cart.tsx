@@ -374,15 +374,19 @@ useEffect(() => {
         console.warn("Could not fetch SuperCoin config, using fallback cap:", err);
       });
   }, []);
-  // Per-brand SuperCoin share (V51). A share of 1..99 makes that share of the brand's price
-  // payable ONLY in SuperCoins (mandatory split); the rest is paid in cash as usual.
+  // Per-brand SuperCoin share (V51): the most of the price payable in SuperCoins in SuperCoin mode.
+  // 0 = no SuperCoin mode for the brand; 1..99 = that percent; no entry = global cap + built-in exclusion list.
   const [brandShareMap, setBrandShareMap] = useState<Record<string, number>>({});
   useEffect(() => {
     fetchSuperCoinBrandShares().then(setBrandShareMap);
   }, []);
-  const splitShareOf = (brandId: string): number => {
+  const brandCapShare = (brandId: string): number | null => {
     const share = brandShareMap[brandId];
-    return typeof share === "number" && share > 0 && share < 100 ? share : 0;
+    return typeof share === "number" && share > 0 && share < 100 ? share : null;
+  };
+  const isScExcluded = (brandId: string, brandName: string): boolean => {
+    const share = brandShareMap[brandId];
+    return typeof share === "number" && share < 100 ? share <= 0 : isSuperCoinExcluded(brandName);
   };
   const [superCoinHoldContext, setSuperCoinHoldContext] = useState<SuperCoinHoldContext | null>(null);
   // User-chosen coin count for the hold (1..min(balance, 20% cap in coins)).
@@ -1169,9 +1173,9 @@ useEffect(() => {
   const subtotal = cart?.totalAmount ?? 0;
 
   // SuperCoin exclusion: check if all items are from excluded brands
-  const allItemsSuperCoinExcluded = cartItems.length > 0 && cartItems.every(item => isSuperCoinExcluded(item.brandName) && splitShareOf(item.brandId) === 0);
+  const allItemsSuperCoinExcluded = cartItems.length > 0 && cartItems.every(item => isScExcluded(item.brandId, item.brandName));
   const superCoinEligibleTotal = cartItems
-    .filter(item => !isSuperCoinExcluded(item.brandName))
+    .filter(item => !isScExcluded(item.brandId, item.brandName))
     .reduce((sum, item) => sum + item.lineTotal, 0);
 
   // Cart cashback value: for each item, its own brand cashback % × line total,
@@ -1238,23 +1242,18 @@ useEffect(() => {
   // means cart items don't all share the same multiplier.
   let totalRupeeCap = 0;
   let totalCoinCap = 0;
-  let requiredSplitCoins = 0;
   if (discountsLoaded) {
     cartItems
-      .filter(item => !isSuperCoinExcluded(item.brandName) || splitShareOf(item.brandId) > 0)
+      .filter(item => !isScExcluded(item.brandId, item.brandName))
       .forEach(item => {
         const itemTotal = item.quantity * item.unitValue;
         const multiplier = brandSupercoinMultiplierMap[item.brandId] ?? 1.25;
-        const splitShare = splitShareOf(item.brandId);
-        // A mandatory-split brand is capped at its own share (not the global cap), and that share is required.
-        const itemRupeeCap = itemTotal * ((splitShare > 0 ? splitShare : superCoinCapPercent) / 100);
+        const itemRupeeCap = itemTotal * ((brandCapShare(item.brandId) ?? superCoinCapPercent) / 100);
         const itemCoinCap = Math.ceil(itemRupeeCap * multiplier);
         totalRupeeCap += itemRupeeCap;
         totalCoinCap += itemCoinCap;
-        if (splitShare > 0) requiredSplitCoins += itemCoinCap;
       });
   }
-  const hasSplit = requiredSplitCoins > 0;
   const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
   const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
   // Rate caption: the brands' own DB multiplier (coins needed per Rs 1), shown as-is.
@@ -1263,7 +1262,7 @@ useEffect(() => {
     ? Array.from(
         new Set(
           cartItems
-            .filter((i) => !isSuperCoinExcluded(i.brandName))
+            .filter((i) => !isScExcluded(i.brandId, i.brandName))
             .map((i) => brandSupercoinMultiplierMap[i.brandId])
             .filter((m): m is number => typeof m === "number" && m > 0)
         )
@@ -1280,23 +1279,13 @@ useEffect(() => {
   // Slider bounds: 1 coin minimum, upper bound = min(balance, cap).
   // Defaults to the max until the user drags (preserves apply-max behavior).
   const maxSCCoins = Math.max(0, Math.min(superCoinState.balance, maxSuperCoinRedeemable));
-  // Cart holds a mandatory-split brand: SuperCoins must cover at least requiredSplitCoins.
-  const splitUnaffordable = hasSplit && (!superCoinState.eligible || maxSCCoins < requiredSplitCoins);
   useEffect(() => {
-    if (maxSCCoins < 1 || (hasSplit && maxSCCoins < requiredSplitCoins)) {
+    if (maxSCCoins < 1) {
       setSelectedSCCoins(0);
       return;
     }
-    const minCoins = hasSplit ? requiredSplitCoins : 1;
-    setSelectedSCCoins((prev) => (prev < minCoins ? (hasSplit ? minCoins : maxSCCoins) : Math.min(prev, maxSCCoins)));
-  }, [maxSCCoins, hasSplit, requiredSplitCoins]);
-  // A mandatory split cannot be paid in cash alone: keep the cart in SuperCoin mode with coins applied.
-  useEffect(() => {
-    if (!hasSplit) return;
-    setRewardMode("superCoins");
-    setScPreviewOff(false);
-    setUseWalletBalance(false);
-  }, [hasSplit]);
+    setSelectedSCCoins((prev) => (prev < 1 ? maxSCCoins : Math.min(prev, maxSCCoins)));
+  }, [maxSCCoins]);
 
   const superCoinDeduction = !allItemsSuperCoinExcluded && superCoinAuthorized && superCoinState.eligible
     ? Math.min(
@@ -1588,16 +1577,6 @@ useEffect(() => {
       return;
     }
 
-    // Mandatory SuperCoin split: never start the cash payment without the required coins on hold.
-    if (hasSplit && (superCoinHoldContextRef.current?.amount ?? 0) < requiredSplitCoins) {
-      toast({
-        title: "SuperCoins required",
-        description: `Apply at least ${requiredSplitCoins} SuperCoins to pay for this voucher.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     try {
       setPaymentSheetOpen(true);
       const paymentBreakdown = buildPaymentBreakdown(useWalletBalance);
@@ -1644,21 +1623,6 @@ useEffect(() => {
 
   // Pay inside the sheet: ask about SuperCoins first when coins are selected but not applied.
   const onPayPressed = () => {
-    if (hasSplit) {
-      if (splitUnaffordable) {
-        toast({
-          title: "Not enough SuperCoins",
-          description: `This voucher needs ${requiredSplitCoins} SuperCoins as part of the payment. Your balance: ${Math.floor(superCoinState.balance)}.`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!superCoinAuthorized) {
-        setPayOpen(false);
-        setScPromptOpen(true);
-        return;
-      }
-    }
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
       setPayOpen(false);
       setScPromptOpen(true);
@@ -2455,7 +2419,7 @@ useEffect(() => {
                           </div>
                           <input
                             type="range"
-                            min={hasSplit ? requiredSplitCoins : 0}
+                            min={0}
                             max={maxSCCoins}
                             step={1}
                             value={scPreviewOff ? 0 : Math.min(Math.max(selectedSCCoins, 1), maxSCCoins)}
@@ -2739,7 +2703,6 @@ useEffect(() => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            {!hasSplit && (
             <AlertDialogCancel
               onClick={() => {
                 setScPromptOpen(false);
@@ -2750,7 +2713,6 @@ useEffect(() => {
             >
               Pay without coins
             </AlertDialogCancel>
-            )}
             <AlertDialogAction
               onClick={() => {
                 setScPromptOpen(false);

@@ -136,18 +136,19 @@ export default function PaymentDetailsSheet({
     min;
 
   const subtotal = amount * quantity;
-  // Per-brand SuperCoin share (V51). 1..99 = a mandatory split: that share of the price must be
-  // paid in SuperCoins and the rest in cash. 0 / missing = normal behaviour.
+  // Per-brand SuperCoin share (V51): the most of the price payable in SuperCoins in SuperCoin mode.
+  // 0 = no SuperCoin mode for the brand; 1..99 = that percent; no entry = global cap + built-in exclusion list.
   const [brandShares, setBrandShares] = useState<Record<string, number>>({});
   useEffect(() => {
     fetchSuperCoinBrandShares().then(setBrandShares);
   }, []);
-  const rawShare = brand ? brandShares[brand.BrandId] : undefined;
-  const splitShare =
-    typeof rawShare === "number" && rawShare > 0 && rawShare < 100 ? rawShare : 0;
-  const hasSplit = splitShare > 0;
+  const brandShare = brand ? brandShares[brand.BrandId] : undefined;
+  const brandCapShare =
+    typeof brandShare === "number" && brandShare > 0 && brandShare < 100 ? brandShare : null;
   const superCoinEligible = brand
-    ? isSuperCoinEligible(brand.BrandId, brand.BrandName) || hasSplit
+    ? typeof brandShare === "number" && brandShare < 100
+      ? brandShare > 0
+      : isSuperCoinEligible(brand.BrandId, brand.BrandName)
     : false;
 
   // ---------------------------------------------------------------------------
@@ -261,32 +262,21 @@ export default function PaymentDetailsSheet({
   // Coin cap = scCapPercent of the voucher face value, in coins, using the
   // brand's own multiplier (same formula as Cart / backend initHold).
   const maxSuperCoinRedeemable = Math.ceil(
-    subtotal * ((hasSplit ? splitShare : scCapPercent) / 100) * scMultiplier
+    subtotal * ((brandCapShare ?? scCapPercent) / 100) * scMultiplier
   );
-  // A mandatory split must be covered by at least this many coins (equals the split cap).
-  const requiredSplitCoins = hasSplit ? maxSuperCoinRedeemable : 0;
   const maxSCCoins = Math.max(
     0,
     Math.min(scState.balance, maxSuperCoinRedeemable)
   );
-  const splitUnaffordable =
-    hasSplit && (!scState.eligible || maxSCCoins < requiredSplitCoins);
   useEffect(() => {
-    if (maxSCCoins < 1 || (hasSplit && maxSCCoins < requiredSplitCoins)) {
+    if (maxSCCoins < 1) {
       setSelectedSCCoins(0);
       return;
     }
-    const minCoins = hasSplit ? requiredSplitCoins : 1;
     setSelectedSCCoins((prev) =>
-      prev < minCoins ? (hasSplit ? minCoins : maxSCCoins) : Math.min(prev, maxSCCoins)
+      prev < 1 ? maxSCCoins : Math.min(prev, maxSCCoins)
     );
-  }, [maxSCCoins, hasSplit, requiredSplitCoins]);
-  // A mandatory split cannot be paid in cash alone: stay in SuperCoin mode with coins applied.
-  useEffect(() => {
-    if (!hasSplit) return;
-    if (payMode !== "superCoins") setPayMode("superCoins");
-    setScPreviewOff(false);
-  }, [hasSplit, payMode]);
+  }, [maxSCCoins]);
 
   const inSuperCoinMode = payMode === "superCoins";
   // Authorised hold wins; while the slider is being moved the coins are only
@@ -601,16 +591,6 @@ export default function PaymentDetailsSheet({
       return;
     }
 
-    // Mandatory SuperCoin split: never start the cash payment without the required coins on hold.
-    if (hasSplit && (scHoldContextRef.current?.amount ?? 0) < requiredSplitCoins) {
-      toast({
-        title: "SuperCoins required",
-        description: `Apply at least ${requiredSplitCoins} SuperCoins to pay for this voucher.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessing(true);
     // Cart's handlePayNow shows PaymentFlowSheet for the whole pay attempt;
     // it only comes down again if the attempt fails (success redirects away).
@@ -712,20 +692,6 @@ export default function PaymentDetailsSheet({
       });
       window.setTimeout(() => navigate("/login"), 1500);
       return;
-    }
-    if (hasSplit) {
-      if (splitUnaffordable) {
-        toast({
-          title: "Not enough SuperCoins",
-          description: `This voucher needs ${requiredSplitCoins} SuperCoins as part of the payment. Your balance: ${Math.floor(scState.balance)}.`,
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!scAuthorized) {
-        setScPromptOpen(true);
-        return;
-      }
     }
     // Same as Cart's onPayPressed: coins selected but not yet authorised ->
     // ask with the "Use X SuperCoins?" prompt first, then the Flipkart OTP.
@@ -1706,7 +1672,7 @@ export default function PaymentDetailsSheet({
                         </div>
                         <input
                           type="range"
-                          min={hasSplit ? requiredSplitCoins : 0}
+                          min={0}
                           max={maxSCCoins}
                           step={1}
                           value={
@@ -1928,7 +1894,6 @@ export default function PaymentDetailsSheet({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              {!hasSplit && (
               <AlertDialogCancel
                 onClick={() => {
                   setScPromptOpen(false);
@@ -1938,7 +1903,6 @@ export default function PaymentDetailsSheet({
               >
                 Pay without coins
               </AlertDialogCancel>
-              )}
               <AlertDialogAction
                 onClick={() => {
                   setScPromptOpen(false);
