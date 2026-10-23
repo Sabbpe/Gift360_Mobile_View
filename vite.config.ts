@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-
 export default defineConfig({
   appType: "spa",
   plugins: [react()],
@@ -15,14 +14,7 @@ export default defineConfig({
   },
   server: {
     host: "0.0.0.0",
-    port: parseInt(process.env.VITE_PORT || "7788"),
-    // Dev only: same-origin proxy to UAT backend (avoids CORS preflight).
-    proxy: {
-      "/api": {
-        target: "https://vdspbck.sabbpe.com",
-        changeOrigin: true,
-      },
-    },
+    port: parseInt(process.env.VITE_PORT || "7788")
   },
   preview: {
     host: "0.0.0.0",
