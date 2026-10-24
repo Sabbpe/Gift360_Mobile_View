@@ -5,9 +5,9 @@ const API_BASE_URL = import.meta.env.VITE_BRAND_API_URL;
 // ---------------------------------------------------------------------------
 // V52 reseller auth model:
 //   POST /v1/reseller/auth/login           contact_email + password -> JWT
-//   GET  /v1/reseller/auth/jwt             (Bearer) -> { clientId, clientSecretHash }
-//   every BUSINESS call                    travels X-Client-Id + X-Client-Hash
-//                                           headers fetched via /auth/jwt
+//   POST /v1/reseller/auth/jwt             (Bearer) -> { clientId, clientSecretHash }
+//   every BUSINESS POST                    has clientId + clientSecretHash in
+//                                           its JSON body, fetched via /auth/jwt
 //                                           immediately before the call —
 //                                           NEVER persisted client-side
 //   POST /v1/reseller/auth/logout          clears the single-session JWT
@@ -72,10 +72,11 @@ export const resellerLogout = async (): Promise<void> => {
   }
 };
 
-/** GET /v1/reseller/auth/jwt — fresh api credentials (Bearer session JWT). */
+/** POST /v1/reseller/auth/jwt — fresh api credentials (Bearer session JWT). */
 export const fetchResellerJwt = async (): Promise<ResellerJwtCredentials> => {
-  const { data } = await axios.get<ResellerJwtCredentials>(
+  const { data } = await axios.post<ResellerJwtCredentials>(
     `${API_BASE_URL}/v1/reseller/auth/jwt`,
+    {},
     {
       headers: {
         Authorization: `Bearer ${getResellerSession()?.token ?? ""}`,
@@ -85,26 +86,24 @@ export const fetchResellerJwt = async (): Promise<ResellerJwtCredentials> => {
   return data;
 };
 
-/**
- * Headers for every BUSINESS call: fetch credentials via GET /auth/jwt right
- * before the call (per contract: nothing persisted locally) and travel them
- * as X-Client-Id / X-Client-Hash — the backend filter validates them against
- * the stored client_secret_hash.
- */
-const authHeaders = async (): Promise<Record<string, string>> => {
+/** Fetch fresh credentials and attach them to a JSON request body. */
+const withResellerCredentials = async <T extends Record<string, unknown>>(
+  payload: T = {} as T
+): Promise<T & { clientId: string; clientSecretHash: string }> => {
   const creds = await fetchResellerJwt();
   return {
-    "X-Client-Id": creds.clientId,
-    "X-Client-Hash": creds.clientSecretHash,
+    ...payload,
+    clientId: creds.clientId,
+    clientSecretHash: creds.clientSecretHash,
   };
 };
 
 /** GET /v1/reseller/wallet/balance */
 export const fetchResellerWallet =
   async (): Promise<{ success: boolean; walletBalance: number }> => {
-    const { data } = await axios.get<{ success: boolean; walletBalance: number }>(
+    const { data } = await axios.post<{ success: boolean; walletBalance: number }>(
       `${API_BASE_URL}/v1/reseller/wallet/balance`,
-      { headers: await authHeaders() }
+      await withResellerCredentials({})
     );
     return data;
   };
@@ -120,28 +119,26 @@ export interface ResellerWalletTransaction {
   createdAt: string;
 }
 
-/** GET /v1/reseller/wallet/transactions — full money-movement audit log. */
+/** POST /v1/reseller/wallet/transactions — full money-movement audit log. */
 export const fetchResellerWalletTransactions =
   async (): Promise<{
     success: boolean;
     walletBalance: number;
     transactions: ResellerWalletTransaction[];
   }> => {
-    const { data } = await axios.get<{
+    const { data } = await axios.post<{
       success: boolean;
       walletBalance: number;
       transactions: ResellerWalletTransaction[];
-    }>(`${API_BASE_URL}/v1/reseller/wallet/transactions`, {
-      headers: await authHeaders(),
-    });
+    }>(`${API_BASE_URL}/v1/reseller/wallet/transactions`, await withResellerCredentials({}));
     return data;
   };
 
-/** GET /v1/reseller/orders — plain JSON array of order summary rows. */
+/** POST /v1/reseller/orders/list — plain JSON array of order summary rows. */
 export const fetchResellerOrders = async (): Promise<ResellerOrderRow[]> => {
-  const { data } = await axios.get<ResellerOrderRow[] | { value?: ResellerOrderRow[] }>(
-    `${API_BASE_URL}/v1/reseller/orders`,
-    { headers: await authHeaders() }
+  const { data } = await axios.post<ResellerOrderRow[] | { value?: ResellerOrderRow[] }>(
+    `${API_BASE_URL}/v1/reseller/orders/list`,
+    await withResellerCredentials({})
   );
   // BE returns a bare array; tolerate a wrapped shape just in case.
   if (Array.isArray(data)) return data;
@@ -176,19 +173,19 @@ export interface ResellerProductListResponse {
   products: ResellerProduct[];
 }
 
-/** GET /v1/reseller/products?search=&page=&size= */
+/** POST /v1/reseller/products/search — filter/page values + auth in JSON. */
 export const fetchResellerProducts = async (opts: {
   search?: string;
   page?: number;
   size?: number;
 } = {}): Promise<ResellerProductListResponse> => {
-  const params = new URLSearchParams();
-  if (opts.search) params.set("search", opts.search);
-  params.set("page", String(opts.page ?? 0));
-  params.set("size", String(opts.size ?? 20));
-  const { data } = await axios.get<ResellerProductListResponse>(
-    `${API_BASE_URL}/v1/reseller/products?${params.toString()}`,
-    { headers: await authHeaders() }
+  const { data } = await axios.post<ResellerProductListResponse>(
+    `${API_BASE_URL}/v1/reseller/products/search`,
+    await withResellerCredentials({
+      search: opts.search,
+      page: opts.page ?? 0,
+      size: opts.size ?? 20,
+    })
   );
   return data;
 };
@@ -249,11 +246,10 @@ export interface ResellerOrderResult {
 
 /**
  * POST /v1/reseller/orders — 201 with full detail (+ credentials when
- * COMPLETED). `Idempotency-Key` is REQUIRED by the service: same key from
+ * COMPLETED). `idempotencyKey` in the JSON body is REQUIRED by the service: same key from
  * the same reseller replays the original order (never a double debit).
- * Cross-origin browsers need UAT Apache to allow-list the header (ops line:
- * `Header always append Access-Control-Allow-Headers "Idempotency-Key"`);
- * local dev bypasses CORS entirely via the Vite /api proxy.
+ * Auth credentials and idempotency are all JSON body fields, avoiding the
+ * custom headers blocked by the UAT Apache CORS allow-list.
  */
 export const createResellerOrder = async (
   payload: ResellerOrderPayload,
@@ -261,19 +257,18 @@ export const createResellerOrder = async (
 ): Promise<ResellerOrderResult> => {
   const { data } = await axios.post<ResellerOrderResult>(
     `${API_BASE_URL}/v1/reseller/orders`,
-    payload,
-    { headers: { ...(await authHeaders()), "Idempotency-Key": idempotencyKey } }
+    await withResellerCredentials({ ...payload, idempotencyKey })
   );
   return data;
 };
 
-/** GET /v1/reseller/orders/{orderNumber} — full detail incl. credentials. */
+/** POST /v1/reseller/orders/details — full detail incl. credentials. */
 export const fetchResellerOrderDetails = async (
   orderNumber: string
 ): Promise<ResellerOrderResult> => {
-  const { data } = await axios.get<ResellerOrderResult>(
-    `${API_BASE_URL}/v1/reseller/orders/${encodeURIComponent(orderNumber)}`,
-    { headers: await authHeaders() }
+  const { data } = await axios.post<ResellerOrderResult>(
+    `${API_BASE_URL}/v1/reseller/orders/details`,
+    await withResellerCredentials({ orderNumber })
   );
   return data;
 };
@@ -319,10 +314,10 @@ export interface ResellerProfile {
 }
 
 export const fetchResellerProfile = async (): Promise<ResellerProfile> => {
-  const { data } = await axios.get<{
+  const { data } = await axios.post<{
     success?: boolean;
     profile?: ResellerProfile;
-  }>(`${API_BASE_URL}/v1/reseller/profile`, { headers: await authHeaders() });
+  }>(`${API_BASE_URL}/v1/reseller/profile`, await withResellerCredentials({}));
   return data.profile ?? (data as unknown as ResellerProfile);
 };
 
