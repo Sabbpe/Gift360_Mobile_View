@@ -228,10 +228,16 @@ export default function SuperCoinOTPModal({
     } catch (e: any) {
       const status = e?.response?.status || e?.status || 0;
       const flipkartMessage = e?.response?.data?.message || e?.message || "";
+      const backendCode = e?.response?.data?.error || "";
+      const lowerMessage = String(flipkartMessage).toLowerCase();
+      // Only a real OTP-limit response gets the OTP wording. Any other rejection (for example
+      // SUPERCOIN_CAP_EXCEEDED) shows the backend's own message, so customers see the true reason.
       const message =
-        status === 400 || flipkartMessage.toLowerCase().includes("daily otp") || flipkartMessage.toLowerCase().includes("otp")
+        backendCode === "SUPERCOIN_CAP_EXCEEDED" && flipkartMessage
+          ? flipkartMessage
+          : lowerMessage.includes("daily otp") || lowerMessage.includes("otp limit") || lowerMessage.includes("otp")
           ? "You've reached today's SuperCoin OTP limit. Please try again after midnight."
-          : flipkartMessage.toLowerCase().includes("already invalidated") || status === 403
+          : lowerMessage.includes("already invalidated") || status === 403
           ? "Previous SuperCoin hold expired. Please try again."
           : flipkartMessage || "Failed to initiate SuperCoin hold. Please try again.";
       setError(message);
