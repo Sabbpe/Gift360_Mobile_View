@@ -45,7 +45,7 @@ import {
 } from "@/api/resellerApi";
 import { useToast } from "@/hooks/use-toast";
 
-type Tab = "orders" | "vouchers" | "failed" | "transactions";
+type Tab = "orders" | "vouchers" | "transactions";
 
 const money = (n: number) =>
   `₹${Number(n || 0).toLocaleString("en-IN", {
@@ -271,7 +271,6 @@ export default function ResellerDashboard() {
     toast({ title: "Export downloaded", description: name, duration: 2000 });
   };
 
-  const failedOrders = orders.filter((o) => o.status === "FAILED");
   const filteredVouchers = vouchers.filter((v) => {
     const d = (v.orderDate || "").slice(0, 10);
     if (dateFrom && d < dateFrom) return false;
@@ -287,7 +286,6 @@ export default function ResellerDashboard() {
       label: "Vouchers",
       value: vouchers.length,
     },
-    { key: "failed", icon: AlertCircle, label: "Failed", value: failedOrders.length },
     {
       key: "transactions",
       icon: Receipt,
@@ -675,8 +673,8 @@ export default function ResellerDashboard() {
               </button>
             </section>
 
-            {/* Stats — Orders / Vouchers / Failed / Transactions (tab switchers) */}
-            <section className="mt-4 grid grid-cols-4 gap-2">
+            {/* Stats — Orders / Vouchers / Transactions (tab switchers) */}
+            <section className="mt-4 grid grid-cols-3 gap-3">
               {stats.map((stat) => (
                 <button
                   key={stat.key}
@@ -685,14 +683,14 @@ export default function ResellerDashboard() {
                     setSelectedOrder(null);
                     setSelectedVoucher(null);
                   }}
-                  className={`rounded-xl p-2.5 text-center shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-95 ${
+                  className={`rounded-xl p-3 text-center shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-95 ${
                     tab === stat.key
                       ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
                       : "bg-white text-gray-900"
                   }`}
                 >
                   <div
-                    className={`mx-auto mb-1.5 flex h-7 w-7 items-center justify-center rounded-lg ${
+                    className={`mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-lg ${
                       tab === stat.key ? "bg-white/20" : "bg-purple-50"
                     }`}
                   >
@@ -837,20 +835,6 @@ export default function ResellerDashboard() {
                             <ChevronRight className="h-4 w-4" />
                           </div>
                         </button>
-                      ))}
-                    </div>
-                  )}
-                </TabList>
-              )}
-
-              {tab === "failed" && (
-                <TabList title="Failed orders">
-                  {failedOrders.length === 0 ? (
-                    <Empty text="No failed orders — nice!" />
-                  ) : (
-                    <div className="space-y-2">
-                      {failedOrders.map((o) => (
-                        <OrderRow key={o.orderNumber} order={o} onOpen={openOrder} />
                       ))}
                     </div>
                   )}
