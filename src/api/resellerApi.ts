@@ -3,19 +3,31 @@ import axios from "axios";
 const API_BASE_URL = import.meta.env.VITE_BRAND_API_URL;
 
 // ---------------------------------------------------------------------------
-// Reseller APIs — live endpoints (verified against UAT):
-//   POST /v1/reseller/auth/token        clientId + clientSecret -> bearer token
-//   GET  /v1/reseller/wallet/balance    { success, walletBalance }
-//   GET  /v1/reseller/orders            { value: [...], Count }
+// V52 reseller auth model:
+//   POST /v1/reseller/auth/login           contact_email + password -> JWT
+//   GET  /v1/reseller/auth/jwt             (Bearer) -> { clientId, clientSecretHash }
+//   every BUSINESS call                    travels X-Client-Id + X-Client-Hash
+//                                           headers fetched via /auth/jwt
+//                                           immediately before the call —
+//                                           NEVER persisted client-side
+//   POST /v1/reseller/auth/logout          clears the single-session JWT
+//   POST /v1/reseller/auth/token           legacy machine handshake (kept)
 // ---------------------------------------------------------------------------
 
-export interface ResellerTokenResponse {
+export interface ResellerLoginResponse {
   success: boolean;
-  resellerId: string;
+  message?: string;
   token: string;
-  tokenType: string;
-  expiresInSec: number;
-  walletBalance: number;
+  tokenType?: string;
+  expiresInSec?: number;
+  resellerId: string;
+}
+
+export interface ResellerJwtCredentials {
+  success?: boolean;
+  resellerId: string;
+  clientId: string;
+  clientSecretHash: string;
 }
 
 export interface ResellerOrderRow {
@@ -28,21 +40,63 @@ export interface ResellerOrderRow {
   createdAt: string;
 }
 
-/** POST /v1/reseller/auth/token */
-export const requestResellerToken = async (
-  clientId: string,
-  clientSecret: string
-): Promise<ResellerTokenResponse> => {
-  const { data } = await axios.post<ResellerTokenResponse>(
-    `${API_BASE_URL}/v1/reseller/auth/token`,
-    { clientId, clientSecret }
+/** POST /v1/reseller/auth/login — stores the JWT session on success. */
+export const resellerLogin = async (
+  email: string,
+  password: string
+): Promise<ResellerLoginResponse> => {
+  const { data } = await axios.post<ResellerLoginResponse>(
+    `${API_BASE_URL}/v1/reseller/auth/login`,
+    { email, password }
+  );
+  if (data?.success && data.token && data.resellerId) {
+    saveResellerSession({
+      token: data.token,
+      resellerId: data.resellerId,
+      savedAt: Date.now(),
+    });
+  }
+  return data;
+};
+
+/** POST /v1/reseller/auth/logout — best-effort; clears the server session. */
+export const resellerLogout = async (): Promise<void> => {
+  try {
+    await axios.post(
+      `${API_BASE_URL}/v1/reseller/auth/logout`,
+      {},
+      { headers: { Authorization: `Bearer ${getResellerSession()?.token ?? ""}` } }
+    );
+  } catch {
+    /* best-effort — local session is cleared regardless */
+  }
+};
+
+/** GET /v1/reseller/auth/jwt — fresh api credentials (Bearer session JWT). */
+export const fetchResellerJwt = async (): Promise<ResellerJwtCredentials> => {
+  const { data } = await axios.get<ResellerJwtCredentials>(
+    `${API_BASE_URL}/v1/reseller/auth/jwt`,
+    {
+      headers: {
+        Authorization: `Bearer ${getResellerSession()?.token ?? ""}`,
+      },
+    }
   );
   return data;
 };
 
-const authHeaders = (): Record<string, string> => {
-  const session = getResellerSession();
-  return { Authorization: `Bearer ${session?.token ?? ""}` };
+/**
+ * Headers for every BUSINESS call: fetch credentials via GET /auth/jwt right
+ * before the call (per contract: nothing persisted locally) and travel them
+ * as X-Client-Id / X-Client-Hash — the backend filter validates them against
+ * the stored client_secret_hash.
+ */
+const authHeaders = async (): Promise<Record<string, string>> => {
+  const creds = await fetchResellerJwt();
+  return {
+    "X-Client-Id": creds.clientId,
+    "X-Client-Hash": creds.clientSecretHash,
+  };
 };
 
 /** GET /v1/reseller/wallet/balance */
@@ -50,7 +104,7 @@ export const fetchResellerWallet =
   async (): Promise<{ success: boolean; walletBalance: number }> => {
     const { data } = await axios.get<{ success: boolean; walletBalance: number }>(
       `${API_BASE_URL}/v1/reseller/wallet/balance`,
-      { headers: authHeaders() }
+      { headers: await authHeaders() }
     );
     return data;
   };
@@ -78,7 +132,7 @@ export const fetchResellerWalletTransactions =
       walletBalance: number;
       transactions: ResellerWalletTransaction[];
     }>(`${API_BASE_URL}/v1/reseller/wallet/transactions`, {
-      headers: authHeaders(),
+      headers: await authHeaders(),
     });
     return data;
   };
@@ -87,7 +141,7 @@ export const fetchResellerWalletTransactions =
 export const fetchResellerOrders = async (): Promise<ResellerOrderRow[]> => {
   const { data } = await axios.get<ResellerOrderRow[] | { value?: ResellerOrderRow[] }>(
     `${API_BASE_URL}/v1/reseller/orders`,
-    { headers: authHeaders() }
+    { headers: await authHeaders() }
   );
   // BE returns a bare array; tolerate a wrapped shape just in case.
   if (Array.isArray(data)) return data;
@@ -134,7 +188,7 @@ export const fetchResellerProducts = async (opts: {
   params.set("size", String(opts.size ?? 20));
   const { data } = await axios.get<ResellerProductListResponse>(
     `${API_BASE_URL}/v1/reseller/products?${params.toString()}`,
-    { headers: authHeaders() }
+    { headers: await authHeaders() }
   );
   return data;
 };
@@ -208,7 +262,7 @@ export const createResellerOrder = async (
   const { data } = await axios.post<ResellerOrderResult>(
     `${API_BASE_URL}/v1/reseller/orders`,
     payload,
-    { headers: { ...authHeaders(), "Idempotency-Key": idempotencyKey } }
+    { headers: { ...(await authHeaders()), "Idempotency-Key": idempotencyKey } }
   );
   return data;
 };
@@ -219,7 +273,7 @@ export const fetchResellerOrderDetails = async (
 ): Promise<ResellerOrderResult> => {
   const { data } = await axios.get<ResellerOrderResult>(
     `${API_BASE_URL}/v1/reseller/orders/${encodeURIComponent(orderNumber)}`,
-    { headers: authHeaders() }
+    { headers: await authHeaders() }
   );
   return data;
 };
@@ -268,7 +322,7 @@ export const fetchResellerProfile = async (): Promise<ResellerProfile> => {
   const { data } = await axios.get<{
     success?: boolean;
     profile?: ResellerProfile;
-  }>(`${API_BASE_URL}/v1/reseller/profile`, { headers: authHeaders() });
+  }>(`${API_BASE_URL}/v1/reseller/profile`, { headers: await authHeaders() });
   return data.profile ?? (data as unknown as ResellerProfile);
 };
 
@@ -445,11 +499,13 @@ export const saveResellerBuyer = (buyer: ResellerBuyer): void => {
 const SESSION_KEY = "resellerSession";
 
 export interface ResellerSession {
+  /** JWT from POST /auth/login (single session — server invalidates others). */
   token: string;
   resellerId: string;
-  clientId: string;
-  walletBalance?: number;
   savedAt: number;
+  /** Legacy clientId/secret login leftovers — no longer written by login. */
+  clientId?: string;
+  walletBalance?: number;
 }
 
 export const saveResellerSession = (session: ResellerSession): void => {

@@ -1,13 +1,16 @@
 // components/ResellerLoginModal.tsx
-// "Already a member? Login" — clientId + clientSecret login for resellers.
-// POST /v1/reseller/auth/token exchanges credentials for a bearer token,
-// saves the reseller session and starts the reseller flow (dashboard).
+// "Already a member? Login" — reseller login with contact_email + password.
+// First login uses the unique initial password (V53, e.g. RSL-XXXXXXXX);
+// POST /v1/reseller/auth/login stores the single-session JWT, and business
+// calls later fetch credentials via GET /auth/jwt.
+// Forgot-password is intentionally hidden from the UI for now (the API still
+// exists server-side).
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLocation } from "wouter";
 import { X, AlertCircle, ShieldCheck, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { requestResellerToken, saveResellerSession } from "@/api/resellerApi";
+import { resellerLogin } from "@/api/resellerApi";
 
 interface ResellerLoginModalProps {
   isOpen: boolean;
@@ -20,61 +23,57 @@ export default function ResellerLoginModal({
 }: ResellerLoginModalProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [clientId, setClientId] = useState("");
-  const [clientSecret, setClientSecret] = useState("");
-  const [showSecret, setShowSecret] = useState(false);
-  const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
 
-  const canSubmit = clientId.trim().length > 0 && clientSecret.trim().length > 0;
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const canLogin = email.trim().length > 0 && password.trim().length > 0;
 
   const resetAndClose = () => {
-    setClientId("");
-    setClientSecret("");
-    setShowSecret(false);
+    setEmail("");
+    setPassword("");
+    setShowPassword(false);
     setError("");
-    setSubmitting(false);
+    setBusy(false);
     onClose();
+  };
+
+  const errorMessage = (err: any, fallback: string): string => {
+    const d = err?.response?.data;
+    return (
+      (typeof d === "string" ? d : d?.message) ||
+      (err?.message && !String(err.message).startsWith("Request failed") ? err.message : "") ||
+      fallback
+    );
   };
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault();
     setError("");
-    if (!canSubmit) {
-      setError("Enter both Client ID and Client Secret");
+    if (!canLogin) {
+      setError("Enter your email and password");
       return;
     }
-    setSubmitting(true);
-    requestResellerToken(clientId.trim(), clientSecret.trim())
+    setBusy(true);
+    resellerLogin(email.trim(), password)
       .then((data) => {
         if (data.success && data.token) {
-          saveResellerSession({
-            token: data.token,
-            resellerId: data.resellerId,
-            clientId: clientId.trim(),
-            walletBalance: data.walletBalance,
-            savedAt: Date.now(),
-          });
           toast({
             title: "Welcome back!",
-            description: "Reseller login successful",
+            description: data.message || "Login successful",
             duration: 3000,
           });
           onClose();
           setLocation("/reseller/dashboard");
         } else {
-          setError("Login failed. Please check your credentials.");
+          setError(data.message || "Login failed. Please try again.");
         }
       })
-      .catch((err) => {
-        const d = (err as any)?.response?.data;
-        const message =
-          d?.message ||
-          (typeof d === "string" ? d : null) ||
-          "Invalid Client ID or Client Secret";
-        setError(message);
-      })
-      .finally(() => setSubmitting(false));
+      .catch((err) => setError(errorMessage(err, "Login failed. Please try again.")))
+      .finally(() => setBusy(false));
   };
 
   if (!isOpen) return null;
@@ -97,7 +96,7 @@ export default function ResellerLoginModal({
           <div>
             <h2 className="text-xl font-bold text-gray-900">Reseller Login</h2>
             <p className="text-xs text-gray-500">
-              Already a member? Log in to your dashboard
+              Login with your email and password
             </p>
           </div>
           <button
@@ -110,7 +109,6 @@ export default function ResellerLoginModal({
         </div>
 
         <form onSubmit={handleLogin} className="space-y-4 px-6 py-6 pb-8">
-          {/* Error banner */}
           {error && (
             <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
               <AlertCircle size={15} className="mt-0.5 shrink-0" />
@@ -118,20 +116,20 @@ export default function ResellerLoginModal({
             </div>
           )}
 
-          {/* Client ID */}
+          {/* Email */}
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-700">
-              Client ID
+              Email
             </label>
             <div className="flex h-11 items-center rounded-xl border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-purple-500">
               <input
-                type="text"
-                autoComplete="off"
+                type="email"
+                autoComplete="username"
                 spellCheck={false}
-                placeholder="e.g. testreseller"
-                value={clientId}
+                placeholder="registered@email.com"
+                value={email}
                 onChange={(e) => {
-                  setClientId(e.target.value);
+                  setEmail(e.target.value);
                   setError("");
                 }}
                 className={inputClass}
@@ -139,49 +137,47 @@ export default function ResellerLoginModal({
             </div>
           </div>
 
-          {/* Client Secret */}
+          {/* Password */}
           <div>
             <label className="mb-1 block text-xs font-semibold text-gray-700">
-              Client Secret
+              Password
             </label>
             <div className="flex h-11 items-center rounded-xl border border-gray-300 bg-white focus-within:ring-2 focus-within:ring-purple-500">
               <input
-                type={showSecret ? "text" : "password"}
-                autoComplete="off"
-                spellCheck={false}
-                placeholder="Enter your client secret"
-                value={clientSecret}
+                type={showPassword ? "text" : "password"}
+                autoComplete="current-password"
+                placeholder="Enter your password"
+                value={password}
                 onChange={(e) => {
-                  setClientSecret(e.target.value);
+                  setPassword(e.target.value);
                   setError("");
                 }}
                 className={inputClass}
               />
               <button
                 type="button"
-                onClick={() => setShowSecret((s) => !s)}
+                onClick={() => setShowPassword((s) => !s)}
                 className="px-3 text-gray-400 hover:text-gray-600"
-                aria-label={showSecret ? "Hide secret" : "Show secret"}
+                aria-label={showPassword ? "Hide password" : "Show password"}
               >
-                {showSecret ? (
+                {showPassword ? (
                   <EyeOff className="h-4 w-4" />
                 ) : (
                   <Eye className="h-4 w-4" />
                 )}
               </button>
             </div>
-            <p className="mt-1 text-[11px] text-gray-500">
-              Credentials are issued to your reseller account at onboarding.
+            <p className="mt-1.5 text-[11px] text-gray-500">
+              First time? Use the unique initial password shared with you.
             </p>
           </div>
 
-          {/* Submit */}
           <button
             type="submit"
-            disabled={submitting || !canSubmit}
+            disabled={busy || !canLogin}
             className="flex h-11 w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 font-semibold text-white shadow-lg transition-all hover:shadow-xl active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {submitting ? (
+            {busy ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
                 Logging in...
@@ -191,12 +187,10 @@ export default function ResellerLoginModal({
             )}
           </button>
 
-          {/* Secure note */}
           <div className="flex items-center justify-center gap-1.5">
             <ShieldCheck className="h-3.5 w-3.5 text-purple-600" />
             <p className="text-[11px] text-gray-500">
-              Secured handshake — your secret is exchanged for a short-lived
-              token
+              Single active session — a new login replaces the previous one
             </p>
           </div>
         </form>

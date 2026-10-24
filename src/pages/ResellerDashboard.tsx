@@ -30,6 +30,8 @@ import {
   fetchResellerOrders,
   fetchResellerOrderDetails,
   fetchResellerWalletTransactions,
+  fetchResellerJwt,
+  resellerLogout,
   getResellerCart,
   vouchersToCsv,
   downloadTextFile,
@@ -39,6 +41,7 @@ import {
   type ResellerVoucherRow,
   type ResellerWalletTransaction,
   type ResellerProfile,
+  type ResellerJwtCredentials,
 } from "@/api/resellerApi";
 import { useToast } from "@/hooks/use-toast";
 
@@ -83,6 +86,8 @@ export default function ResellerDashboard() {
   const [profile, setProfile] = useState<ResellerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
+  // clientId for display only (fetched via /auth/jwt — never persisted).
+  const [credentials, setCredentials] = useState<ResellerJwtCredentials | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<ResellerOrderResult | null>(
     null
   );
@@ -142,14 +147,16 @@ export default function ResellerDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [wallet, orderRows, txns] = await Promise.all([
+      const [wallet, orderRows, txns, creds] = await Promise.all([
         fetchResellerWallet(),
         fetchResellerOrders(),
         fetchResellerWalletTransactions(),
+        fetchResellerJwt().catch(() => null), // display-only; never blocks the dashboard
       ]);
       setWalletBalance(wallet.walletBalance);
       setOrders(orderRows);
       setTransactions(txns.transactions ?? []);
+      setCredentials(creds);
       void loadVouchers(orderRows);
     } catch (err) {
       const status = (err as any)?.response?.status;
@@ -179,6 +186,7 @@ export default function ResellerDashboard() {
   }, []);
 
   const handleLogout = () => {
+    void resellerLogout(); // best-effort: clears the single-session JWT server-side
     clearResellerSession();
     setLocation("/reseller");
   };
@@ -209,7 +217,7 @@ export default function ResellerDashboard() {
     if (!profile && !profileLoading) void loadProfile();
   };
 
-  const avatarInitial = (session?.clientId || "R").trim().charAt(0).toUpperCase();
+  const avatarInitial = (credentials?.clientId || "R").trim().charAt(0).toUpperCase();
 
   const openOrder = async (orderNumber: string) => {
     setSelectedVoucher(null);
@@ -309,10 +317,10 @@ export default function ResellerDashboard() {
               </span>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-base font-bold">
-                  {profile?.organizationName || session?.clientId || "Reseller"}
+                  {profile?.organizationName || credentials?.clientId || "Reseller"}
                 </p>
                 <p className="truncate text-[11px] opacity-80">
-                  {session?.clientId}
+                  {credentials?.clientId || session?.resellerId}
                 </p>
               </div>
               <span className="shrink-0 rounded-full bg-white/20 px-2.5 py-1 text-[10px] font-bold">
@@ -373,7 +381,7 @@ export default function ResellerDashboard() {
                   />
                   <ProfileRow
                     label="Client ID"
-                    value={session?.clientId ?? profile?.clientId ?? "—"}
+                    value={credentials?.clientId ?? profile?.clientId ?? "—"}
                     mono
                   />
                   <ProfileRow
@@ -583,7 +591,7 @@ export default function ResellerDashboard() {
                 Reseller Dashboard
               </h1>
               <p className="max-w-[190px] truncate text-[11px] text-gray-500">
-                {session?.clientId || "Reseller"}
+                {credentials?.clientId || session?.resellerId || "Reseller"}
               </p>
             </div>
           </div>
