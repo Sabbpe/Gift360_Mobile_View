@@ -19,6 +19,12 @@ export interface TicketMessage {
   senderType: "USER" | "ADMIN" | "BOT";
   message: string;
   createdAt: string;
+  /** Message id: needed to rate a bot answer. */
+  id?: number;
+  /** Present only on bot answers that can be rated (👍/👎). */
+  intentKey?: string | null;
+  /** The customer's saved vote on this answer. */
+  vote?: "UP" | "DOWN" | null;
 }
 
 export type TicketStatus = "OPEN" | "REPLIED" | "CLOSED";
@@ -95,6 +101,22 @@ export const getSupportTicketThread = async (
       throw new Error(
         error.response?.data?.message || "Failed to fetch support messages"
       );
+    }
+    throw new Error("An unexpected error occurred");
+  }
+};
+
+/** 👍/👎 on one Sahil answer. A second call for the same message changes the vote. */
+export const sendSupportFeedback = async (
+  publicId: string,
+  messageId: number,
+  vote: "UP" | "DOWN"
+): Promise<void> => {
+  try {
+    await brandApi.post(`/v1/support/tickets/${publicId}/messages/${messageId}/feedback`, { vote });
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      throw new Error(error.response?.data?.message || "Failed to save your feedback");
     }
     throw new Error("An unexpected error occurred");
   }

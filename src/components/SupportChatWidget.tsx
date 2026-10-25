@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { MessageCircle, X, Send, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Loader2, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,6 +9,7 @@ import {
   createSupportTicket,
   getSupportTicketThread,
   sendSupportTicketMessage,
+  sendSupportFeedback,
   TicketClosedError,
   type TicketMessage,
   type TicketStatus,
@@ -90,6 +91,10 @@ export default function SupportChatWidget() {
   const [sendingReply, setSendingReply] = useState(false);
   const [replyError, setReplyError] = useState<string | null>(null);
 
+  // 👍/👎 on Sahil's answers: votes just made in this session (the server copy comes with each message)
+  const [votes, setVotes] = useState<Record<number, "UP" | "DOWN">>({});
+  const [votingId, setVotingId] = useState<number | null>(null);
+
   useEffect(() => {
     if (user?.name && !name) setName(user.name);
     if (user?.email && !email) setEmail(user.email);
@@ -105,6 +110,7 @@ export default function SupportChatWidget() {
     setMessages([]);
     setTicketStatus(null);
     setHasUnread(false);
+    setVotes({});
     seenMessageCountRef.current = 0;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identityKey]);
@@ -242,6 +248,21 @@ export default function SupportChatWidget() {
     }
   };
 
+  // Rate one of Sahil's answers. The backend also posts Sahil's follow-up line, so refresh the thread.
+  const handleVote = async (messageId: number, vote: "UP" | "DOWN") => {
+    if (!ticketId || votingId !== null) return;
+    setVotingId(messageId);
+    try {
+      await sendSupportFeedback(ticketId, messageId, vote);
+      setVotes((prev) => ({ ...prev, [messageId]: vote }));
+      await fetchMessages(ticketId, true);
+    } catch (err: any) {
+      setReplyError(err.message || "Could not save your feedback.");
+    } finally {
+      setVotingId(null);
+    }
+  };
+
   // A closed ticket is done — clear it so the widget falls back to the
   // intake form and the user starts a fresh conversation instead of
   // reopening the old one.
@@ -256,6 +277,7 @@ export default function SupportChatWidget() {
     setMessage("");
     setHasUnread(false);
     setWaitingSince(null);
+    setVotes({});
     seenMessageCountRef.current = 0;
   };
 
@@ -434,6 +456,35 @@ export default function SupportChatWidget() {
                             )
                           )}
                         </p>
+                        {m.senderType === "BOT" && m.id != null && !!m.intentKey && (() => {
+                          const mid = m.id as number;
+                          const vote = votes[mid] ?? m.vote ?? null;
+                          // only the latest answer takes votes; older ones stay visible but grey
+                          const active = idx === messages.length - 1 && ticketStatus !== "CLOSED" && !waitingSince && votingId === null;
+                          const btn = (v: "UP" | "DOWN", label: string, Icon: typeof ThumbsUp) => (
+                            <button
+                              type="button"
+                              disabled={!active}
+                              aria-label={label}
+                              aria-pressed={vote === v}
+                              onClick={() => handleVote(mid, v)}
+                              className={`flex h-6 w-6 items-center justify-center rounded-full border transition-colors ${
+                                vote === v
+                                  ? "border-blue-600 bg-blue-50 text-blue-600"
+                                  : "border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600"
+                              } ${active ? "" : "opacity-50 cursor-default hover:border-gray-200 hover:text-gray-500"}`}
+                            >
+                              <Icon className="h-3 w-3" />
+                            </button>
+                          );
+                          return (
+                            <div className="mt-2 flex items-center gap-1.5 text-[11px] text-gray-500">
+                              <span>Was this helpful?</span>
+                              {btn("UP", "Yes, this helped", ThumbsUp)}
+                              {btn("DOWN", "No, this did not help", ThumbsDown)}
+                            </div>
+                          );
+                        })()}
                         {m.senderType !== "USER" && idx === messages.length - 1 && ticketStatus !== "CLOSED" && !waitingSince && (
                           <div className="mt-2 flex flex-wrap gap-1.5">
                             {splitOptions(m.message).options.map((o) => (
