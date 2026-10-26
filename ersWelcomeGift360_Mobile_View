@@ -1,0 +1,14 @@
+[35msrc/api/supercoinApi.ts[m[36m:[m[32m107[m[36m:[mexport const [1;31mfetchSuperCoinBalance[m = (identity: SuperCoinIdentity) =>
+[35msrc/api/walletApi.ts[m[36m:[m[32m20[m[36m:[mexport const [1;31mfetchWalletBalance[m = async (clientId: string): Promise<WalletBalance> => {
+[35msrc/components/InstantGiftingBanner.tsx[m[36m:[m[32m120[m[36m:[m  // 5 minutes and 5 bonus [1;31mSuperCoins are credited[m. After a win we send the customer to the SuperCoin modal.
+[35msrc/components/InstantGiftingBanner.tsx[m[36m:[m[32m247[m[36m:[m                sub="Complete a purchase within 5 minutes of your win and 5 bonus [1;31mSuperCoins are credited[m after your voucher is issued."
+[35msrc/components/RewardsModal.tsx[m[36m:[m[32m162[m[36m:[m                    Complete a purchase before the timer runs out and {QUIZ_SUPERCOIN_REWARD} bonus [1;31mSuperCoins are credited[m after your voucher is issued.
+[35msrc/components/RewardsModal.tsx[m[36m:[m[32m201[m[36m:[m                  [1;31mShare your Gift360 story[m, win {STORY_SUPERCOIN_REWARD} SuperCoins
+[35msrc/components/RewardsModal.tsx[m[36m:[m[32m260[m[36m:[m            [1;31mSuperCoins are credited[m after we verify your reel or story is live.
+[35msrc/components/SuperCoinOTPModal.tsx[m[36m:[m[32m15[m[36m:[m  [1;31mfetchSuperCoinBalance[m,
+[35msrc/components/SuperCoinOTPModal.tsx[m[36m:[m[32m162[m[36m:[m        const response = await [1;31mfetchSuperCoinBalance[m(identity);
+[35msrc/components/SuperCoinsBrandModal.tsx[m[36m:[m[32m411[m[36m:[m  // with cashback off and the [1;31mSuperCoins are credited[m after the voucher is issued.
+[35msrc/hooks/useFetchWallet.ts[m[36m:[m[32m2[m[36m:[mimport { [1;31mfetchWalletBalance[m } from "@/api/walletApi";
+[35msrc/hooks/useFetchWallet.ts[m[36m:[m[32m9[m[36m:[m    queryFn: () => [1;31mfetchWalletBalance[m(clientId!),
+[35msrc/hooks/useSuperCoin.ts[m[36m:[m[32m4[m[36m:[m  [1;31mfetchSuperCoinBalance[m,
+[35msrc/hooks/useSuperCoin.ts[m[36m:[m[32m48[m[36m:[m    mutationFn: () => [1;31mfetchSuperCoinBalance[m(requireIdentity()),
