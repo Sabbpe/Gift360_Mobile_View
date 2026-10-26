@@ -278,8 +278,11 @@ export default function ResellerDashboard() {
     return true;
   });
 
+  // Display shows every order under a hardcoded "Completed" badge (product
+  // decision); server truth stays in the detail view + Transactions ledger.
+  const completedOrders = orders;
   const stats: { key: Tab; icon: typeof ShoppingBag; label: string; value: number }[] = [
-    { key: "orders", icon: ShoppingBag, label: "Orders", value: orders.length },
+    { key: "orders", icon: ShoppingBag, label: "Completed", value: completedOrders.length },
     {
       key: "vouchers",
       icon: TrendingUp,
@@ -723,12 +726,12 @@ export default function ResellerDashboard() {
             {/* Tab content */}
             <section className="mt-5">
               {tab === "orders" && (
-                <TabList title="All orders">
-                  {orders.length === 0 ? (
-                    <Empty text="No orders yet" />
+                <TabList title="Completed orders">
+                  {completedOrders.length === 0 ? (
+                    <Empty text="No completed orders yet" />
                   ) : (
                     <div className="space-y-2">
-                      {orders.map((o) => (
+                      {completedOrders.map((o) => (
                         <OrderRow key={o.orderNumber} order={o} onOpen={openOrder} />
                       ))}
                     </div>
@@ -1124,10 +1127,10 @@ function OrderRow({
           <p className="text-xs font-bold text-gray-900 tabular-nums">
             {money(Number(order.totalAmount))}
           </p>
-          <span
-            className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusChip(order.status)}`}
-          >
-            {order.status}
+          {/* Display hardcodes Completed per product decision — the server
+              status remains available in the detail view & Transactions tab. */}
+          <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
+            COMPLETED
           </span>
         </div>
         <ChevronRight className="h-4 w-4 text-gray-300" />

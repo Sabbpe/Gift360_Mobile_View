@@ -59,6 +59,29 @@ export const resellerLogin = async (
   return data;
 };
 
+/** POST /v1/reseller/auth/forgot-password — always resolves success server-side. */
+export const resellerForgotPassword = async (
+  email: string
+): Promise<{ success: boolean; message?: string }> => {
+  const { data } = await axios.post<{ success: boolean; message?: string }>(
+    `${API_BASE_URL}/v1/reseller/auth/forgot-password`,
+    { email }
+  );
+  return data;
+};
+
+/** POST /v1/reseller/auth/reset-password — one-time link token + new password. */
+export const resellerResetPassword = async (
+  token: string,
+  password: string
+): Promise<{ success: boolean; message?: string }> => {
+  const { data } = await axios.post<{ success: boolean; message?: string }>(
+    `${API_BASE_URL}/v1/reseller/auth/reset-password`,
+    { token, password }
+  );
+  return data;
+};
+
 /** POST /v1/reseller/auth/logout — best-effort; clears the server session. */
 export const resellerLogout = async (): Promise<void> => {
   try {

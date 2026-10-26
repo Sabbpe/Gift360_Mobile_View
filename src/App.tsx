@@ -49,6 +49,7 @@ import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import SuperCoinVoucherPreview from "./pages/SuperCoinVoucherPreview";
 import RewardsPage from "./pages/RewardsPage";
+import ResellerResetPassword from "./pages/ResellerResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
 import { trackPageView } from "./lib/analytics";
@@ -112,6 +113,8 @@ function AppRoutes() {
       <Route path="/distributor" component={DistributorLandingPage} />
       <Route path="/reseller" component={ResellerLandingPage} />
       <Route path="/reseller/dashboard" component={ResellerDashboard} />
+      <Route path="/changepassword" component={ResellerResetPassword} />
+      <Route path="/reseller/reset-password" component={ResellerResetPassword} />
       <Route path="/reseller/catalog" component={ResellerCatalog} />
       <Route path="/reseller/cart" component={ResellerCart} />
       <Route path="/corporate" component={CorporateLandingPage} />
