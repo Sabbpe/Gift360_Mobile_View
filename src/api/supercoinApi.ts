@@ -104,8 +104,41 @@ export const searchSuperCoinUser = (identity: SuperCoinIdentity) =>
 export const enrolSuperCoinUser = (identity: SuperCoinIdentity) =>
   postSuperCoin<SuperCoinSearchResponse>("/enrolUser", { identity });
 
-export const fetchSuperCoinBalance = (identity: SuperCoinIdentity) =>
-  postSuperCoin<SuperCoinBalanceResponse>("/balance", { identity });
+// client_id of the logged-in user — authUser is written by AuthContext on
+// login (same source walletApi/valuedesignApi read).
+const readAuthClientId = (): string | null => {
+  try {
+    const raw = localStorage.getItem("authUser");
+    if (!raw) return null;
+    const user = JSON.parse(raw);
+    return typeof user?.clientId === "string" && user.clientId ? user.clientId : null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * POST /api/v1/clients/supercoin-balance — store the balance just fetched
+ * from /balance into client_profile.supercoin_balance (V55). Fire-and-forget;
+ * failures never affect the balance flow itself.
+ */
+export const storeSuperCoinBalance = (clientId: string, balance: number): Promise<void> =>
+  brandApi
+    .post("/v1/clients/supercoin-balance", { clientId, balance })
+    .then(() => undefined);
+
+export const fetchSuperCoinBalance = async (
+  identity: SuperCoinIdentity
+): Promise<SuperCoinBalanceResponse> => {
+  const response = await postSuperCoin<SuperCoinBalanceResponse>("/balance", { identity });
+  // After every /balance fetch while logged in, persist the snapshot so
+  // client_profile always carries the latest SuperCoin balance.
+  const clientId = readAuthClientId();
+  if (clientId) {
+    storeSuperCoinBalance(clientId, extractSuperCoinBalance(response)).catch(() => {});
+  }
+  return response;
+};
 
 export const initSuperCoinHold = (payload: SuperCoinTransactionalPayload) =>
   postSuperCoin<SuperCoinInitHoldResponse>("/initHold", payload);
