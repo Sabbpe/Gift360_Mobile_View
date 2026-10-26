@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   X, Coins, ArrowRight, Instagram, CheckCircle, Loader2, Sparkles, Gift,
-  ExternalLink,
+  ExternalLink, Copy, Check,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
@@ -22,6 +22,10 @@ type Props = {
 
 /** SuperCoins credited for an approved Instagram reel or story. Must match the backend. */
 const STORY_SUPERCOIN_REWARD = 100;
+
+/** Reference post users should copy-paste as the style guide for their own post. */
+const REFERENCE_POST_URL =
+  "https://www.instagram.com/p/De8rW3yTd6-/?cplk=MWg2OHh3OHlwendnZQ%3D%3D";
 
 const INSTAGRAM_URL_RE = /^https?:\/\/([\w-]+\.)*instagram\.com\/.+/i;
 
@@ -48,6 +52,7 @@ export default function RewardsModal({ open, onClose }: Props) {
   const [storySending, setStorySending] = useState(false);
   const [storyDone, setStoryDone] = useState(false);
   const [storyError, setStoryError] = useState<string | null>(null);
+  const [copiedReference, setCopiedReference] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -99,6 +104,13 @@ export default function RewardsModal({ open, onClose }: Props) {
   }, [user?.clientId, quizReward?.publicId, setLocation]);
 
   const storyUrlValid = INSTAGRAM_URL_RE.test(storyUrl.trim());
+
+  const handleCopyReference = () => {
+    navigator.clipboard.writeText(REFERENCE_POST_URL).then(() => {
+      setCopiedReference(true);
+      setTimeout(() => setCopiedReference(false), 1500);
+    });
+  };
 
   const handleStorySubmit = async () => {
     if (!user?.clientId) { setLocation("/login"); return; }
@@ -278,24 +290,34 @@ export default function RewardsModal({ open, onClose }: Props) {
                 </li>
               </ol>
 
-              {/* Reference reel — the look to copy while posting */}
-              <a
-                href="https://www.instagram.com/p/De8rW3yTd6-/?cplk=MWg2OHh3OHlwendnZQ%3D%3D"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-lg bg-white/10 border border-[#F7D46B]/50 px-3 py-2 hover:bg-white/15 transition-colors"
-              >
-                <ExternalLink className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[10.5px] font-semibold text-white leading-snug">
-                    Posting reference — see the example post
-                  </p>
-                  <p className="text-[9.5px] text-white/65 leading-snug truncate">
-                    Match this look and style for your post
-                  </p>
+              {/* Reference post — copy this link and use it as the guide */}
+              <div className="rounded-lg bg-white/10 border border-[#F7D46B]/50 px-3 py-2.5">
+                <p className="flex items-center gap-1.5 text-[10.5px] font-semibold text-white leading-snug">
+                  <ExternalLink className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
+                  Reference post — copy-paste this link and use it as your reference
+                </p>
+                <div className="mt-1.5 flex items-start gap-2">
+                  <a
+                    href={REFERENCE_POST_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="min-w-0 flex-1 break-all text-[9.5px] leading-snug text-[#F7D46B] underline"
+                  >
+                    {REFERENCE_POST_URL}
+                  </a>
+                  <button
+                    type="button"
+                    onClick={handleCopyReference}
+                    className="shrink-0 inline-flex items-center gap-1 rounded-md bg-[#F7D46B] px-2 py-1 text-[9px] font-bold text-[#4C1D95] shadow-sm active:scale-95 transition-all"
+                  >
+                    {copiedReference ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+                    {copiedReference ? "Copied" : "Copy"}
+                  </button>
                 </div>
-                <ArrowRight className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
-              </a>
+                <p className="mt-1 text-[9px] text-white/65 leading-snug">
+                  Match the same look and style when you post your own reel or story.
+                </p>
+              </div>
             </div>
 
             {/* Link submission form */}
