@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   X, Coins, ArrowRight, Instagram, CheckCircle, Loader2, Sparkles, Gift,
+  ExternalLink,
 } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
 import {
@@ -192,7 +193,11 @@ export default function RewardsModal({ open, onClose }: Props) {
             className="relative w-full rounded-xl overflow-hidden"
             style={{ background: "linear-gradient(135deg, #4C1D95 0%, #6D28D9 55%, #7C3AED 100%)" }}
           >
-            <div className="px-4 py-4 flex items-start justify-between gap-3">
+            {/* Decorative gold glow */}
+            <div className="pointer-events-none absolute -top-10 -right-10 w-32 h-32 rounded-full bg-[#F7D46B]/20 blur-2xl" />
+
+            {/* Header */}
+            <div className="relative px-4 pt-4 flex items-start justify-between gap-3">
               <div className="flex-1 min-w-0 space-y-1.5">
                 <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold tracking-wider text-[#4C1D95] bg-[#F7D46B]">
                   STORY &amp; REEL
@@ -201,22 +206,103 @@ export default function RewardsModal({ open, onClose }: Props) {
                   Share your Gift360 story, win {STORY_SUPERCOIN_REWARD} SuperCoins
                 </h3>
                 <p className="text-[11px] text-white/85 leading-snug">
-                  Buy a voucher with us, share your experience as a reel or story on Instagram,
-                  paste your link below and submit to win <span className="font-bold text-[#F7D46B]">{STORY_SUPERCOIN_REWARD} SuperCoins</span>.
+                  Bought a voucher? Post your experience as an Instagram reel or story,
+                  tag <span className="font-bold text-[#F7D46B]">@gift360.io</span> in the
+                  post, then paste your link below — earn{" "}
+                  <span className="font-bold text-[#F7D46B]">{STORY_SUPERCOIN_REWARD} SuperCoins</span>{" "}
+                  once we verify it.
                 </p>
               </div>
-              <div className="w-[64px] h-[64px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
+              <div className="w-[64px] h-[64px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15 ring-2 ring-[#F7D46B]/40">
                 <Instagram className="h-8 w-8 text-[#F7D46B]" strokeWidth={1.8} />
               </div>
             </div>
 
-            <div className="px-4 pb-4 space-y-2">
-              <ol className="space-y-1 text-[11px] text-white/85">
-                <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">1.</span> Buy any voucher on Gift360</li>
-                <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">2.</span> Post a reel or story about it on Instagram</li>
-                <li className="flex gap-1.5"><span className="font-bold text-[#F7D46B]">3.</span> Paste your link here and submit</li>
+            {/* How it works — structured steps */}
+            <div className="relative px-4 pt-3 space-y-1.5">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-[#F7D46B]">
+                HOW IT WORKS
+              </p>
+              <ol className="space-y-1.5">
+                <li className="flex items-start gap-2 rounded-lg bg-white/10 px-2.5 py-2">
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[#F7D46B] text-[#4C1D95] text-[9px] font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-semibold text-white leading-snug">
+                      Buy any Gift360 voucher
+                    </p>
+                    <p className="text-[10px] text-white/70 leading-snug">
+                      Complete your purchase before you post.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2 rounded-lg bg-white/10 px-2.5 py-2">
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[#F7D46B] text-[#4C1D95] text-[9px] font-bold flex items-center justify-center">
+                    2
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-semibold text-white leading-snug">
+                      Post a reel or story on Instagram
+                    </p>
+                    <p className="text-[10px] text-white/70 leading-snug">
+                      Share your genuine experience with the voucher.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2 rounded-lg bg-[#F7D46B]/15 ring-1 ring-[#F7D46B]/60 px-2.5 py-2">
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[#F7D46B] text-[#4C1D95] text-[9px] font-bold flex items-center justify-center">
+                    3
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-semibold text-white leading-snug">
+                      Tag <span className="text-[#F7D46B]">@gift360.io</span> in the post
+                    </p>
+                    <p className="text-[10px] text-white/70 leading-snug">
+                      Mention us in the caption — this is how we find your entry.
+                    </p>
+                  </div>
+                </li>
+                <li className="flex items-start gap-2 rounded-lg bg-white/10 px-2.5 py-2">
+                  <span className="mt-0.5 w-4 h-4 shrink-0 rounded-full bg-[#F7D46B] text-[#4C1D95] text-[9px] font-bold flex items-center justify-center">
+                    4
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-[11.5px] font-semibold text-white leading-snug">
+                      Paste your link here and submit
+                    </p>
+                    <p className="text-[10px] text-white/70 leading-snug">
+                      We check it&apos;s live, then credit your SuperCoins.
+                    </p>
+                  </div>
+                </li>
               </ol>
 
+              {/* Reference reel — the look to copy while posting */}
+              <a
+                href="https://www.instagram.com/reels/De6jKsSvBQB/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 rounded-lg bg-white/10 border border-[#F7D46B]/50 px-3 py-2 hover:bg-white/15 transition-colors"
+              >
+                <ExternalLink className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10.5px] font-semibold text-white leading-snug">
+                    Posting reference — see the example reel
+                  </p>
+                  <p className="text-[9.5px] text-white/65 leading-snug truncate">
+                    Match this look and style for your post
+                  </p>
+                </div>
+                <ArrowRight className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
+              </a>
+            </div>
+
+            {/* Link submission form */}
+            <div className="px-4 py-3 space-y-2">
+              <p className="text-[10px] font-bold tracking-[0.12em] text-[#F7D46B]">
+                YOUR INSTAGRAM LINK
+              </p>
               {storyDone ? (
                 <div className="flex items-start gap-2 rounded-lg bg-white/95 px-3 py-2.5">
                   <CheckCircle className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
