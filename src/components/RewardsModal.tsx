@@ -280,7 +280,7 @@ export default function RewardsModal({ open, onClose }: Props) {
 
               {/* Reference reel — the look to copy while posting */}
               <a
-                href="https://www.instagram.com/reels/De6jKsSvBQB/"
+                href="https://www.instagram.com/p/De8rW3yTd6-/?cplk=MWg2OHh3OHlwendnZQ%3D%3D"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 rounded-lg bg-white/10 border border-[#F7D46B]/50 px-3 py-2 hover:bg-white/15 transition-colors"
@@ -288,7 +288,7 @@ export default function RewardsModal({ open, onClose }: Props) {
                 <ExternalLink className="h-3.5 w-3.5 text-[#F7D46B] shrink-0" />
                 <div className="min-w-0 flex-1">
                   <p className="text-[10.5px] font-semibold text-white leading-snug">
-                    Posting reference — see the example reel
+                    Posting reference — see the example post
                   </p>
                   <p className="text-[9.5px] text-white/65 leading-snug truncate">
                     Match this look and style for your post
