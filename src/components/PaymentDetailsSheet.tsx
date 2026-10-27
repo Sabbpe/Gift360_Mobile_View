@@ -533,6 +533,7 @@ export default function PaymentDetailsSheet({
       {
         orderNumber,
         paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
+        paymentModes: useMethodFee ? paymentMethods.map((m) => m.code) : undefined,
       },
       {
         onSuccess: (response) => {

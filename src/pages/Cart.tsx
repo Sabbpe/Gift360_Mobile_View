@@ -1705,7 +1705,11 @@ useEffect(() => {
 
   const startBackendPayment = (orderNumber: string) => {
     backendPaymentMutation.mutate(
-      { orderNumber, paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined },
+      {
+        orderNumber,
+        paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
+        paymentModes: useMethodFee ? paymentMethods.map((m) => m.code) : undefined,
+      },
       {
       onSuccess: (response) => {
         console.log("Backend payment initiation response:", response);

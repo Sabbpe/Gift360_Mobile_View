@@ -288,7 +288,13 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
 };
 
 const initiateBackendPaymentNow = (orderNumber: string) => {
-  backendPaymentMutation.mutate({ orderNumber, paymentMethod: paymentMethodCode }, {
+  backendPaymentMutation.mutate(
+    {
+      orderNumber,
+      paymentMethod: paymentMethodCode,
+      paymentModes: paymentMethods.length > 0 ? paymentMethods.map((m) => m.code) : undefined,
+    },
+    {
     onSuccess: (response) => {
       console.log("Backend payment initiation response:", response);
 

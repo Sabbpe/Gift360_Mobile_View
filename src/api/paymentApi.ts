@@ -19,14 +19,26 @@ export interface BackendPaymentInitiationResponse {
 // Backend-mediated payment initiation.
 // The backend owns the merchant credentials and computes the net payable,
 // so the frontend never sends an amount or token to the gateway directly.
+// paymentModes carries every mode the selector offered: the hosted checkout
+// page opens with all of them, while the platform fee stays that of the
+// selected paymentMethod.
 export const initiateBackendPayment = async (
   orderNumber: string,
   freshSession = false,
-  paymentMethod?: string
+  paymentMethod?: string,
+  paymentModes?: string[]
 ): Promise<BackendPaymentInitiationResponse> => {
+  const hasList = !!paymentModes && paymentModes.length > 0;
+  const payload =
+    paymentMethod || hasList
+      ? {
+          ...(paymentMethod ? { paymentMethod } : {}),
+          ...(hasList ? { paymentModes } : {}),
+        }
+      : undefined;
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`,
-    paymentMethod ? { paymentMethod } : undefined
+    payload
   );
   return response.data;
 };
@@ -36,11 +48,18 @@ export const initiateRetryPayment = async (
   walletUsed: boolean,
   walletAmount: number,
   earnCashback: boolean,
-  paymentMethod?: string
+  paymentMethod?: string,
+  paymentModes?: string[]
 ): Promise<BackendPaymentInitiationResponse> => {
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/retry-payment`,
-    { walletUsed, walletAmount, earnCashback, ...(paymentMethod ? { paymentMethod } : {}) }
+    {
+      walletUsed,
+      walletAmount,
+      earnCashback,
+      ...(paymentMethod ? { paymentMethod } : {}),
+      ...(paymentModes && paymentModes.length > 0 ? { paymentModes } : {}),
+    }
   );
   return response.data;
 };

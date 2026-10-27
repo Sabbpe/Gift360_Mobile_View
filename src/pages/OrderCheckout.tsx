@@ -691,7 +691,8 @@ export default function OrderCheckout() {
         selectedWalletUsage,
         paymentBreakdown.walletDeduction,
         rewardMode === "cashbackWallet",
-        useMethodFee ? activePaymentMethod?.code : undefined
+        useMethodFee ? activePaymentMethod?.code : undefined,
+        useMethodFee ? paymentMethods.map((m) => m.code) : undefined
       );
       const paymentUrl = response.payment_url || response.paymentUrl || response.data;
       if (!(response.status === 1 || response.status === true) || !paymentUrl) {
