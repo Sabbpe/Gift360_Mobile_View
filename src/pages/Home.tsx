@@ -152,6 +152,8 @@ function BalanceCard() {
               ? "…"
               : scBalance.data == null
               ? "—"
+              : scBalance.data === "NA"
+              ? "NA"
               : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
           </span>
         </div>

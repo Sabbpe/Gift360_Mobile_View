@@ -2376,6 +2376,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                             ? "…"
                             : scBalance.data == null
                             ? "—"
+                            : scBalance.data === "NA"
+                            ? "NA"
                             : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
                         </span>
                       </span>

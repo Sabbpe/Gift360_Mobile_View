@@ -122,7 +122,7 @@ const readAuthClientId = (): string | null => {
  * from /balance into client_profile.supercoin_balance (V55). Fire-and-forget;
  * failures never affect the balance flow itself.
  */
-export const storeSuperCoinBalance = (clientId: string, balance: number): Promise<void> =>
+export const storeSuperCoinBalance = (clientId: string, balance: number | string): Promise<void> =>
   brandApi
     .post("/v1/clients/supercoin-balance", { clientId, balance })
     .then(() => undefined);
@@ -130,14 +130,27 @@ export const storeSuperCoinBalance = (clientId: string, balance: number): Promis
 export const fetchSuperCoinBalance = async (
   identity: SuperCoinIdentity
 ): Promise<SuperCoinBalanceResponse> => {
-  const response = await postSuperCoin<SuperCoinBalanceResponse>("/balance", { identity });
-  // After every /balance fetch while logged in, persist the snapshot so
-  // client_profile always carries the latest SuperCoin balance.
-  const clientId = readAuthClientId();
-  if (clientId) {
-    storeSuperCoinBalance(clientId, extractSuperCoinBalance(response)).catch(() => {});
+  try {
+    const response = await postSuperCoin<SuperCoinBalanceResponse>("/balance", { identity });
+    // After every /balance fetch while logged in, persist the snapshot so
+    // client_profile always carries the latest SuperCoin balance.
+    const clientId = readAuthClientId();
+    if (clientId) {
+      storeSuperCoinBalance(clientId, extractSuperCoinBalance(response)).catch(() => {});
+    }
+    return response;
+  } catch (err) {
+    // Upstream 404 = not a Flipkart SuperCoin user -> record "NA" once on the
+    // profile (server keeps an existing balance, ignores NA when not empty).
+    const status = (err as { response?: { status?: number } })?.response?.status;
+    if (status === 404) {
+      const clientId = readAuthClientId();
+      if (clientId) {
+        storeSuperCoinBalance(clientId, "NA").catch(() => {});
+      }
+    }
+    throw err;
   }
-  return response;
 };
 
 export const initSuperCoinHold = (payload: SuperCoinTransactionalPayload) =>
