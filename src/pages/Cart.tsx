@@ -20,6 +20,7 @@ import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -414,6 +415,7 @@ useEffect(() => {
   });
   const timerRef = useRef<number>(0);
   const { data: walletData } = useFetchWallet(user?.clientId);
+const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const superCoinMerchantWalletId =
     import.meta.env.VITE_SUPERCOIN_MERCHANT_WALLET_ID?.trim() || "";
   const normalizedSuperCoinMobile = useMemo(
@@ -2352,7 +2354,7 @@ useEffect(() => {
                       aria-checked={useWalletBalance}
                       disabled={walletBalance <= 0}
                       onClick={() => setUseWalletBalance(!useWalletBalance)}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
+                      className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
                     >
                       <Wallet className="h-5 w-5 shrink-0 text-[var(--cart-primary)]" />
                       <span className="min-w-0 flex-1">
@@ -2365,6 +2367,17 @@ useEffect(() => {
                       </span>
                       <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${useWalletBalance ? 'bg-[var(--cart-primary)]' : 'bg-gray-300'}`}>
                         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${useWalletBalance ? 'left-[22px]' : 'left-0.5'}`} />
+                      </span>
+                      <span className="flex w-full items-center gap-1.5 border-t border-[rgba(151,71,255,0.15)] pt-1.5 text-xs">
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 shrink-0 object-contain anim-sc-wiggle" />
+                        <span className="text-muted-foreground">SuperCoins balance:</span>
+                        <span className="font-bold tabular-nums text-[var(--cart-primary)]">
+                          {scBalance.isLoading
+                            ? "…"
+                            : scBalance.data == null
+                            ? "—"
+                            : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                        </span>
                       </span>
                     </button>
                   ) : (

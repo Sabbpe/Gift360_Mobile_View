@@ -46,6 +46,7 @@ import { getImageUrl } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 const MAX_QUANTITY_PER_ITEM = 3;
 
 /**
@@ -163,6 +164,7 @@ export default function PaymentDetailsSheet({
   // sheet doesn't refire the wallet call or re-handle its auth token.
   const [useWalletBalance, setUseWalletBalance] = useState(false);
   const { data: walletData } = useFetchWallet(user?.clientId);
+const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
   // Platform-fee fallback (method fees from the DB are preferred when loaded).
   const [platformFeeConfig, setPlatformFeeConfig] = useState({
@@ -1535,7 +1537,7 @@ export default function PaymentDetailsSheet({
                     aria-checked={useWalletBalance}
                     disabled={walletBalance <= 0}
                     onClick={() => setUseWalletBalance(!useWalletBalance)}
-                    className="flex w-full items-center gap-3 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
+                    className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
                   >
                     <Wallet className="h-5 w-5 shrink-0 text-[#9747FF]" />
                     <span className="min-w-0 flex-1">
@@ -1558,6 +1560,17 @@ export default function PaymentDetailsSheet({
                           useWalletBalance ? "left-[22px]" : "left-0.5"
                         }`}
                       />
+                    </span>
+                    <span className="flex w-full items-center gap-1.5 border-t border-[rgba(151,71,255,0.15)] pt-1.5 text-xs">
+                      <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 shrink-0 object-contain anim-sc-wiggle" />
+                      <span className="text-[#6B7280]">SuperCoins balance:</span>
+                      <span className="font-bold tabular-nums text-[#9747FF]">
+                        {scBalance.isLoading
+                          ? "…"
+                          : scBalance.data == null
+                          ? "—"
+                          : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                      </span>
                     </span>
                   </button>
 

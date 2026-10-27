@@ -61,6 +61,7 @@ import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, fetchPersonalRecommendations, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 import { brandApi } from "@/lib/valuedesignApi";
 
 type BrandItem = {
@@ -102,6 +103,7 @@ function BalanceCard() {
   const [visible, setVisible] = useState(true);
   const { user } = useAuthContext();
   const { data: walletData, isPending, isError, refetch } = useFetchWallet(user?.clientId);
+  const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const hasClient = !!user?.clientId;
   const hasBalance = typeof walletData?.totalBalance === "number";
   // "0" only when the server actually said 0 (or for a guest). A loading or failed
@@ -139,6 +141,20 @@ function BalanceCard() {
             Couldn&apos;t load your balance. Tap to retry
           </button>
         )}
+        {/* SuperCoins balance — pinned top-right of the card */}
+        <div className="absolute right-[12px] top-[12px] z-10 flex items-center gap-1 rounded-full bg-white/75 px-2 py-[3px] shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-[13px] w-[13px] shrink-0 object-contain anim-sc-wiggle" />
+          <span className="text-[10px] font-medium leading-none text-black/70">SuperCoins balance:</span>
+          <span className="text-[11px] font-bold leading-none tabular-nums text-[#5B3FFF]">
+            {!visible
+              ? "••••••"
+              : scBalance.isLoading
+              ? "…"
+              : scBalance.data == null
+              ? "—"
+              : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+          </span>
+        </div>
         <div className="absolute bottom-[6px] right-[10px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
           <style>{`
             @keyframes gold-pulse-badge {
