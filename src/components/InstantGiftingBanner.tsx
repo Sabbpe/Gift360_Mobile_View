@@ -3,15 +3,21 @@ import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Gift, Coins, RefreshCw, BadgeDollarSign } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
+import { useOccasions } from "@/hooks/useOccasions";
+import { occasionSlug } from "@/lib/occasionSlug";
 import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
 import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import partnerImg from "@/assets/coorp.png";
+import cashBannerImg from "@/assets/cashhbanner.png";
+import occasionImg from "@/assets/occasion.png";
+import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
+import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 
 const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
 const BATA_BRAND_ID = "335f53f7-68f6-4eb0-be45-e571c1044cf9";
-const TOTAL_SLIDES = 4;
+const TOTAL_SLIDES = 7;
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
@@ -80,6 +86,110 @@ function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   );
 }
 
+/** Slide 2 — points at the existing "convert coins" guide (SuperCoinGuideSheet). */
+function ConvertCoinsSlide({ onViewGuide }: { onViewGuide: () => void }) {
+  return (
+    <div
+      className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3"
+      style={{ background: "linear-gradient(135deg, #5B2B99 0%, #7C3AED 100%)" }}
+    >
+      <div className="flex-1 min-w-0 space-y-1.5">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
+          CONVERT COINS
+        </span>
+        <h2 className="text-[15px] font-bold text-white leading-tight">
+          Turn SuperCoins into gift vouchers
+        </h2>
+        <p className="text-[10px] text-white/85 leading-snug">
+          See how converting coins cuts what you pay — the full step-by-step guide.
+        </p>
+        <button
+          type="button"
+          onClick={onViewGuide}
+          className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[10px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all"
+        >
+          View guide
+          <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+        </button>
+      </div>
+      <div className="w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
+        <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-10 w-10 object-contain anim-sc-wiggle" />
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Slide 3 — occasion shortcuts. Chips come straight from /v1/occasions (the
+ * same ordered list the Home occasion sections are built from); tapping one
+ * smooth-scrolls to that section. Chip styling mirrors the SuperCoins intro
+ * tabs so it reads like the rest of the app.
+ */
+function OccasionSlide({
+  occasions,
+  pending,
+  selected,
+  onSelect,
+}: {
+  occasions: string[];
+  pending: boolean;
+  selected: string | null;
+  onSelect: (occasion: string) => void;
+}) {
+  const list = occasions.filter((o) => o.trim().toLowerCase() !== "top brands");
+  return (
+    <div className="relative w-full h-[185px] flex items-center px-4 py-3 overflow-hidden">
+      {/* Festive backdrop — empty cream space on the left carries the content */}
+      <img
+        loading="lazy"
+        decoding="async"
+        src={occasionImg}
+        alt=""
+        className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+      />
+      {/* Left column only — clears the gift-box/arch art on the right */}
+      <div className="relative flex-1 max-w-[50%] space-y-1.5">
+        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-extrabold tracking-[0.14em] text-white bg-[#7C3AED] shadow-[0_2px_6px_rgba(124,58,237,0.35)]">
+          OCCASIONS
+        </span>
+        <h2 className="text-[16px] font-extrabold text-gray-900 leading-[1.15] tracking-[-0.01em]">
+          Offers for <span className="text-[#7C3AED]">every occasion</span>
+        </h2>
+        <p className="text-[10px] font-semibold text-gray-600 leading-snug">
+          Pick one — jump straight to its picks.
+        </p>
+        <div className="no-scrollbar flex max-h-[76px] flex-wrap gap-1.5 overflow-y-auto pt-0.5">
+          {pending ? (
+            [0, 1, 2, 3].map((i) => (
+              <span key={i} className="g-skeleton h-[26px] w-[64px] rounded-full" />
+            ))
+          ) : list.length ? (
+            list.map((occasion) => {
+              const active = selected === occasion;
+              return (
+                <button
+                  key={occasion}
+                  type="button"
+                  onClick={() => onSelect(occasion)}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold leading-none transition-all active:scale-95 ${
+                    active
+                      ? "bg-gradient-to-r from-[#9747FF] to-[#7C3AED] text-white shadow-[0_4px_10px_rgba(124,58,237,0.4)]"
+                      : "border border-[#E2D9FF] bg-white text-[#7C3AED] shadow-[0_2px_6px_rgba(124,58,237,0.10)] hover:border-[#7C3AED]/50"
+                  }`}
+                >
+                  {occasion}
+                </button>
+              );
+            })
+          ) : (
+            <span className="text-[10px] font-semibold text-gray-400">Loading occasions…</span>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function QuizSlide({ title, sub, cta, onPlay, busy }: { title: string; sub: string; cta?: string; onPlay?: () => void; busy?: boolean }) {
   return (
     <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3"
@@ -125,6 +235,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizBusy, setQuizBusy] = useState(false);
   const [quizNote, setQuizNote] = useState<string | null>(null);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const { data: rewardStatus } = useQuery({
     queryKey: ["rewardStatus", user?.clientId],
@@ -205,6 +316,24 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
     [scrollTo, stopAutoplay]
   );
 
+  // Slide 3 — occasion shortcuts. The sections below render one block per
+  // occasion from the SAME /v1/occasions list, so the chip just smooth-scrolls
+  // to its anchor (and holds the carousel so the user can read the section).
+  const { data: occasions = [], isPending: occasionsPending } = useOccasions();
+  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
+
+  const scrollToOccasion = useCallback(
+    (occasion: string) => {
+      setSelectedOccasion(occasion);
+      userPausedRef.current = true;
+      stopAutoplay();
+      document
+        .getElementById(`occasion-${occasionSlug(occasion)}`)
+        ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    },
+    [reduced, stopAutoplay]
+  );
+
   useEffect(() => {
     startAutoplay();
     return () => stopAutoplay();
@@ -238,6 +367,67 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
             scrollbarWidth: "none",
           }}
         >
+          <div className="flex-shrink-0 w-full snap-start">
+            {/* Cashback banner — opens Brands with the "Upto 15%" filter on */}
+            <button
+              type="button"
+              onClick={() =>
+                setLocation(
+                  "/brands?discount=Up%20to%205%25&discount=5%25%20-%2015%25"
+                )
+              }
+              className="relative block h-[185px] w-full overflow-hidden text-left active:scale-[0.995] transition-transform"
+              aria-label="Shop now — save upto 30% with Cashback wallet points"
+            >
+              <img
+                loading="lazy"
+                decoding="async"
+                src={cashBannerImg}
+                alt="Save upto 30% with Cashback wallet points"
+                className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+              />
+              <style>{`
+                @keyframes save-wiggle {
+                  0%, 100% { transform: rotate(-5deg) translateY(0); }
+                  25%      { transform: rotate(3deg) translateY(-4px); }
+                  75%      { transform: rotate(5deg) translateY(-2px); }
+                }
+                .save-wiggle-1 { animation: save-wiggle 1.4s ease-in-out infinite;       transform-origin: 50% 75%; }
+                .save-wiggle-2 { animation: save-wiggle 1.4s ease-in-out 0.16s infinite; transform-origin: 50% 75%; }
+                .save-wiggle-3 { animation: save-wiggle 1.4s ease-in-out 0.32s infinite; transform-origin: 50% 75%; }
+                @media (prefers-reduced-motion: reduce) {
+                  .save-wiggle-1, .save-wiggle-2, .save-wiggle-3 { animation: none !important; }
+                }
+              `}</style>
+              {/* Left column only — starts at the slide's standard left margin (px-4,
+                  same as the other slides); max-w keeps the right-side art free */}
+              <div className="relative flex h-full max-w-[56%] flex-col justify-center gap-1.5 pl-4 pr-2">
+                <div aria-hidden="true" className="flex items-baseline gap-1.5 text-[21px] font-black italic leading-none tracking-tight">
+                  <span className="save-wiggle-1 text-[#4C1D95] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
+                  <span className="save-wiggle-2 text-[#7C3AED] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
+                  <span className="save-wiggle-3 text-[#4C1D95] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
+                </div>
+                <p className="text-[11.5px] font-extrabold leading-[1.2] text-[#5B2B99]">
+                  Save upto 30% with Cashback wallet points
+                </p>
+                <span className="inline-flex w-fit items-center gap-1 rounded-lg bg-[#7C3AED] px-3.5 py-1.5 text-[10px] font-bold text-white shadow-md">
+                  Shop Now
+                  <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
+                </span>
+              </div>
+            </button>
+          </div>
+          <div className="flex-shrink-0 w-full snap-start">
+            <ConvertCoinsSlide onViewGuide={() => setGuideOpen(true)} />
+          </div>
+          <div className="flex-shrink-0 w-full snap-start">
+            <OccasionSlide
+              occasions={occasions}
+              pending={occasionsPending}
+              selected={selectedOccasion}
+              onSelect={scrollToOccasion}
+            />
+          </div>
           <div className="flex-shrink-0 w-full snap-start">
             {quizEarned ? (
               <QuizSlide title="Quiz reward earned" sub="Your 5 bonus SuperCoins have been credited. Thanks for playing." />
@@ -289,6 +479,7 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           quizStartExpiresAt={quizReward.quizStartExpiresAt}
         />
       )}
+      <SuperCoinIntroModal open={guideOpen} onClose={() => setGuideOpen(false)} initialTab="convert" />
     </section>
   );
 }

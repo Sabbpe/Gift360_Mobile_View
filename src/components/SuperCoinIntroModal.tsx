@@ -5,7 +5,7 @@ import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import SuperCoinBanner from "@/components/SuperCoinBanner";
 import SuperCoinGuideSheet from "@/components/SuperCoinGuideSheet";
 
-type Props = { open: boolean; onClose: () => void };
+type Props = { open: boolean; onClose: () => void; initialTab?: TabId };
 
 type TabId = "brands" | "convert";
 
@@ -32,17 +32,17 @@ const CONVERT_STEPS = [
   },
 ];
 
-export default function SuperCoinIntroModal({ open, onClose }: Props) {
+export default function SuperCoinIntroModal({ open, onClose, initialTab }: Props) {
   const [, setLocation] = useLocation();
   const [tab, setTab] = useState<TabId>("brands");
   const [guideOpen, setGuideOpen] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setTab("brands");
+      setTab(initialTab ?? "brands");
       setGuideOpen(false);
     }
-  }, [open]);
+  }, [open, initialTab]);
 
   useEffect(() => {
     if (!open) return;

@@ -131,6 +131,10 @@ useEffect(() => {
   const tabFromUrl = urlParams.get('tab') as "about" | "how" | "terms" | null;
   const brandIdFromUrl = urlParams.get('brandId');
   const superCoinsOnly = urlParams.get("supercoins") === "1";
+  // Pre-applied discount filter: /brands?discount=Up%20to%205%25&discount=5%25%20-%2015%25
+  // (existing meta keys — e.g. the Instant Gifting "Shop Now" banner, where the
+  // two ranges together mean "upto 15%").
+  const discountFromUrl = urlParams.getAll("discount");
 
   const [sheetInitialTab, setSheetInitialTab] = useState<"about" | "how" | "terms" | null>(null);
 
@@ -139,7 +143,7 @@ useEffect(() => {
     brands: [],
     priceRange: "all",
     sortBy: "Popularity",
-    discountRanges: [],
+    discountRanges: discountFromUrl.length ? discountFromUrl : [],
     sortOrder: "none",
   });
 

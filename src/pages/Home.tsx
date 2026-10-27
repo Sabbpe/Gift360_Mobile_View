@@ -57,6 +57,7 @@ import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
+import { occasionSlug } from "@/lib/occasionSlug";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, fetchPersonalRecommendations, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -441,7 +442,10 @@ function OccasionPicksSection({
   const title = occasion;
 
   return (
-    <section className="px-[21px] pt-[26px]">
+    <section
+      id={`occasion-${occasionSlug(occasion)}`}
+      className="scroll-mt-[76px] px-[21px] pt-[26px]"
+    >
       <div className="inline-block bg-white rounded-xl px-3 py-1">
         <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">{title}</h2>
       </div>
