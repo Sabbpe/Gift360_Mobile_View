@@ -9,12 +9,14 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  QrCode,
   RefreshCw,
   Smartphone,
   X,
 } from "lucide-react";
 import { useUpiIntentPayment } from "@/hooks/useUpiIntentPayment";
 import { isIOS, openUpiApp, UPI_APPS } from "@/lib/upiIntent";
+import UpiQrCode from "@/components/UpiQrCode";
 
 interface UpiIntentSheetProps {
   open: boolean;
@@ -51,12 +53,14 @@ export default function UpiIntentSheet({
     onPaid,
   });
   const [copied, setCopied] = useState(false);
+  const [showQr, setShowQr] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      stop();
-      setCopied(false);
-      return;
+  if (!open) {
+    stop();
+    setCopied(false);
+    setShowQr(false);
+    return;
     }
     void start();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -88,7 +92,7 @@ export default function UpiIntentSheet({
         role="dialog"
         aria-modal="true"
         aria-label="UPI payment"
-        className="relative w-[min(100%,460px)] overflow-hidden rounded-t-[24px] bg-white shadow-[0_-16px_48px_rgba(33,24,74,0.22)] animate-[slide-up-sheet_0.3s_ease-out]"
+        className="relative w-[min(100%,460px)] max-h-[80vh] overflow-y-auto rounded-t-[24px] bg-white shadow-[0_-16px_48px_rgba(33,24,74,0.22)] animate-[slide-up-sheet_0.3s_ease-out]"
       >
         {/* Header */}
         <div className="relative bg-[linear-gradient(135deg,#9747FF_0%,#7C3AED_45%,#5B2B99_100%)] px-5 pb-4 pt-4 text-white">
@@ -180,6 +184,21 @@ export default function UpiIntentSheet({
                 <Copy className="h-3.5 w-3.5" />
                 {copied ? "Payment link copied" : "Copy payment link (open in any UPI app)"}
               </button>
+
+              <button
+                type="button"
+                onClick={() => setShowQr((v) => !v)}
+                className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-dashed border-[#D9CBFF] py-2 text-[11px] font-semibold text-[#7C3AED] active:scale-[0.99]"
+              >
+                <QrCode className="h-3.5 w-3.5" />
+                {showQr ? "Hide QR code" : "Show QR code (works on any phone)"}
+              </button>
+
+              {showQr && intent?.deeplink && (
+                <div className="flex justify-center pt-1">
+                  <UpiQrCode value={intent.deeplink} />
+                </div>
+              )}
 
               <p className="text-center text-[10px] leading-snug text-gray-400">
                 Do not close this screen until you see the confirmation.
