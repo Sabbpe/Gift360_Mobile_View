@@ -11,6 +11,7 @@ vi.mock("@/api/upiIntentApi", () => ({
 }));
 
 vi.mock("@/lib/upiIntent", () => ({
+  isIOS: () => false,
   openUpiApp: vi.fn(),
   registerUpiReturnListener: vi.fn(() => () => {}),
   savePendingIntent: vi.fn(),

@@ -14,8 +14,10 @@ vi.mock("@/api/upiIntentApi", () => ({
 
 const openUpiApp = vi.fn();
 let pendingIntent: { orderNumber: string; merchantRequestId: string; deeplink: string; startedAt: number } | null = null;
+let ios = false;
 
 vi.mock("@/lib/upiIntent", () => ({
+  isIOS: () => ios,
   openUpiApp: (...args: unknown[]) => openUpiApp(...args),
   registerUpiReturnListener: () => () => {},
   savePendingIntent: vi.fn(),
@@ -30,6 +32,7 @@ describe("useUpiIntentPayment", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     pendingIntent = null;
+    ios = false;
     createUpiIntent.mockResolvedValue({
       status: "SUCCESS",
       orderNumber: "ORD123",
@@ -67,6 +70,20 @@ describe("useUpiIntentPayment", () => {
 
     expect(result.current.phase).toBe("awaiting");
     expect(openUpiApp).toHaveBeenCalledWith(DEEPLINK);
+    unmount();
+  });
+
+  it("iOS (Safari/PWA) never auto-opens the generic deeplink", async () => {
+    ios = true;
+    const { result, unmount } = renderHook(() => useUpiIntentPayment({ orderNumber: "ORD123" }));
+
+    await act(async () => {
+      await result.current.start();
+    });
+
+    expect(result.current.phase).toBe("awaiting");
+    expect(createUpiIntent).toHaveBeenCalledTimes(1);
+    expect(openUpiApp).not.toHaveBeenCalled();
     unmount();
   });
 

@@ -12,6 +12,7 @@ import {
 import {
   clearPendingIntent,
   isFreshPendingIntent,
+  isIOS,
   loadPendingIntent,
   openUpiApp,
   registerUpiReturnListener,
@@ -139,7 +140,10 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
         startedAt: Date.now(),
       });
       setPhaseSafe("awaiting");
-      if (autoOpen) {
+      // iOS has no system UPI chooser: opening `upi://` would hand the payment
+      // to whichever app claims it (e.g. WhatsApp). All iOS builds (native AND
+      // Safari/PWA) must wait for an explicit app tap in the sheet instead.
+      if (autoOpen && !isIOS()) {
         openUpiApp(response.deeplink);
       }
       schedule();
@@ -154,10 +158,9 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
   }, [orderNumber, schedule, setPhaseSafe, autoOpen]);
 
   const reopen = useCallback(
-    (app?: string) => {
-      if (intent?.deeplink) {
-        openUpiApp(intent.deeplink, intent.hostUrlsForIOS, app);
-      }
+    (app?: string): boolean => {
+      if (!intent?.deeplink) return false;
+      return openUpiApp(intent.deeplink, intent.hostUrlsForIOS, app);
     },
     [intent]
   );

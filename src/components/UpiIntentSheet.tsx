@@ -70,9 +70,17 @@ export default function UpiIntentSheet({
   const launchInstalled = async (app: IosUpiApp) => {
     const deeplink = intent?.deeplink;
     if (!deeplink) return;
-    const prefix = intent?.hostUrlsForIOS?.[app.key] ?? app.scheme;
+    const rawPrefix = intent?.hostUrlsForIOS?.[app.key];
+    // The backend may hand back a generic `upi://` prefix; on iOS that is unsafe
+    // (no system chooser -> WhatsApp), so prefer the app's own scheme.
+    const prefix = rawPrefix && !/^upi:\/\//i.test(rawPrefix) ? rawPrefix : app.scheme;
+    const url = buildHostAppUrl(deeplink, prefix);
+    if (!url) {
+      setLaunchError(`Couldn't build a ${app.label} link. Try another app or scan the QR code.`);
+      return;
+    }
     setLaunchError(null);
-    const opened = await openUpiUrlNative(buildHostAppUrl(deeplink, prefix));
+    const opened = await openUpiUrlNative(url);
     if (!opened) {
       setLaunchError(`Couldn't open ${app.label}. Try another app or scan the QR code.`);
     }
@@ -212,18 +220,32 @@ export default function UpiIntentSheet({
                   </div>
                 )
               ) : isIOS() ? (
-                <div className="grid grid-cols-2 gap-2">
-                  {appKeys.map((app) => (
-                    <button
-                      key={app}
-                      type="button"
-                      onClick={() => reopen(app)}
-                      className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E2D9FF] bg-white px-3 py-2.5 text-[12px] font-bold text-[#5B2B99] shadow-sm active:scale-95"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      {APP_LABELS[app] ?? app}
-                    </button>
-                  ))}
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    {appKeys.map((app) => (
+                      <button
+                        key={app}
+                        type="button"
+                        onClick={() => {
+                          const openedInApp = reopen(app);
+                          if (!openedInApp) {
+                            setLaunchError(
+                              `Couldn't build a ${APP_LABELS[app] ?? app} link. Scan the QR code below instead.`
+                            );
+                          } else {
+                            setLaunchError(null);
+                          }
+                        }}
+                        className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E2D9FF] bg-white px-3 py-2.5 text-[12px] font-bold text-[#5B2B99] shadow-sm active:scale-95"
+                      >
+                        <ExternalLink className="h-3.5 w-3.5" />
+                        {APP_LABELS[app] ?? app}
+                      </button>
+                    ))}
+                  </div>
+                  {launchError && (
+                    <p className="text-[11px] font-medium text-red-600">{launchError}</p>
+                  )}
                 </div>
               ) : (
                 <button
@@ -306,7 +328,7 @@ export default function UpiIntentSheet({
                   {error ?? "The payment was not completed. You have not been charged."}
                 </p>
               </div>
-              {intent?.deeplink && (
+              {!isIOS() && intent?.deeplink && (
                 <button
                   type="button"
                   onClick={() => reopen()}
@@ -314,6 +336,16 @@ export default function UpiIntentSheet({
                 >
                   Try the payment again
                 </button>
+              )}
+              {isIOS() && intent?.deeplink && (
+                <div className="space-y-2">
+                  <div className="flex justify-center">
+                    <UpiQrCode value={intent.deeplink} />
+                  </div>
+                  <p className="text-center text-[10px] leading-snug text-gray-400">
+                    Scan this QR code with any UPI app to complete this order.
+                  </p>
+                </div>
               )}
               <button
                 type="button"
