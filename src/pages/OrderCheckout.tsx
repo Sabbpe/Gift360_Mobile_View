@@ -27,6 +27,8 @@ import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { initiateRetryPayment } from "@/api/paymentApi";
+import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import UpiIntentSheet from "@/components/UpiIntentSheet";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, {
@@ -332,6 +334,8 @@ export default function OrderCheckout() {
   const superCoinHoldContextRef = useRef<SuperCoinHoldContext | null>(null);
   const paymentInFlightRef = useRef(false);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
+  // Juspay UPI-intent gateway (new); the Easebuzz retry path stays untouched.
+  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
   const [superCoinHoldExpiryMs, setSuperCoinHoldExpiryMs] = useState<number | null>(null);
   const [transactionTime, setTransactionTime] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<SuperCoinCountdownState>({
@@ -674,6 +678,11 @@ export default function OrderCheckout() {
     }
     if (!user?.clientId) {
       toast({ title: "Error", description: "User client ID not found. Please login again.", variant: "destructive" });
+      return;
+    }
+    if (isUpiIntentGateway) {
+      // UPI intent: no hosted redirect - the sheet opens the UPI app and polls.
+      setUpiIntentOrder(orderNumber);
       return;
     }
     try {
@@ -1175,6 +1184,16 @@ export default function OrderCheckout() {
       <MobileBottomNav />
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
+
+      <UpiIntentSheet
+        open={!!upiIntentOrder}
+        orderNumber={upiIntentOrder ?? ""}
+        onClose={() => setUpiIntentOrder(null)}
+        onPaid={() => {
+          setUpiIntentOrder(null);
+          window.location.assign("/orders");
+        }}
+      />
 
       {superCoinIdentity && (
         <SuperCoinOTPModal

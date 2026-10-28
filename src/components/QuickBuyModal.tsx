@@ -4,6 +4,8 @@ import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
+import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
@@ -38,6 +40,8 @@ export default function QuickBuyModal({
   const { toast } = useToast();
 const createOrderMutation = useCreateOrder();
 const backendPaymentMutation = useBackendPaymentInitiation();
+// Juspay UPI-intent gateway (new); the Easebuzz path stays as-is.
+const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
 const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
 const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
 const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
@@ -288,6 +292,10 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
 };
 
 const initiateBackendPaymentNow = (orderNumber: string) => {
+  if (isUpiIntentGateway) {
+    setUpiIntentOrder(orderNumber);
+    return;
+  }
   backendPaymentMutation.mutate(
     {
       orderNumber,
@@ -536,6 +544,16 @@ const isProcessing =
 
         </div>
       </div>
+
+      <UpiIntentSheet
+        open={!!upiIntentOrder}
+        orderNumber={upiIntentOrder ?? ""}
+        onClose={() => setUpiIntentOrder(null)}
+        onPaid={() => {
+          setUpiIntentOrder(null);
+          window.location.assign("/orders");
+        }}
+      />
     </>
   );
 }

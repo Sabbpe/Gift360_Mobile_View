@@ -21,6 +21,8 @@ import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
+import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -297,6 +299,8 @@ export default function Cart() {
   const [sheetAmount, setSheetAmount] = useState<number | undefined>(undefined);
   const [sheetQuantity, setSheetQuantity] = useState<number | undefined>(undefined);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
+  // Juspay UPI-intent gateway (new); Easebuzz path below stays untouched.
+  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
   const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
   const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
@@ -1706,6 +1710,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const startBackendPayment = (orderNumber: string) => {
+    if (isUpiIntentGateway) {
+      setPaymentSheetOpen(false);
+      setUpiIntentOrder(orderNumber);
+      return;
+    }
     backendPaymentMutation.mutate(
       {
         orderNumber,
@@ -2750,6 +2759,16 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       <MobileBottomNav />
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
+
+      <UpiIntentSheet
+        open={!!upiIntentOrder}
+        orderNumber={upiIntentOrder ?? ""}
+        onClose={() => setUpiIntentOrder(null)}
+        onPaid={() => {
+          setUpiIntentOrder(null);
+          window.location.assign("/orders");
+        }}
+      />
 
       {/* Redeemed → 3·2·1 → payment (cosmetic; always continues) */}
       <SuperCoinRedeemedModal

@@ -1,0 +1,184 @@
+// hooks/useUpiIntentPayment.ts
+// State machine + polling for the Juspay UPI-intent flow.
+// Golden rule: the client only DISPLAYS what the backend reports — it never
+// decides that a payment is done.
+import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createUpiIntent,
+  fetchUpiIntentStatus,
+  type UpiIntentCreateResponse,
+  type UpiIntentStatusResponse,
+} from "@/api/upiIntentApi";
+import {
+  clearPendingIntent,
+  isFreshPendingIntent,
+  loadPendingIntent,
+  openUpiApp,
+  registerUpiReturnListener,
+  savePendingIntent,
+} from "@/lib/upiIntent";
+
+export type UpiIntentPhase =
+  | "idle"
+  | "initiating"
+  | "awaiting"
+  | "confirming"
+  | "paid"
+  | "failed"
+  | "expired";
+
+const POLL_INTERVAL_MS = 3500;
+
+interface Options {
+  orderNumber: string;
+  onPaid?: (orderNumber: string) => void;
+}
+
+export const useUpiIntentPayment = ({ orderNumber, onPaid }: Options) => {
+  const [phase, setPhase] = useState<UpiIntentPhase>("idle");
+  const [intent, setIntent] = useState<UpiIntentCreateResponse | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const stoppedRef = useRef(false);
+  const timerRef = useRef<number>(0);
+  const phaseRef = useRef<UpiIntentPhase>("idle");
+
+  const setPhaseSafe = useCallback((next: UpiIntentPhase) => {
+    phaseRef.current = next;
+    setPhase(next);
+  }, []);
+
+  const applyStatus = useCallback(
+    (status: UpiIntentStatusResponse): boolean => {
+      if (status.paid || status.status === "SUCCESS") {
+        clearPendingIntent();
+        setPhaseSafe("paid");
+        onPaid?.(orderNumber);
+        return true;
+      }
+      if (status.status === "FAILED") {
+        clearPendingIntent();
+        setError(status.message ?? "The payment was not completed.");
+        setPhaseSafe("failed");
+        return true;
+      }
+      if (status.status === "EXPIRED") {
+        clearPendingIntent();
+        setError(status.message ?? "The UPI payment request expired. Please try again.");
+        setPhaseSafe("expired");
+        return true;
+      }
+      return false;
+    },
+    [onPaid, orderNumber, setPhaseSafe]
+  );
+
+  const pollOnce = useCallback(async (): Promise<boolean> => {
+    try {
+      return applyStatus(await fetchUpiIntentStatus(orderNumber));
+    } catch {
+      return false; // transient - keep polling
+    }
+  }, [applyStatus, orderNumber]);
+
+  const schedule = useCallback(() => {
+    if (stoppedRef.current) return;
+    window.clearTimeout(timerRef.current);
+    timerRef.current = window.setTimeout(async () => {
+      if (stoppedRef.current) return;
+      const done = await pollOnce();
+      if (done) return;
+      if (phaseRef.current === "awaiting") setPhaseSafe("confirming");
+      schedule();
+    }, POLL_INTERVAL_MS);
+  }, [pollOnce, setPhaseSafe]);
+
+  const start = useCallback(async () => {
+    if (!orderNumber) return;
+    stoppedRef.current = false;
+    setError(null);
+    window.clearTimeout(timerRef.current);
+
+    const saved = loadPendingIntent();
+    if (saved && saved.orderNumber === orderNumber && isFreshPendingIntent(saved)) {
+      // Page reloaded mid-payment: resume polling, don't accidentally reopen
+      // the UPI app (the user may be paying right now).
+      setIntent({
+        status: "SUCCESS",
+        orderNumber: saved.orderNumber,
+        merchantRequestId: saved.merchantRequestId,
+        deeplink: saved.deeplink,
+        hostUrlsForIOS: saved.hostUrlsForIOS,
+        amount: saved.amount,
+      });
+      setPhaseSafe("awaiting");
+      schedule();
+      return;
+    }
+
+    setPhaseSafe("initiating");
+    try {
+      const response = await createUpiIntent(orderNumber);
+      if (!response.deeplink) {
+        throw new Error(response.responseMessage || "Unable to start the UPI payment.");
+      }
+      setIntent(response);
+      savePendingIntent({
+        orderNumber,
+        merchantRequestId: response.merchantRequestId,
+        deeplink: response.deeplink,
+        hostUrlsForIOS: response.hostUrlsForIOS,
+        amount: response.amount,
+        startedAt: Date.now(),
+      });
+      setPhaseSafe("awaiting");
+      openUpiApp(response.deeplink);
+      schedule();
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
+        (err as Error)?.message ??
+        "Unable to start the UPI payment. Please try again.";
+      setError(message);
+      setPhaseSafe("failed");
+    }
+  }, [orderNumber, schedule, setPhaseSafe]);
+
+  const reopen = useCallback(
+    (app?: string) => {
+      if (intent?.deeplink) {
+        openUpiApp(intent.deeplink, intent.hostUrlsForIOS, app);
+      }
+    },
+    [intent]
+  );
+
+  const checkNow = useCallback(async () => {
+    if (stoppedRef.current) return;
+    const current = phaseRef.current;
+    if (current === "paid" || current === "failed" || current === "expired") return;
+    if (current === "awaiting") setPhaseSafe("confirming");
+    const done = await pollOnce();
+    if (!done && phaseRef.current === "confirming") setPhaseSafe("confirming");
+  }, [pollOnce, setPhaseSafe]);
+
+  useEffect(() => {
+    return () => {
+      stoppedRef.current = true;
+      window.clearTimeout(timerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    return registerUpiReturnListener(() => {
+      void checkNow();
+    });
+  }, [checkNow]);
+
+  const stop = useCallback(() => {
+    stoppedRef.current = true;
+    window.clearTimeout(timerRef.current);
+  }, []);
+
+  return { phase, intent, error, start, reopen, checkNow, stop };
+};

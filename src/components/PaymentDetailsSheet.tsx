@@ -45,6 +45,8 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { getImageUrl } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
+import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 const MAX_QUANTITY_PER_ITEM = 3;
@@ -157,6 +159,9 @@ export default function PaymentDetailsSheet({
   // The math and the SuperCoin OTP/hold flow mirror Cart.tsx exactly.
   // ---------------------------------------------------------------------------
   const [payPanelOpen, setPayPanelOpen] = useState(false);
+  // Juspay UPI-intent gateway: when enabled, Pay Now opens the deeplink sheet
+  // instead of the Easebuzz hosted redirect. Easebuzz code path is untouched.
+  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
   const [payMode, setPayMode] = useState<PayMode | null>(null);
 
   // Cashback-points (wallet) redemption — same hook Cart uses; the query is
@@ -531,6 +536,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const startBackendPayment = (orderNumber: string) => {
+    if (isUpiIntentGateway) {
+      setPaymentFlowOpen(false);
+      setUpiIntentOrder(orderNumber);
+      return;
+    }
     backendPaymentMutation.mutate(
       {
         orderNumber,
@@ -1963,6 +1973,16 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
         {/* Cart's loading sheet while the payment attempt is in flight */}
         <PaymentFlowSheet open={paymentFlowOpen} state="loading" />
+
+      <UpiIntentSheet
+        open={!!upiIntentOrder}
+        orderNumber={upiIntentOrder ?? ""}
+        onClose={() => setUpiIntentOrder(null)}
+        onPaid={() => {
+          setUpiIntentOrder(null);
+          window.location.assign("/orders");
+        }}
+      />
 
       <AddToCartSuccessModal open={showSuccess} />
     </div>
