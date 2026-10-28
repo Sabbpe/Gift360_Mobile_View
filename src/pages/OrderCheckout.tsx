@@ -27,7 +27,7 @@ import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { initiateRetryPayment } from "@/api/paymentApi";
-import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
@@ -670,7 +670,7 @@ export default function OrderCheckout() {
   // ── Pay orchestration (mirrors Cart minus order creation) ────────────────
   const isProcessing = isRetryingPayment;
 
-  const handlePayNow = async () => {
+  const handlePayNow = async (choice: 'EASEBUZZ' | 'JUSPAY_UPI' = 'EASEBUZZ') => {
     if (!isAuthenticated) {
       toast({ title: "Login required", description: "Please login to place an order", variant: "destructive" });
       setLocation("/login");
@@ -680,7 +680,7 @@ export default function OrderCheckout() {
       toast({ title: "Error", description: "User client ID not found. Please login again.", variant: "destructive" });
       return;
     }
-    if (isUpiIntentGateway) {
+    if (choice === "JUSPAY_UPI") {
       // UPI intent: no hosted redirect - the sheet opens the UPI app and polls.
       setUpiIntentOrder(orderNumber);
       return;
@@ -1140,11 +1140,19 @@ export default function OrderCheckout() {
                     <Button
                       type="button"
                       className="w-full cart-gradient-fill h-12 text-base font-bold"
-                      onClick={handlePayNow}
+                      onClick={() => handlePayNow("EASEBUZZ")}
                       disabled={isProcessing || orderLoading || cartItems.length === 0}
                     >
                       {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
                     </Button>
+
+                    {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
+                    <PayWithUpiButton
+                      onClick={() => handlePayNow("JUSPAY_UPI")}
+                      disabled={isProcessing || orderLoading || cartItems.length === 0}
+                      amount={uiTotalToPay}
+                      className="mt-2"
+                    />
                   </CardContent>
                 </Card>
               </div>

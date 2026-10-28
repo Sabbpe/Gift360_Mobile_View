@@ -21,7 +21,7 @@ import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
-import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
@@ -1562,8 +1562,12 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     };
   }, [superCoinIdentity]);
 
+  // Two checkout buttons: the existing one (Easebuzz hosted checkout with the
+  // UPI/NB/DC/CC selector) and a separate one for the Juspay UPI intent.
+  const payViaRef = useRef<"easebuzz" | "juspay">("easebuzz");
+
   // Step 1: Create Order in Database
-  const handlePayNow = async (gateway: "ntt" | "easebuzz") => {
+  const handlePayNow = async (gateway: "ntt" | "easebuzz" | "juspay") => {
     if (!isAuthenticated) {
       toast({
         title: "Login required",
@@ -1629,6 +1633,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
   // Pay inside the sheet: ask about SuperCoins first when coins are selected but not applied.
   const onPayPressed = () => {
+    payViaRef.current = "easebuzz";
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
       setPayOpen(false);
       setScPromptOpen(true);
@@ -1636,6 +1641,18 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     }
     setPayOpen(false);
     void handlePayNow("easebuzz");
+  };
+
+  // Separate button: pay through the Juspay UPI-intent gateway.
+  const onPayViaUpi = () => {
+    payViaRef.current = "juspay";
+    if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
+      setPayOpen(false);
+      setScPromptOpen(true);
+      return;
+    }
+    setPayOpen(false);
+    void handlePayNow("juspay");
   };
 
   // After the Flipkart OTP succeeds, show the redeemed countdown; it calls
@@ -1658,7 +1675,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
   const validateOrder = (
     orderNumber: string,
-    gateway: "ntt" | "easebuzz",
+    gateway: "ntt" | "easebuzz" | "juspay",
     paymentBreakdown: ReturnType<typeof buildPaymentBreakdown>
   ) => {
     console.log("ðŸ” Validating order:", orderNumber);
@@ -1692,6 +1709,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
           );
           // Proceed to payment without storing snapshot
           // Post-payment pages fetch fresh data from backend
+          if (gateway === "juspay") {
+            setPaymentSheetOpen(false);
+            setUpiIntentOrder(orderNumber);
+            return;
+          }
           startBackendPayment(orderNumber);
         },
         onError: (error) => {
@@ -1710,11 +1732,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const startBackendPayment = (orderNumber: string) => {
-    if (isUpiIntentGateway) {
-      setPaymentSheetOpen(false);
-      setUpiIntentOrder(orderNumber);
-      return;
-    }
     backendPaymentMutation.mutate(
       {
         orderNumber,
@@ -2717,6 +2734,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     ? "Processing..."
                     : `Pay ₹${displayTotal.toFixed(2)}`}
             </button>
+
+            {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
+            <PayWithUpiButton
+              onClick={onPayViaUpi}
+              disabled={isProcessing}
+              amount={displayTotal}
+              className="mt-2"
+            />
           </div>
         </div>
       )}
@@ -2736,7 +2761,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                 setScPromptOpen(false);
                 setScPreviewOff(true);
                 setPayOpen(false);
-                void handlePayNow("easebuzz");
+                void handlePayNow(payViaRef.current);
               }}
             >
               Pay without coins

@@ -1,10 +1,10 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Plus, Minus, ShoppingCart, ChevronDown, Loader2 } from "lucide-react";
 import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
-import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
@@ -146,7 +146,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
     }
   };
 
-const handlePayNow = async () => {
+const handlePayNow = async (choice: "EASEBUZZ" | "JUSPAY_UPI" = "EASEBUZZ") => {
   if (!isValidAmount()) {
     toast({
       title: "Invalid amount",
@@ -277,6 +277,10 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
           return;
         }
         console.log("Payment required. Amount:", validationResponse.amountToPay);
+        if (choice === "JUSPAY_UPI") {
+          setUpiIntentOrder(orderNumber);
+          return;
+        }
         initiateBackendPaymentNow(orderNumber);
       },
       onError: (error: any) => {
@@ -292,10 +296,6 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
 };
 
 const initiateBackendPaymentNow = (orderNumber: string) => {
-  if (isUpiIntentGateway) {
-    setUpiIntentOrder(orderNumber);
-    return;
-  }
   backendPaymentMutation.mutate(
     {
       orderNumber,
@@ -527,7 +527,7 @@ const isProcessing =
     </button>
     <button
       disabled={isProcessing}
-      onClick={handlePayNow}
+      onClick={() => handlePayNow("EASEBUZZ")}
       className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
         isValidAmount() && !isProcessing
           ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
@@ -540,6 +540,13 @@ const isProcessing =
       {!isProcessing && "Pay Now"}
     </button>
   </div>
+
+  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
+  <PayWithUpiButton
+    onClick={() => handlePayNow("JUSPAY_UPI")}
+    disabled={isProcessing || !isValidAmount()}
+    className="mt-3"
+  />
 </div>
 
         </div>

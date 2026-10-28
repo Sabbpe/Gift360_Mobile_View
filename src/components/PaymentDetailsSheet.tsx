@@ -1,4 +1,4 @@
-﻿import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ChevronLeft, Clock, Minus, Plus, Wallet } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
@@ -45,7 +45,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { getImageUrl } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
-import { isUpiIntentGateway } from "@/lib/paymentGateway";
+import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
@@ -263,6 +263,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const [scPromptOpen, setScPromptOpen] = useState(false);
   // Cart's PaymentFlowSheet loading modal shown while paying.
   const [paymentFlowOpen, setPaymentFlowOpen] = useState(false);
+  // Which gateway the customer tapped; the SuperCoin prompt must not switch it.
+  const payViaRef = useRef<"EASEBUZZ" | "JUSPAY_UPI">("EASEBUZZ");
   // UPI/netbanking chooser pops up only when Pay is pressed (not inline).
   const [methodModalOpen, setMethodModalOpen] = useState(false);
 
@@ -536,11 +538,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const startBackendPayment = (orderNumber: string) => {
-    if (isUpiIntentGateway) {
-      setPaymentFlowOpen(false);
-      setUpiIntentOrder(orderNumber);
-      return;
-    }
     backendPaymentMutation.mutate(
       {
         orderNumber,
@@ -593,7 +590,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     );
   };
 
-  const doPay = async () => {
+  const doPay = async (choice: 'EASEBUZZ' | 'JUSPAY_UPI' = 'EASEBUZZ') => {
     if (!user?.clientId) {
       toast({
         title: "Login required",
@@ -631,6 +628,12 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         return;
       }
 
+      if (choice === 'JUSPAY_UPI') {
+        setPaymentFlowOpen(false);
+        setIsProcessing(false);
+        setUpiIntentOrder(orderNumber);
+        return;
+      }
       startBackendPayment(orderNumber);
     } catch (error: any) {
       void unholdSuperCoin();
@@ -698,6 +701,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const handlePayPressed = () => {
+    payViaRef.current = "EASEBUZZ";
     if (!user?.clientId) {
       toast({
         description: "Please login to continue payment",
@@ -712,7 +716,25 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       setScPromptOpen(true);
       return;
     }
-    void doPay();
+    void doPay('EASEBUZZ');
+  };
+
+  // Separate button: Juspay UPI intent (deeplink + polling) on the same order.
+  const handlePayViaJuspay = () => {
+    payViaRef.current = "JUSPAY_UPI";
+    if (!user?.clientId) {
+      toast({
+        description: "Please login to continue payment",
+        variant: "destructive",
+      });
+      window.setTimeout(() => navigate("/login"), 1500);
+      return;
+    }
+    if (inSuperCoinMode && !scAuthorized && scPreviewDeduction > 0) {
+      setScPromptOpen(true);
+      return;
+    }
+    void doPay('JUSPAY_UPI');
   };
 
   const handleScAuthorized = (context: SuperCoinHoldContext) => {
@@ -1626,6 +1648,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                       ? "Processing..."
                       : `Pay ₹${displayTotal.toFixed(2)}`}
                   </button>
+
+                  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
+                  <PayWithUpiButton
+                    onClick={handlePayViaJuspay}
+                    disabled={isProcessing || displayTotal <= 0}
+                    amount={displayTotal}
+                    className="mt-2"
+                  />
                 </div>
               )}
 
@@ -1797,6 +1827,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                       ? "Processing..."
                       : `Pay ₹${displayTotal.toFixed(2)}`}
                   </button>
+
+                  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
+                  <PayWithUpiButton
+                    onClick={handlePayViaJuspay}
+                    disabled={isProcessing || displayTotal <= 0}
+                    amount={displayTotal}
+                    className="mt-2"
+                  />
                 </div>
               )}
             </div>
@@ -1874,6 +1912,13 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                   ? "Processing..."
                   : `Pay ₹${displayTotal.toFixed(2)}`}
               </button>
+
+              <PayWithUpiButton
+                onClick={handlePayViaJuspay}
+                disabled={isProcessing || displayTotal <= 0}
+                amount={displayTotal}
+                className="mt-2"
+              />
             </div>
           </div>
         )}
@@ -1905,7 +1950,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
           open={scRedeemedOpen}
           onContinue={() => {
             setScRedeemedOpen(false);
-            void doPay();
+            void doPay(payViaRef.current);
           }}
         />
 
@@ -1924,7 +1969,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                 onClick={() => {
                   setScPromptOpen(false);
                   setScPreviewOff(true);
-                  void doPay();
+                  void doPay(payViaRef.current);
                 }}
               >
                 Pay without coins
