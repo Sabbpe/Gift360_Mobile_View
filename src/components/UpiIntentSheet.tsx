@@ -15,8 +15,12 @@ import {
   X,
 } from "lucide-react";
 import { useUpiIntentPayment } from "@/hooks/useUpiIntentPayment";
-import { isIOS, openUpiApp, UPI_APPS } from "@/lib/upiIntent";
+import { buildHostAppUrl, isIOS, openUpiApp, UPI_APPS } from "@/lib/upiIntent";
 import UpiQrCode from "@/components/UpiQrCode";
+import { useInstalledUpiApps } from "@/hooks/useInstalledUpiApps";
+import { isNativeIos } from "@/lib/ios";
+import { openUpiUrlNative } from "@/plugins/upi";
+import type { IosUpiApp } from "@/lib/iosUpiApps";
 
 interface UpiIntentSheetProps {
   open: boolean;
@@ -48,18 +52,38 @@ export default function UpiIntentSheet({
   onPaid,
   onFallbackToOtherMethods,
 }: UpiIntentSheetProps) {
+  // Native iOS is the only environment where installed-app detection is possible.
+  // There the user must pick one of the detected apps explicitly (no auto-launch).
+  // Web / iOS-Safari / Android keep their existing behaviour.
+  const nativeIos = isNativeIos();
   const { phase, intent, error, start, reopen, checkNow, stop } = useUpiIntentPayment({
     orderNumber,
     onPaid,
+    autoOpen: !nativeIos,
   });
+  const installedApps = useInstalledUpiApps({ enabled: nativeIos });
   const [copied, setCopied] = useState(false);
   const [showQr, setShowQr] = useState(false);
+  const [launchError, setLaunchError] = useState<string | null>(null);
+
+  /** Opens the backend deeplink in a SPECIFIC installed app (explicit tap only). */
+  const launchInstalled = async (app: IosUpiApp) => {
+    const deeplink = intent?.deeplink;
+    if (!deeplink) return;
+    const prefix = intent?.hostUrlsForIOS?.[app.key] ?? app.scheme;
+    setLaunchError(null);
+    const opened = await openUpiUrlNative(buildHostAppUrl(deeplink, prefix));
+    if (!opened) {
+      setLaunchError(`Couldn't open ${app.label}. Try another app or scan the QR code.`);
+    }
+  };
 
   useEffect(() => {
   if (!open) {
     stop();
     setCopied(false);
     setShowQr(false);
+    setLaunchError(null);
     return;
     }
     void start();
@@ -136,7 +160,58 @@ export default function UpiIntentSheet({
                 </p>
               </div>
 
-              {isIOS() ? (
+              {nativeIos ? (
+                installedApps.loading ? (
+                  <div className="flex items-center justify-center gap-2 rounded-xl border border-[#E2D9FF] bg-white py-3 text-[12px] font-semibold text-[#5B2B99]">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Detecting UPI apps on this iPhone…
+                  </div>
+                ) : installedApps.apps.length > 0 ? (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-2 gap-2">
+                      {installedApps.apps.map((app) => (
+                        <button
+                          key={app.key}
+                          type="button"
+                          onClick={() => void launchInstalled(app)}
+                          className="flex items-center justify-center gap-1.5 rounded-xl border border-[#E2D9FF] bg-white px-3 py-2.5 text-[12px] font-bold text-[#5B2B99] shadow-sm active:scale-95"
+                        >
+                          <ExternalLink className="h-3.5 w-3.5" />
+                          {app.label}
+                        </button>
+                      ))}
+                    </div>
+                    {launchError && (
+                      <p className="text-[11px] font-medium text-red-600">{launchError}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-medium leading-snug text-amber-800">
+                      {installedApps.status === "error"
+                        ? "We couldn't check which UPI apps are installed on this iPhone. Scan the QR below or use another payment method."
+                        : "No UPI payment app was found on this iPhone. Scan the QR below or use another payment method."}
+                    </p>
+                    {intent?.deeplink && (
+                      <div className="flex justify-center">
+                        <UpiQrCode value={intent.deeplink} />
+                      </div>
+                    )}
+                    {onFallbackToOtherMethods && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onFallbackToOtherMethods();
+                          onClose();
+                        }}
+                        className="w-full rounded-xl border border-[#E2D9FF] bg-[#F7F2FF] py-2.5 text-[12px] font-bold text-[#5B2B99] active:scale-95"
+                      >
+                        Pay with NetBanking / Card / UPI instead
+                      </button>
+                    )}
+                  </div>
+                )
+              ) : isIOS() ? (
                 <div className="grid grid-cols-2 gap-2">
                   {appKeys.map((app) => (
                     <button

@@ -17,6 +17,7 @@ import {
   registerUpiReturnListener,
   savePendingIntent,
 } from "@/lib/upiIntent";
+import { isNativePlatform } from "@/lib/ios";
 
 export type UpiIntentPhase =
   | "idle"
@@ -32,9 +33,15 @@ const POLL_INTERVAL_MS = 3500;
 interface Options {
   orderNumber: string;
   onPaid?: (orderNumber: string) => void;
+  /**
+   * Whether to launch the UPI app immediately after the intent is created.
+   * Android/web keep this true (unchanged behaviour). Native iOS passes false:
+   * the sheet shows only detected apps and launches one only after a user tap.
+   */
+  autoOpen?: boolean;
 }
 
-export const useUpiIntentPayment = ({ orderNumber, onPaid }: Options) => {
+export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Options) => {
   const [phase, setPhase] = useState<UpiIntentPhase>("idle");
   const [intent, setIntent] = useState<UpiIntentCreateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +139,9 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid }: Options) => {
         startedAt: Date.now(),
       });
       setPhaseSafe("awaiting");
-      openUpiApp(response.deeplink);
+      if (autoOpen) {
+        openUpiApp(response.deeplink);
+      }
       schedule();
     } catch (err) {
       const message =
@@ -142,7 +151,7 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid }: Options) => {
       setError(message);
       setPhaseSafe("failed");
     }
-  }, [orderNumber, schedule, setPhaseSafe]);
+  }, [orderNumber, schedule, setPhaseSafe, autoOpen]);
 
   const reopen = useCallback(
     (app?: string) => {
@@ -173,6 +182,35 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid }: Options) => {
     return registerUpiReturnListener(() => {
       void checkNow();
     });
+  }, [checkNow]);
+
+  // Native shell: the UPI app never reports back, so resume polling whenever the
+  // app becomes active again (Capacitor App plugin). Web keeps the listeners above.
+  useEffect(() => {
+    if (!isNativePlatform()) return;
+    let cancelled = false;
+    let detach: (() => void) | undefined;
+    void (async () => {
+      try {
+        const { App } = await import("@capacitor/app");
+        const handle = await App.addListener("appStateChange", ({ isActive }) => {
+          if (isActive) void checkNow();
+        });
+        if (cancelled) {
+          void handle.remove();
+        } else {
+          detach = () => {
+            void handle.remove();
+          };
+        }
+      } catch {
+        /* plugin not available (web build) - ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+      detach?.();
+    };
   }, [checkNow]);
 
   const stop = useCallback(() => {
