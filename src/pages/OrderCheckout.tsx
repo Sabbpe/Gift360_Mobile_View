@@ -1197,6 +1197,11 @@ export default function OrderCheckout() {
         open={!!upiIntentOrder}
         orderNumber={upiIntentOrder ?? ""}
         onClose={() => setUpiIntentOrder(null)}
+        onFallbackToOtherMethods={() => {
+          const ref = upiIntentOrder;
+          if (!ref) return;
+          void handlePayNow("EASEBUZZ");
+        }}
         onPaid={() => {
           setUpiIntentOrder(null);
           window.location.assign("/orders");

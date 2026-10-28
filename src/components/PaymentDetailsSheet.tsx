@@ -2023,6 +2023,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         open={!!upiIntentOrder}
         orderNumber={upiIntentOrder ?? ""}
         onClose={() => setUpiIntentOrder(null)}
+        onFallbackToOtherMethods={() => {
+          const ref = upiIntentOrder;
+          if (!ref) return;
+          startBackendPayment(ref);
+        }}
         onPaid={() => {
           setUpiIntentOrder(null);
           window.location.assign("/orders");

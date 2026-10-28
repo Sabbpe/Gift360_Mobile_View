@@ -556,6 +556,11 @@ const isProcessing =
         open={!!upiIntentOrder}
         orderNumber={upiIntentOrder ?? ""}
         onClose={() => setUpiIntentOrder(null)}
+        onFallbackToOtherMethods={() => {
+          const ref = upiIntentOrder;
+          if (!ref) return;
+          initiateBackendPaymentNow(ref);
+        }}
         onPaid={() => {
           setUpiIntentOrder(null);
           window.location.assign("/orders");

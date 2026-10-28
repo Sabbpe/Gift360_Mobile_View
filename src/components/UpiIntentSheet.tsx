@@ -22,6 +22,12 @@ interface UpiIntentSheetProps {
   amountLabel?: string;
   onClose: () => void;
   onPaid?: (orderNumber: string) => void;
+  /**
+   * Optional escape hatch: start the regular Easebuzz checkout for the same
+   * order (UPI / NetBanking / Debit / Credit). Shown when the UPI-intent
+   * gateway is unavailable, so checkout is never blocked.
+   */
+  onFallbackToOtherMethods?: () => void;
 }
 
 const APP_LABELS: Record<string, string> = {
@@ -38,6 +44,7 @@ export default function UpiIntentSheet({
   amountLabel,
   onClose,
   onPaid,
+  onFallbackToOtherMethods,
 }: UpiIntentSheetProps) {
   const { phase, intent, error, start, reopen, checkNow, stop } = useUpiIntentPayment({
     orderNumber,
@@ -221,6 +228,18 @@ export default function UpiIntentSheet({
               >
                 Retry
               </button>
+              {onFallbackToOtherMethods && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onFallbackToOtherMethods();
+                    onClose();
+                  }}
+                  className="w-full rounded-xl border border-[#E2D9FF] bg-[#F7F2FF] py-2.5 text-[12px] font-bold text-[#5B2B99] active:scale-95"
+                >
+                  Pay with NetBanking / Card / UPI instead
+                </button>
+              )}
               <button
                 type="button"
                 onClick={onClose}
