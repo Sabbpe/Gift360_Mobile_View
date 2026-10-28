@@ -1258,6 +1258,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   }
   const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
   const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
+  // Cap percent to DISPLAY: the brand's own DB share (lowest across the cart), else the global cap.
+  // Same rule as the cap maths above, so the label always matches what can actually be applied.
+  const displayCapPercent = (() => {
+    const caps = cartItems
+      .filter((item) => !isScExcluded(item.brandId, item.brandName))
+      .map((item) => brandCapShare(item.brandId) ?? superCoinCapPercent);
+    return caps.length > 0 ? Math.min(...caps) : superCoinCapPercent;
+  })();
   // Rate caption: the brands' own DB multiplier (coins needed per Rs 1), shown as-is.
   // (effectiveSupercoinMultiplier is rounded up per item, so it is not used for display.)
   const scRateValues = discountsLoaded
@@ -2343,7 +2351,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                   <p className="-mt-1 text-center text-xs font-medium text-muted-foreground">
                     {(rewardMode === 'cashbackWallet' || allItemsSuperCoinExcluded)
                       ? "Earn cashback points · 1 point = ₹1"
-                      : `${scRateText ? `${scRateText} · ` : ""}up to ${superCoinCapPercent}% of voucher value`}
+                      : `${scRateText ? `${scRateText} · ` : ""}up to ${displayCapPercent}% of voucher value`}
                   </p>
 
                   {/* One redeem control per mode, same footprint */}
