@@ -11,6 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
+  Home,
   Wallet,
   ShoppingBag,
   TrendingUp,
@@ -335,6 +336,12 @@ export default function ResellerDashboard() {
         style={{ fontFamily: "Poppins, sans-serif" }}
       >
         <DetailHeader
+          onHome={() => {
+            setShowProfile(false);
+            setSelectedOrder(null);
+            setSelectedVoucher(null);
+            setTab("orders");
+          }}
           title="Profile"
           onBack={() => setShowProfile(false)}
         />
@@ -457,6 +464,12 @@ export default function ResellerDashboard() {
         style={{ fontFamily: "Poppins, sans-serif" }}
       >
         <DetailHeader
+          onHome={() => {
+            setShowProfile(false);
+            setSelectedOrder(null);
+            setSelectedVoucher(null);
+            setTab("orders");
+          }}
           title="Order details"
           onBack={() => setSelectedOrder(null)}
           onProfile={openProfile}
@@ -556,6 +569,12 @@ export default function ResellerDashboard() {
         style={{ fontFamily: "Poppins, sans-serif" }}
       >
         <DetailHeader
+          onHome={() => {
+            setShowProfile(false);
+            setSelectedOrder(null);
+            setSelectedVoucher(null);
+            setTab("orders");
+          }}
           title="Voucher details"
           onBack={() => setSelectedVoucher(null)}
           onProfile={openProfile}
@@ -1114,11 +1133,13 @@ function DetailHeader({
   onBack,
   onProfile,
   avatarInitial,
+  onHome,
 }: {
   title: string;
   onBack: () => void;
   onProfile?: () => void;
   avatarInitial?: string;
+  onHome?: () => void;
 }) {
   return (
     <nav className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-3">
@@ -1133,9 +1154,20 @@ function DetailHeader({
           </button>
           <h1 className="text-sm font-bold text-gray-900">{title}</h1>
         </div>
-        {onProfile && (
-          <ProfileAvatar onClick={onProfile} initial={avatarInitial || "R"} />
-        )}
+        <div className="flex items-center gap-2">
+          {onHome && (
+            <button
+              onClick={onHome}
+              className="rounded-full bg-purple-50 p-2 text-purple-700"
+              aria-label="Home"
+            >
+              <Home className="h-4 w-4" />
+            </button>
+          )}
+          {onProfile && (
+            <ProfileAvatar onClick={onProfile} initial={avatarInitial || "R"} />
+          )}
+        </div>
       </div>
     </nav>
   );

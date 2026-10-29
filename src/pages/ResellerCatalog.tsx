@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
+  Home,
   Search,
   ShoppingCart,
   Plus,
@@ -223,6 +224,13 @@ export default function ResellerCatalog() {
           <h1 className="flex-1 text-sm font-bold text-gray-900">
             Browse Brands
           </h1>
+          <button
+            onClick={() => setLocation("/reseller/dashboard")}
+            className="rounded-full bg-purple-50 p-2 text-purple-700"
+            aria-label="Home"
+          >
+            <Home className="h-5 w-5" />
+          </button>
           <button
             onClick={() => setLocation("/reseller/cart")}
             className="relative rounded-full bg-purple-50 p-2 text-purple-700"

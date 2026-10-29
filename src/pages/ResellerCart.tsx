@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
+  Home,
   Trash2,
   Plus,
   Minus,
@@ -219,7 +220,14 @@ export default function ResellerCart() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-sm font-bold text-gray-900">Order placed</h1>
+            <h1 className="flex-1 text-sm font-bold text-gray-900">Order placed</h1>
+            <button
+              onClick={() => setLocation("/reseller/dashboard")}
+              className="rounded-full bg-purple-50 p-2 text-purple-700"
+              aria-label="Home"
+            >
+              <Home className="h-5 w-5" />
+            </button>
           </div>
         </nav>
         <main className="mx-auto max-w-lg px-4 py-6">
@@ -348,6 +356,13 @@ export default function ResellerCart() {
               </span>
             )}
           </h1>
+          <button
+            onClick={() => setLocation("/reseller/dashboard")}
+            className="rounded-full bg-purple-50 p-2 text-purple-700"
+            aria-label="Home"
+          >
+            <Home className="h-5 w-5" />
+          </button>
         </div>
       </nav>
 
