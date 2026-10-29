@@ -473,6 +473,14 @@ export default function OrderCheckout() {
   }
   const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
   const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
+  // Cap percent to DISPLAY: the brand's own DB share (lowest across the cart), else the global cap.
+  // Same rule as the cap maths above, so the label always matches what can actually be applied.
+  const displayCapPercent = (() => {
+    const caps = cartItems
+      .filter((item) => !isScExcluded(item.brandId, item.brandName))
+      .map((item) => brandCapShare(item.brandId) ?? superCoinCapPercent);
+    return caps.length > 0 ? Math.min(...caps) : superCoinCapPercent;
+  })();
 
   const maxSCCoins = Math.max(0, Math.min(superCoinState.balance, maxSuperCoinRedeemable));
   useEffect(() => {
@@ -1073,7 +1081,7 @@ export default function OrderCheckout() {
                                           Save ₹{(selectedSCCoins / effectiveSupercoinMultiplier).toFixed(2)}
                                         </span>
                                         <span className="text-muted-foreground">
-                                          Max {maxSCCoins} SC · {superCoinCapPercent}% of voucher value
+                                          Max {maxSCCoins} SC · {displayCapPercent}% of voucher value
                                         </span>
                                       </div>
                                     </div>

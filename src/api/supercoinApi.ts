@@ -206,20 +206,18 @@ export interface SuperCoinBurnOrderPayload {
 export const burnSuperCoinOrder = (payload: SuperCoinBurnOrderPayload) =>
   postSuperCoin<SuperCoinBurnOrderResponse>("/burn-and-order", payload);
 
-// Burn ratio = coins shown as required per rupee of voucher value.
-// DB-configurable on the SuperCoin brand row (giftvouchers_brands
-// .supercoin_burn_ratio, V41 migration) and served by GET /v1/supercoin/config,
-// so retuning it needs a SQL UPDATE -- not a .env edit plus a rebuild.
-// VITE_SUPERCOIN_BURN_RATIO is only the bootstrap fallback used before the
-// first fetchSuperCoinConfig() resolves (or if it fails), matching the
-// backend's own fallback chain.
-let superCoinBurnRatio = Number(import.meta.env.VITE_SUPERCOIN_BURN_RATIO) || 1.0;
+// Burn ratio = coins required per rupee of voucher value. It comes ONLY from the
+// database (giftvouchers_brands.supercoin_burn_ratio), served by
+// POST /v1/supercoin/config. There is deliberately no env/hardcoded fallback: a
+// stale fallback shows customers a coin amount the server then rejects
+// (HOLD_AMOUNT_MISMATCH). Until the config has loaded the ratio is unknown, so
+// calculateSuperCoinsRequired() returns 0 and the apply buttons stay disabled.
+let superCoinBurnRatio: number | null = null;
 
-export const getSuperCoinBurnRatio = (): number => superCoinBurnRatio;
+export const getSuperCoinBurnRatio = (): number | null => superCoinBurnRatio;
 
 // Only accept a positive finite ratio; a bad/absent server value keeps the
-// previous one rather than silently dropping the ratio to 0 and making
-// every voucher look free.
+// previous one.
 export const setSuperCoinBurnRatio = (ratio: unknown): void => {
   const parsed = Number(ratio);
   if (Number.isFinite(parsed) && parsed > 0) {
@@ -228,6 +226,7 @@ export const setSuperCoinBurnRatio = (ratio: unknown): void => {
 };
 
 export const calculateSuperCoinsRequired = (voucherAmount: number): number => {
+  if (superCoinBurnRatio === null) return 0;
   return Math.ceil(Math.round(voucherAmount * superCoinBurnRatio * 100) / 100);
 };
 
@@ -281,13 +280,11 @@ export interface SuperCoinConfigResponse {
 // (Cart, OrderCheckout, the convert-coins modal) also refreshes the conversion
 // display everywhere else in the session.
 export const fetchSuperCoinConfig = async (sku?: string): Promise<SuperCoinConfigResponse> => {
-  // SKU sent in the POST body. Explicit argument wins, else the VITE_ env var,
-  // else empty -- the backend then falls back to its own
-  // sabbpe.supercoin.voucher-sku property, so a blank value can never hard-fail.
-  const skuToSend = sku?.trim() || import.meta.env.VITE_SUPERCOIN_VOUCHER_SKU?.trim() || "EGCGBFKC002";
+  // No SKU is sent: the backend resolves the SuperCoin voucher row itself, so
+  // nothing about which SKU or ratio to use lives in the frontend build.
   const response = await brandApi.post<SuperCoinConfigResponse>(
     "/v1/supercoin/config",
-    skuToSend ? { sku: skuToSend } : {}
+    sku?.trim() ? { sku: sku.trim() } : {}
   );
   if (typeof response.data?.burnRatio === "number") {
     setSuperCoinBurnRatio(response.data.burnRatio);
