@@ -106,7 +106,7 @@ export const getSupportTicketThread = async (
   }
 };
 
-/** 👍/👎 on one Sahil answer. A second call for the same message changes the vote. */
+/** 👍/👎 on one Shebby answer. A second call for the same message changes the vote. */
 export const sendSupportFeedback = async (
   publicId: string,
   messageId: number,

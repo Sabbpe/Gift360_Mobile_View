@@ -154,7 +154,7 @@ function AppRoutes() {
   );
 }
 
-// Support chat (Sahil) on every page except where it would get in the way.
+// Support chat (Shebby) on every page except where it would get in the way.
 const NO_SUPPORT_CHAT_PREFIXES = ["/admin", "/onboarding", "/login", "/register", "/forgot-password", "/reset-password"];
 
 function GlobalSupportChat() {
