@@ -88,6 +88,9 @@ export const getNearbyBrands = async (
       maxPrice: b.max_price,
       images: b.images ? JSON.parse(b.images) : {},
       nearestDistanceKm: b.nearest_distance_km,
+      nearestStoreAddress: b.nearest_store_address ?? null,
+      nearestStoreCity: b.nearest_store_city ?? null,
+      storesNearby: b.stores_nearby ?? null,
     };
   });
 };
