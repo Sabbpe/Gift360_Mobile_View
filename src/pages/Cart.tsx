@@ -21,8 +21,8 @@ import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
-import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
@@ -1562,8 +1562,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     };
   }, [superCoinIdentity]);
 
-  // Two checkout buttons: the existing one (Easebuzz hosted checkout with the
-  // UPI/NB/DC/CC selector) and a separate one for the Juspay UPI intent.
+  // ONE Pay button + the method selector. The selected mode decides the
+  // gateway: UPI -> Juspay UPI intent; NB / Debit / Credit -> Easebuzz.
   const payViaRef = useRef<"easebuzz" | "juspay">("easebuzz");
 
   // Step 1: Create Order in Database
@@ -1631,28 +1631,18 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     setPayOpen(true);
   };
 
-  // Pay inside the sheet: ask about SuperCoins first when coins are selected but not applied.
+  // Pay inside the sheet: UPI continues on Juspay, every other mode keeps the
+  // Easebuzz hosted checkout. Ask about SuperCoins first when needed.
   const onPayPressed = () => {
-    payViaRef.current = "easebuzz";
+    const gateway = isUpiPaymentMethod(activePaymentMethod?.code) ? "juspay" : "easebuzz";
+    payViaRef.current = gateway;
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
       setPayOpen(false);
       setScPromptOpen(true);
       return;
     }
     setPayOpen(false);
-    void handlePayNow("easebuzz");
-  };
-
-  // Separate button: pay through the Juspay UPI-intent gateway.
-  const onPayViaUpi = () => {
-    payViaRef.current = "juspay";
-    if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
-      setPayOpen(false);
-      setScPromptOpen(true);
-      return;
-    }
-    setPayOpen(false);
-    void handlePayNow("juspay");
+    void handlePayNow(gateway);
   };
 
   // After the Flipkart OTP succeeds, show the redeemed countdown; it calls
@@ -1736,7 +1726,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       {
         orderNumber,
         paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
-        paymentModes: useMethodFee ? paymentMethods.map((m) => m.code) : undefined,
+        // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+        paymentModes: useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined,
       },
       {
       onSuccess: (response) => {
@@ -2730,18 +2721,10 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                 ? "Loading..."
                 : easebuzzScriptStatus === "error"
                   ? "Payment unavailable"
-                  : isProcessing
-                    ? "Processing..."
-                    : `Pay ₹${displayTotal.toFixed(2)}`}
+                    : isProcessing
+                      ? "Processing..."
+                      : `Pay ₹${displayTotal.toFixed(2)}`}
             </button>
-
-            {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
-            <PayWithUpiButton
-              onClick={onPayViaUpi}
-              disabled={isProcessing}
-              amount={displayTotal}
-              className="mt-2"
-            />
           </div>
         </div>
       )}

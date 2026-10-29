@@ -4,8 +4,8 @@ import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
-import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
@@ -300,7 +300,9 @@ const initiateBackendPaymentNow = (orderNumber: string) => {
     {
       orderNumber,
       paymentMethod: paymentMethodCode,
-      paymentModes: paymentMethods.length > 0 ? paymentMethods.map((m) => m.code) : undefined,
+      // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+      paymentModes:
+        paymentMethods.length > 0 ? easebuzzPaymentModes(paymentMethods) : undefined,
     },
     {
     onSuccess: (response) => {
@@ -527,7 +529,7 @@ const isProcessing =
     </button>
     <button
       disabled={isProcessing}
-      onClick={() => handlePayNow("EASEBUZZ")}
+      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ")}
       className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
         isValidAmount() && !isProcessing
           ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
@@ -540,13 +542,6 @@ const isProcessing =
       {!isProcessing && "Pay Now"}
     </button>
   </div>
-
-  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
-  <PayWithUpiButton
-    onClick={() => handlePayNow("JUSPAY_UPI")}
-    disabled={isProcessing || !isValidAmount()}
-    className="mt-3"
-  />
 </div>
 
         </div>

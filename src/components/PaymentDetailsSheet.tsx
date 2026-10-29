@@ -45,8 +45,8 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { getImageUrl } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
-import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 const MAX_QUANTITY_PER_ITEM = 3;
@@ -542,7 +542,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       {
         orderNumber,
         paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
-        paymentModes: useMethodFee ? paymentMethods.map((m) => m.code) : undefined,
+        // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+        paymentModes: useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined,
       },
       {
         onSuccess: (response) => {
@@ -701,7 +702,10 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   };
 
   const handlePayPressed = () => {
-    payViaRef.current = "EASEBUZZ";
+    // ONE Pay button: UPI goes to the Juspay intent flow, every other mode
+    // (NB / Debit / Credit) keeps the Easebuzz hosted checkout.
+    const choice = isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ";
+    payViaRef.current = choice;
     if (!user?.clientId) {
       toast({
         description: "Please login to continue payment",
@@ -716,25 +720,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       setScPromptOpen(true);
       return;
     }
-    void doPay('EASEBUZZ');
-  };
-
-  // Separate button: Juspay UPI intent (deeplink + polling) on the same order.
-  const handlePayViaJuspay = () => {
-    payViaRef.current = "JUSPAY_UPI";
-    if (!user?.clientId) {
-      toast({
-        description: "Please login to continue payment",
-        variant: "destructive",
-      });
-      window.setTimeout(() => navigate("/login"), 1500);
-      return;
-    }
-    if (inSuperCoinMode && !scAuthorized && scPreviewDeduction > 0) {
-      setScPromptOpen(true);
-      return;
-    }
-    void doPay('JUSPAY_UPI');
+    void doPay(choice);
   };
 
   const handleScAuthorized = (context: SuperCoinHoldContext) => {
@@ -1648,14 +1634,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                       ? "Processing..."
                       : `Pay ₹${displayTotal.toFixed(2)}`}
                   </button>
-
-                  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
-                  <PayWithUpiButton
-                    onClick={handlePayViaJuspay}
-                    disabled={isProcessing || displayTotal <= 0}
-                    amount={displayTotal}
-                    className="mt-2"
-                  />
                 </div>
               )}
 
@@ -1827,14 +1805,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                       ? "Processing..."
                       : `Pay ₹${displayTotal.toFixed(2)}`}
                   </button>
-
-                  {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
-                  <PayWithUpiButton
-                    onClick={handlePayViaJuspay}
-                    disabled={isProcessing || displayTotal <= 0}
-                    amount={displayTotal}
-                    className="mt-2"
-                  />
                 </div>
               )}
             </div>
@@ -1912,13 +1882,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                   ? "Processing..."
                   : `Pay ₹${displayTotal.toFixed(2)}`}
               </button>
-
-              <PayWithUpiButton
-                onClick={handlePayViaJuspay}
-                disabled={isProcessing || displayTotal <= 0}
-                amount={displayTotal}
-                className="mt-2"
-              />
             </div>
           </div>
         )}

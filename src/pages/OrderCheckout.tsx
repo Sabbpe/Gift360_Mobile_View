@@ -27,8 +27,8 @@ import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { initiateRetryPayment } from "@/api/paymentApi";
-import PayWithUpiButton from "@/components/PayWithUpiButton";
 import UpiIntentSheet from "@/components/UpiIntentSheet";
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinOTPModal, {
@@ -701,7 +701,8 @@ export default function OrderCheckout() {
         paymentBreakdown.walletDeduction,
         rewardMode === "cashbackWallet",
         useMethodFee ? activePaymentMethod?.code : undefined,
-        useMethodFee ? paymentMethods.map((m) => m.code) : undefined
+        // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+        useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined
       );
       const paymentUrl = response.payment_url || response.paymentUrl || response.data;
       if (!(response.status === 1 || response.status === true) || !paymentUrl) {
@@ -1140,19 +1141,11 @@ export default function OrderCheckout() {
                     <Button
                       type="button"
                       className="w-full cart-gradient-fill h-12 text-base font-bold"
-                      onClick={() => handlePayNow("EASEBUZZ")}
+                      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ")}
                       disabled={isProcessing || orderLoading || cartItems.length === 0}
                     >
                       {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
                     </Button>
-
-                    {/* Separate gateway button: Juspay UPI intent (deeplink + polling) */}
-                    <PayWithUpiButton
-                      onClick={() => handlePayNow("JUSPAY_UPI")}
-                      disabled={isProcessing || orderLoading || cartItems.length === 0}
-                      amount={uiTotalToPay}
-                      className="mt-2"
-                    />
                   </CardContent>
                 </Card>
               </div>

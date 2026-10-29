@@ -214,7 +214,7 @@ export default function UpiIntentSheet({
                         }}
                         className="w-full rounded-xl border border-[#E2D9FF] bg-[#F7F2FF] py-2.5 text-[12px] font-bold text-[#5B2B99] active:scale-95"
                       >
-                        Pay with NetBanking / Card / UPI instead
+                        Pay with NetBanking / Debit / Credit card instead
                       </button>
                     )}
                   </div>
@@ -363,7 +363,7 @@ export default function UpiIntentSheet({
                   }}
                   className="w-full rounded-xl border border-[#E2D9FF] bg-[#F7F2FF] py-2.5 text-[12px] font-bold text-[#5B2B99] active:scale-95"
                 >
-                  Pay with NetBanking / Card / UPI instead
+                  Pay with NetBanking / Debit / Credit card instead
                 </button>
               )}
               <button
