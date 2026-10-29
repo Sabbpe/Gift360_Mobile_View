@@ -178,6 +178,20 @@ export default function ResellerCart() {
         );
       } else if (status === 401) {
         setOrderError("Session expired. Please login again.");
+      } else if (status === 502 && String(d?.message || "").startsWith("PARTIAL")) {
+        // Some lines were bought and charged, the rest refunded. The cart must
+        // NOT be retried as-is (it would buy the delivered lines again).
+        clearResellerCart();
+        clearOrderIdempotencyKey();
+        setItems([]);
+        void refreshWallet();
+        toast({
+          title: "Order partly delivered",
+          description:
+            "Delivered vouchers were charged; failed items were refunded. See Vouchers and Failed.",
+          duration: 6000,
+        });
+        setLocation("/reseller/dashboard");
       } else {
         setOrderError(
           (typeof d === "string" ? d : d?.message) ||

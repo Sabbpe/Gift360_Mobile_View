@@ -124,7 +124,7 @@ export default function ResellerDashboard() {
     setVouchersLoading(true);
     try {
       const completed = allOrders
-        .filter((o) => o.status === "COMPLETED")
+        .filter((o) => o.status === "COMPLETED" || o.status === "PARTIALLY_FAILED")
         .slice(0, 50); // safety cap; a dedicated vouchers endpoint would scale better
       const results = await Promise.allSettled(
         completed.map((o) => fetchResellerOrderDetails(o.orderNumber))
