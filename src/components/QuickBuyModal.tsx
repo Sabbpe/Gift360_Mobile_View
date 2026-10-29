@@ -538,6 +538,10 @@ const isProcessing =
         methods={paymentMethods}
         amountLabel={`₹${(Number(amount) * quantity).toFixed(2)}`}
         onClose={() => setPayUsingOrder(null)}
+        onLeavePending={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
         onPaid={() => {
           setPayUsingOrder(null);
           window.location.assign("/orders");

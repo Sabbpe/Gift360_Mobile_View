@@ -1247,6 +1247,10 @@ export default function OrderCheckout() {
         methods={paymentMethods}
         amountLabel={`₹${uiTotalToPay.toFixed(2)}`}
         onClose={() => setPayUsingOrder(null)}
+        onLeavePending={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
         onPaid={() => {
           setPayUsingOrder(null);
           window.location.assign("/orders");

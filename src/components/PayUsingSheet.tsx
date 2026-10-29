@@ -26,6 +26,8 @@ interface PayUsingSheetProps {
   methods: PaymentMethodFee[];
   amountLabel?: string;
   onClose: () => void;
+  /** Leave a still-pending payment and open My Orders for status/reconciliation. */
+  onLeavePending: (orderNumber: string) => void;
   onPaid: (orderNumber: string) => void;
   /** NetBanking / Debit / Credit -> Easebuzz (UPI is never sent there). */
   onCardMethod: (code: string) => void;
@@ -49,6 +51,7 @@ export default function PayUsingSheet({
   methods,
   amountLabel,
   onClose,
+  onLeavePending,
   onPaid,
   onCardMethod,
   onFallbackToOtherMethods,
@@ -156,7 +159,7 @@ export default function PayUsingSheet({
     setPendingPrompt(false);
     setProcessingOpen(false);
     stop();
-    onClose();
+    onLeavePending(orderNumber);
   };
 
   const handleViewOrders = () => {

@@ -64,6 +64,7 @@ export default function PaymentProcessingModal({
   const paid = phase === "paid";
   const failed = phase === "failed" || phase === "expired";
   const waiting = !paid && !failed;
+  const closeAction = pendingPrompt ? onLeave : waiting ? onRequestClose : onLeave;
 
   return (
     <div className="fixed inset-0 z-[320] flex items-center justify-center px-4">
@@ -71,7 +72,7 @@ export default function PaymentProcessingModal({
         type="button"
         aria-label="Close"
         className="absolute inset-0 bg-black/45 backdrop-blur-[2px]"
-        onClick={waiting ? onRequestClose : onLeave}
+        onClick={closeAction}
       />
       <div
         role="dialog"
@@ -82,7 +83,7 @@ export default function PaymentProcessingModal({
         <div className="relative bg-[linear-gradient(135deg,#9747FF_0%,#7C3AED_45%,#5B2B99_100%)] px-5 pb-5 pt-5 text-white">
           <button
             type="button"
-            onClick={waiting ? onRequestClose : onLeave}
+            onClick={closeAction}
             aria-label="Close"
             className="absolute right-3 top-3 grid h-8 w-8 place-items-center rounded-full bg-white/15 active:scale-95"
           >
