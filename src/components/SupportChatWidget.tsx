@@ -54,7 +54,6 @@ function splitOptions(message: string): { text: string; options: string[]; go: s
 
 // The only pages the chat is allowed to open. Anything else (admin, login, reseller...) is ignored.
 const GO_PAGES: Record<string, string> = {
-  "/offers": "Offers",
   "/brands": "All brands",
   "/nearby": "Offers Near You",
   "/categories": "Categories",
@@ -80,18 +79,19 @@ const msgKey = (m: TicketMessage, i: number) => `${m.id ?? i}:${m.createdAt}`;
 
 // Tap-to-start choices shown before a conversation exists. "go" opens a page (no ticket needed);
 // "say" starts the conversation with that text.
-const START_CHIPS: { icon: string; label: string; go?: string; say?: string }[] = [
+const START_CHIPS: { icon: string; label: string; go?: string; say?: string; loginOnly?: boolean }[] = [
   { icon: "\u{1F4CD}", label: "Offers near me", go: "/nearby" },
-  { icon: "\u{1F525}", label: "Top offers today", go: "/offers" },
-  { icon: "\u{1F4B0}", label: "SuperCoins & cashback", say: "SuperCoins" },
+  { icon: "\u{1F6CD}\uFE0F", label: "Brands & cashback", say: "Brands and cashback" },
+  { icon: "\u{1F381}", label: "Picked for me", say: "Recommend me a voucher", loginOnly: true },
+  { icon: "\u{1F4B0}", label: "SuperCoins", say: "SuperCoins" },
   { icon: "\u{1F4E6}", label: "Orders & payment help", say: "Orders" },
-  { icon: "\u{1F6CD}\uFE0F", label: "Browse brands", go: "/brands" },
 ];
 
 export default function SupportChatWidget() {
   const { user } = useAuthContext();
   const [, setLocation] = useLocation();
   const [open, setOpen] = useState(false);
+  const [viewMenu, setViewMenu] = useState(false);               // show the tap menu again, inside an existing conversation
   const [showForm, setShowForm] = useState(false);               // typed-question form (instead of the tap menu)
   const [compact, setCompact] = useState(false);                 // smaller panel so the page behind stays visible
   const [navNote, setNavNote] = useState<{ label: string } | null>(null);
@@ -170,6 +170,7 @@ export default function SupportChatWidget() {
     baselineRef.current = false;
     doneNavRef.current = new Set();
     setShowForm(false);
+    setViewMenu(false);
     setNavNote(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identityKey]);
@@ -295,6 +296,7 @@ export default function SupportChatWidget() {
     try {
       const saved = await sendSupportTicketMessage(ticketId, text);
       setMessages((prev) => [...prev, saved]);
+      setViewMenu(false);
       setReplyText("");
       setWaitingSince(Date.now());
     } catch (err: any) {
@@ -344,6 +346,7 @@ export default function SupportChatWidget() {
     baselineRef.current = false;
     doneNavRef.current = new Set();
     setShowForm(false);
+    setViewMenu(false);
     setNavNote(null);
   };
 
@@ -386,6 +389,13 @@ export default function SupportChatWidget() {
     if (g) openPage(g.path);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages, open]);
+
+  // A tapped menu choice: open a page, or ask Shebby (new conversation or the current one).
+  const pickChip = (c: { go?: string; say?: string; label: string }) => {
+    if (c.go) { openPage(c.go); setViewMenu(false); return; }
+    const text = c.say || c.label;
+    if (ticketId) { setViewMenu(false); void handleSendReply(text); } else { startWith(text); }
+  };
 
   const navStrip = navNote ? (
     <div className="flex-shrink-0 px-3 py-1.5 bg-green-50 border-t border-green-200 flex items-center gap-2 text-[11px] font-semibold text-green-700">
@@ -452,8 +462,7 @@ export default function SupportChatWidget() {
                 {ticketId && ticketStatus !== "CLOSED" && (
                   <button
                     type="button"
-                    disabled={sendingReply || !!waitingSince}
-                    onClick={() => handleSendReply("Menu")}
+                    onClick={() => setViewMenu(true)}
                     className="h-8 rounded-full px-3 text-[11px] font-bold bg-white/20 text-white hover:bg-white/30 disabled:opacity-50"
                   >
                     {"\u2630"} Menu
@@ -479,21 +488,27 @@ export default function SupportChatWidget() {
             </div>
           </div>
 
-          {!ticketId && !showForm ? (
+          {(!ticketId && !showForm) || (ticketId && viewMenu) ? (
             <>
               <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-muted/30">
                 <div className="max-w-[92%] rounded-2xl rounded-bl-sm bg-white border border-gray-200 px-3 py-2 text-sm text-gray-800">
                   <p className="text-[11px] font-semibold text-blue-600 mb-0.5">Shebby</p>
-                  <p>{firstName ? `Hi ${firstName}! \u{1F44B}` : "Hi! \u{1F44B}"} I'm here to help you with offers.</p>
-                  <p className="mt-1 font-semibold">Want to see offers near you?</p>
+                  {ticketId ? (
+                    <p className="font-semibold">What would you like to do?</p>
+                  ) : (
+                    <>
+                      <p>{firstName ? `Hi ${firstName}! \u{1F44B}` : "Hi! \u{1F44B}"} I'm here to help you with offers.</p>
+                      <p className="mt-1 font-semibold">Want to see offers near you?</p>
+                    </>
+                  )}
                 </div>
                 <div className="flex flex-wrap gap-1.5">
-                  {START_CHIPS.map((c, i) => (
+                  {START_CHIPS.filter((c) => !c.loginOnly || !!user).map((c, i) => (
                     <button
                       key={c.label}
                       type="button"
                       disabled={submitting}
-                      onClick={() => (c.go ? openPage(c.go) : startWith(c.say || c.label))}
+                      onClick={() => pickChip(c)}
                       className={`rounded-full border border-blue-600 px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
                         i === 0 ? "bg-blue-600 text-white" : "text-blue-600 hover:bg-blue-50 bg-white"
                       }`}
@@ -506,9 +521,15 @@ export default function SupportChatWidget() {
               </div>
               {navStrip}
               <div className="flex-shrink-0 px-2.5 py-2 border-t border-gray-100">
-                <Button variant="outline" size="sm" className="w-full" onClick={() => setShowForm(true)}>
-                  {"\u270D\uFE0F"} Type my question
-                </Button>
+                {ticketId ? (
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setViewMenu(false)}>
+                    {"\u2190"} Back to chat
+                  </Button>
+                ) : (
+                  <Button variant="outline" size="sm" className="w-full" onClick={() => setShowForm(true)}>
+                    {"\u270D\uFE0F"} Type my question
+                  </Button>
+                )}
               </div>
             </>
           ) : !ticketId ? (
@@ -656,21 +677,31 @@ export default function SupportChatWidget() {
                             </div>
                           );
                         })()}
-                        {m.senderType !== "USER" && idx === messages.length - 1 && ticketStatus !== "CLOSED" && !waitingSince && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {splitOptions(m.message).options.map((o) => (
-                              <button
-                                key={o}
-                                type="button"
-                                disabled={sendingReply}
-                                onClick={() => handleSendReply(o)}
-                                className="rounded-full border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50"
-                              >
-                                {o}
-                              </button>
-                            ))}
-                          </div>
-                        )}
+                        {m.senderType !== "USER" && idx === messages.length - 1 && ticketStatus !== "CLOSED" && !waitingSince && (() => {
+                          const opts = splitOptions(m.message).options;
+                          const hasMenu = opts.some((o) => o.trim().toLowerCase() === "main menu");
+                          const btn = "rounded-full border border-blue-600 px-3 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 disabled:opacity-50";
+                          return (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {opts.map((o) => (
+                                <button
+                                  key={o}
+                                  type="button"
+                                  disabled={sendingReply}
+                                  onClick={() => (o.trim().toLowerCase() === "main menu" ? setViewMenu(true) : handleSendReply(o))}
+                                  className={btn}
+                                >
+                                  {o}
+                                </button>
+                              ))}
+                              {m.senderType === "BOT" && !hasMenu && (
+                                <button type="button" onClick={() => setViewMenu(true)} className={btn}>
+                                  {"\u2B05"} Main menu
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
                         <p
                           className={`mt-1 text-[11px] ${
                             m.senderType === "USER" ? "text-blue-100" : "text-gray-400"
