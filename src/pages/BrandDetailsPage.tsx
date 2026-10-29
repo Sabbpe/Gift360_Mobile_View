@@ -13,6 +13,7 @@ import {
   Building2,
   Store,
   Navigation,
+  Phone,
   X,
   FileText,
   BookOpen,
@@ -31,6 +32,33 @@ import { useBrandGuardRail } from "@/hooks/useBrandGuardRail";
 import type { NearbyStoreRequest } from "@/types/store";
 import { useNearbyStores } from "@/hooks/useNearbyStores";
 import { getUserLocation } from "@/utils/geolocation";
+
+// Store-card helpers ---------------------------------------------------------
+const tidyAddress = (raw: string | null | undefined): string => {
+  if (!raw) return "";
+  // Source data is often ALL CAPS: title-case long shouted words, keep short
+  // abbreviations (MG, NH, ITC) and anything containing digits as they are.
+  return raw
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/[A-Z][A-Z']{3,}/g, (w) => w.charAt(0) + w.slice(1).toLowerCase());
+};
+
+const dialableNumber = (raw: string | null | undefined): string | null => {
+  if (!raw) return null;
+  const digits = raw.replace(/[^0-9+]/g, "");
+  const plain = digits.replace(/\D/g, "");
+  if (plain.length < 8) return null;
+  if (/^(\d)\1+$/.test(plain) || plain === "1234567890" || plain === "9876543210") return null;
+  return digits;
+};
+
+// Coordinates come from pincode centres until address-level geocoding is done,
+// so distances are shown rounded instead of to 0.1 km.
+const formatDistance = (km: number): string => {
+  if (km < 1) return "< 1 Km";
+  return `~${Math.round(km)} Km`;
+};
 import { motion, AnimatePresence, useAnimation } from "framer-motion";
 import { TrendingUp, Sparkles } from "lucide-react"; // Add these icons
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -1329,14 +1357,23 @@ return (
                                       {store.state && `, ${store.state}`}
                                     </h4>
                                     {store.address && (
-                                      <p className="text-xs sm:text-sm text-muted-foreground line-clamp-2 break-words">
-                                        {store.address}
+                                      <p className="text-xs sm:text-sm text-muted-foreground break-words leading-snug">
+                                        {tidyAddress(store.address)}
                                       </p>
+                                    )}
+                                    {dialableNumber(store.contactNumber) && (
+                                      <a
+                                        href={`tel:${dialableNumber(store.contactNumber)}`}
+                                        className="inline-flex items-center gap-1 mt-1.5 text-xs sm:text-sm text-primary font-medium"
+                                      >
+                                        <Phone className="h-3 w-3" />
+                                        {store.contactNumber}
+                                      </a>
                                     )}
                                   </div>
                                   <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-primary/10 text-primary text-xs sm:text-sm font-semibold flex-shrink-0 whitespace-nowrap">
                                     <MapPin className="h-3 w-3" />
-                                    {store.distanceKm.toFixed(1)} Km
+                                    {formatDistance(store.distanceKm)}
                                   </div>
                                 </div>
 
