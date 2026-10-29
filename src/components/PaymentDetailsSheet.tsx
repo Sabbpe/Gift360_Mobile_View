@@ -10,7 +10,7 @@ import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+import PayUsingSheet from "@/components/PayUsingSheet";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import { isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
 import AddToCartSuccessModal from "@/components/AddToCartSuccessModal";
@@ -45,7 +45,7 @@ import type { BrandDetailsParsed } from "@/types/brandDetails";
 import { getImageUrl } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
-import UpiIntentSheet from "@/components/UpiIntentSheet";
+
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
@@ -161,7 +161,7 @@ export default function PaymentDetailsSheet({
   const [payPanelOpen, setPayPanelOpen] = useState(false);
   // Juspay UPI-intent gateway: when enabled, Pay Now opens the deeplink sheet
   // instead of the Easebuzz hosted redirect. Easebuzz code path is untouched.
-  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
+  const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
   const [payMode, setPayMode] = useState<PayMode | null>(null);
 
   // Cashback-points (wallet) redemption — same hook Cart uses; the query is
@@ -264,9 +264,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   // Cart's PaymentFlowSheet loading modal shown while paying.
   const [paymentFlowOpen, setPaymentFlowOpen] = useState(false);
   // Which gateway the customer tapped; the SuperCoin prompt must not switch it.
-  const payViaRef = useRef<"EASEBUZZ" | "JUSPAY_UPI">("EASEBUZZ");
-  // UPI/netbanking chooser pops up only when Pay is pressed (not inline).
-  const [methodModalOpen, setMethodModalOpen] = useState(false);
+  const payViaRef = useRef<"EASEBUZZ" | "CHOOSE">("EASEBUZZ");
 
   // Coin cap = scCapPercent of the voucher face value, in coins, using the
   // brand's own multiplier (same formula as Cart / backend initHold).
@@ -537,11 +535,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     return response.orderNumber;
   };
 
-  const startBackendPayment = (orderNumber: string) => {
+  const startBackendPayment = (orderNumber: string, methodCode?: string) => {
     backendPaymentMutation.mutate(
       {
         orderNumber,
-        paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
+        paymentMethod: useMethodFee ? methodCode ?? activePaymentMethod?.code : undefined,
         // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
         paymentModes: useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined,
       },
@@ -591,7 +589,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     );
   };
 
-  const doPay = async (choice: 'EASEBUZZ' | 'JUSPAY_UPI' = 'EASEBUZZ') => {
+  const doPay = async (choice: 'EASEBUZZ' | 'CHOOSE' = 'EASEBUZZ') => {
     if (!user?.clientId) {
       toast({
         title: "Login required",
@@ -629,10 +627,10 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         return;
       }
 
-      if (choice === 'JUSPAY_UPI') {
+      if (choice === 'CHOOSE') {
         setPaymentFlowOpen(false);
         setIsProcessing(false);
-        setUpiIntentOrder(orderNumber);
+        setPayUsingOrder(orderNumber);
         return;
       }
       startBackendPayment(orderNumber);
@@ -704,7 +702,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const handlePayPressed = () => {
     // ONE Pay button: UPI goes to the Juspay intent flow, every other mode
     // (NB / Debit / Credit) keeps the Easebuzz hosted checkout.
-    const choice = isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ";
+    const choice = isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ";
     payViaRef.current = choice;
     if (!user?.clientId) {
       toast({
@@ -721,6 +719,24 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       return;
     }
     void doPay(choice);
+  };
+
+  // Left-hand "Pay using" button: always opens the full payment chooser.
+  const handlePayUsingPressed = () => {
+    payViaRef.current = "CHOOSE";
+    if (!user?.clientId) {
+      toast({
+        description: "Please login to continue payment",
+        variant: "destructive",
+      });
+      window.setTimeout(() => navigate("/login"), 1500);
+      return;
+    }
+    if (inSuperCoinMode && !scAuthorized && scPreviewDeduction > 0) {
+      setScPromptOpen(true);
+      return;
+    }
+    void doPay("CHOOSE");
   };
 
   const handleScAuthorized = (context: SuperCoinHoldContext) => {
@@ -1622,18 +1638,26 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      useMethodFee ? setMethodModalOpen(true) : handlePayPressed()
-                    }
-                    disabled={isProcessing || displayTotal <= 0}
-                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isProcessing
-                      ? "Processing..."
-                      : `Pay ₹${displayTotal.toFixed(2)}`}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handlePayUsingPressed}
+                      disabled={isProcessing || displayTotal <= 0}
+                      className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      Pay using
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePayPressed}
+                      disabled={isProcessing || displayTotal <= 0}
+                      className="flex h-12 flex-[1.35] items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isProcessing
+                        ? "Processing..."
+                        : `Pay ₹${displayTotal.toFixed(2)}`}
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -1793,18 +1817,26 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     </div>
                   </div>
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      useMethodFee ? setMethodModalOpen(true) : handlePayPressed()
-                    }
-                    disabled={isProcessing || displayTotal <= 0}
-                    className="flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
-                  >
-                    {isProcessing
-                      ? "Processing..."
-                      : `Pay ₹${displayTotal.toFixed(2)}`}
-                  </button>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={handlePayUsingPressed}
+                      disabled={isProcessing || displayTotal <= 0}
+                      className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      Pay using
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePayPressed}
+                      disabled={isProcessing || displayTotal <= 0}
+                      className="flex h-12 flex-[1.35] items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
+                    >
+                      {isProcessing
+                        ? "Processing..."
+                        : `Pay ₹${displayTotal.toFixed(2)}`}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
@@ -1812,80 +1844,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         )}
 
         {/* ---------------------------------------------------------------- */}
-        {/* UPI/netbanking chooser — opens as its own pop-up sheet when Pay   */}
-        {/* is pressed (same contents as Cart's pay sheet), for both modes.    */}
-        {/* ---------------------------------------------------------------- */}
-        {payPanelOpen && methodModalOpen && (
-          <div className="fixed inset-0 z-[70] flex items-end justify-center pb-[64px]">
-            <button
-              type="button"
-              aria-label="Close payment methods"
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setMethodModalOpen(false)}
-            />
-            <div
-              className="relative max-h-[88%] w-full max-w-[390px] overflow-y-auto rounded-t-[28px] bg-white p-4 pb-6 shadow-[0_-16px_48px_rgba(33,24,74,0.18)]"
-              style={{ fontFamily: "Poppins, sans-serif" }}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Choose how to pay"
-            >
-              <div className="mb-3 flex items-start justify-between">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wide text-[#6B7280]">
-                    You pay
-                  </p>
-                  <p className="text-[26px] font-extrabold leading-tight tabular-nums text-[#9747FF]">
-                    ₹{displayTotal.toFixed(2)}
-                  </p>
-                  <p className="mt-1 flex w-fit items-center gap-1 rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700">
-                    {inSuperCoinMode && (
-                      <img loading="lazy" decoding="async"
-                        src={superCoinIcon}
-                        alt=""
-                        className="h-3.5 w-3.5 object-contain"
-                      />
-                    )}
-                    {earnText}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  aria-label="Close"
-                  onClick={() => setMethodModalOpen(false)}
-                  className="grid h-9 w-9 place-items-center rounded-full text-[16px] text-[#6B7280]"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {useMethodFee && (
-                <PaymentMethodSelector
-                  methods={paymentMethods}
-                  value={activePaymentMethod?.code ?? ""}
-                  onChange={setSelectedPaymentMethod}
-                  cashAmount={displayCash}
-                  disabled={isProcessing}
-                />
-              )}
-
-              <button
-                type="button"
-                onClick={() => {
-                  setMethodModalOpen(false);
-                  handlePayPressed();
-                }}
-                disabled={isProcessing || displayTotal <= 0}
-                className="mt-3 flex h-12 w-full items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                {isProcessing
-                  ? "Processing..."
-                  : `Pay ₹${displayTotal.toFixed(2)}`}
-              </button>
-            </div>
-          </div>
-        )}
-
         {superCoinIdentity && (
           <SuperCoinOTPModal
             open={scOTPModalOpen}
@@ -1982,18 +1940,32 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         {/* Cart's loading sheet while the payment attempt is in flight */}
         <PaymentFlowSheet open={paymentFlowOpen} state="loading" />
 
-      <UpiIntentSheet
-        open={!!upiIntentOrder}
-        orderNumber={upiIntentOrder ?? ""}
-        onClose={() => setUpiIntentOrder(null)}
-        onFallbackToOtherMethods={() => {
-          const ref = upiIntentOrder;
-          if (!ref) return;
-          startBackendPayment(ref);
-        }}
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={displayCash}
+        methods={paymentMethods}
+        amountLabel={`₹${displayTotal.toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
         onPaid={() => {
-          setUpiIntentOrder(null);
+          setPayUsingOrder(null);
           window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          setSelectedPaymentMethod(code);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) setSelectedPaymentMethod(fallback);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, fallback);
         }}
       />
 

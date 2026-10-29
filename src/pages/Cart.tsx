@@ -16,12 +16,12 @@ import { useExternalScript } from "@/hooks/useExternalScript";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+import PayUsingSheet from "@/components/PayUsingSheet";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
-import UpiIntentSheet from "@/components/UpiIntentSheet";
+
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
@@ -300,7 +300,7 @@ export default function Cart() {
   const [sheetQuantity, setSheetQuantity] = useState<number | undefined>(undefined);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
   // Juspay UPI-intent gateway (new); Easebuzz path below stays untouched.
-  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
+  const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
   const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
   const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
@@ -1564,10 +1564,10 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
   // ONE Pay button + the method selector. The selected mode decides the
   // gateway: UPI -> Juspay UPI intent; NB / Debit / Credit -> Easebuzz.
-  const payViaRef = useRef<"easebuzz" | "juspay">("easebuzz");
+  const payViaRef = useRef<"easebuzz" | "choose">("easebuzz");
 
   // Step 1: Create Order in Database
-  const handlePayNow = async (gateway: "ntt" | "easebuzz" | "juspay") => {
+  const handlePayNow = async (gateway: "ntt" | "easebuzz" | "choose") => {
     if (!isAuthenticated) {
       toast({
         title: "Login required",
@@ -1634,7 +1634,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   // Pay inside the sheet: UPI continues on Juspay, every other mode keeps the
   // Easebuzz hosted checkout. Ask about SuperCoins first when needed.
   const onPayPressed = () => {
-    const gateway = isUpiPaymentMethod(activePaymentMethod?.code) ? "juspay" : "easebuzz";
+    const gateway = isUpiPaymentMethod(activePaymentMethod?.code) ? "choose" : "easebuzz";
     payViaRef.current = gateway;
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
       setPayOpen(false);
@@ -1643,6 +1643,18 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     }
     setPayOpen(false);
     void handlePayNow(gateway);
+  };
+
+  // Left-hand "Pay using" button: always opens the full payment chooser.
+  const onPayUsingPressed = () => {
+    payViaRef.current = "choose";
+    if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
+      setPayOpen(false);
+      setScPromptOpen(true);
+      return;
+    }
+    setPayOpen(false);
+    void handlePayNow("choose");
   };
 
   // After the Flipkart OTP succeeds, show the redeemed countdown; it calls
@@ -1665,9 +1677,9 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
   const validateOrder = (
     orderNumber: string,
-    gateway: "ntt" | "easebuzz" | "juspay",
+    gateway: "ntt" | "easebuzz" | "choose",
     paymentBreakdown: ReturnType<typeof buildPaymentBreakdown>
-  ) => {
+    ) => {
     console.log("ðŸ” Validating order:", orderNumber);
     console.log("Payment breakdown", paymentBreakdown);
 
@@ -1699,9 +1711,9 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
           );
           // Proceed to payment without storing snapshot
           // Post-payment pages fetch fresh data from backend
-          if (gateway === "juspay") {
+          if (gateway === "choose") {
             setPaymentSheetOpen(false);
-            setUpiIntentOrder(orderNumber);
+            setPayUsingOrder(orderNumber);
             return;
           }
           startBackendPayment(orderNumber);
@@ -1721,11 +1733,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     );
   };
 
-  const startBackendPayment = (orderNumber: string) => {
+  const startBackendPayment = (orderNumber: string, methodCode?: string) => {
     backendPaymentMutation.mutate(
       {
         orderNumber,
-        paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined,
+        paymentMethod: useMethodFee ? methodCode ?? activePaymentMethod?.code : undefined,
         // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
         paymentModes: useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined,
       },
@@ -2701,22 +2713,26 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
               </button>
             </div>
 
-            {useMethodFee && (
-              <PaymentMethodSelector
-                methods={paymentMethods}
-                value={activePaymentMethod?.code ?? ""}
-                onChange={setSelectedPaymentMethod}
-                cashAmount={displayCash}
-                disabled={isProcessing}
-              />
-            )}
+            <div className="flex items-center justify-between rounded-xl bg-[#F7F2FF] px-3 py-2 text-[11px] font-semibold text-[#5B2B99]">
+              <span>Paying via {activePaymentMethod?.label ?? "UPI"}</span>
+              <span>Fee ₹{displayFee.toFixed(2)}</span>
+            </div>
 
-            <button
-              type="button"
-              className="cart-gradient-fill h-12 w-full rounded-2xl font-bold shadow-lg shadow-[rgba(108,92,231,0.25)] transition-all active:scale-[0.98] disabled:opacity-50"
-              onClick={onPayPressed}
-              disabled={isProcessing || easebuzzScriptStatus !== "ready"}
-            >
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={onPayUsingPressed}
+                disabled={isProcessing}
+                className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
+              >
+                Pay using
+              </button>
+              <button
+                type="button"
+                className="cart-gradient-fill h-12 flex-[1.35] rounded-2xl font-bold shadow-lg shadow-[rgba(108,92,231,0.25)] transition-all active:scale-[0.98] disabled:opacity-50"
+                onClick={onPayPressed}
+                disabled={isProcessing || easebuzzScriptStatus !== "ready"}
+              >
               {easebuzzScriptStatus === "loading"
                 ? "Loading..."
                 : easebuzzScriptStatus === "error"
@@ -2724,7 +2740,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     : isProcessing
                       ? "Processing..."
                       : `Pay ₹${displayTotal.toFixed(2)}`}
-            </button>
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -2768,18 +2785,32 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
 
-      <UpiIntentSheet
-        open={!!upiIntentOrder}
-        orderNumber={upiIntentOrder ?? ""}
-        onClose={() => setUpiIntentOrder(null)}
-        onFallbackToOtherMethods={() => {
-          const ref = upiIntentOrder;
-          if (!ref) return;
-          startBackendPayment(ref);
-        }}
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={displayCash}
+        methods={paymentMethods}
+        amountLabel={`₹${displayTotal.toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
         onPaid={() => {
-          setUpiIntentOrder(null);
+          setPayUsingOrder(null);
           window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          setSelectedPaymentMethod(code);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) setSelectedPaymentMethod(fallback);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, fallback);
         }}
       />
 
@@ -2788,7 +2819,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
         open={scRedeemedOpen}
         onContinue={() => {
           setScRedeemedOpen(false);
-          void handlePayNow("easebuzz");
+          void handlePayNow(payViaRef.current);
         }}
       />
 

@@ -70,8 +70,17 @@ describe("resolveUpiUrl (iOS must never open the generic upi:// scheme)", () => 
     expect(resolveUpiUrl(DEEPLINK, undefined, "WhatsApp", true)).toBeNull();
   });
 
-  it("keeps Android/desktop behaviour: the backend deeplink is used unchanged", () => {
+  it("uses the chosen app scheme on Android/desktop too (no system chooser)", () => {
+    for (const [app, prefix] of IOS_APPS) {
+      expect(resolveUpiUrl(DEEPLINK, undefined, app, false)).toBe(`${prefix}${QUERY}`);
+    }
+  });
+
+  it("keeps the generic backend deeplink only when NO app is chosen (Android/desktop)", () => {
     expect(resolveUpiUrl(DEEPLINK, undefined, undefined, false)).toBe(DEEPLINK);
-    expect(resolveUpiUrl(DEEPLINK, { Gpay: "tez://upi/pay?" }, "Gpay", false)).toBe(DEEPLINK);
+  });
+
+  it("returns null for an unknown app on Android/desktop", () => {
+    expect(resolveUpiUrl(DEEPLINK, undefined, "SomeOtherUpi", false)).toBeNull();
   });
 });

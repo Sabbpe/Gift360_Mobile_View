@@ -4,14 +4,14 @@ import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
-import UpiIntentSheet from "@/components/UpiIntentSheet";
+import PayUsingSheet from "@/components/PayUsingSheet";
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 const MAX_QUANTITY_PER_ITEM = 3;
@@ -41,7 +41,7 @@ export default function QuickBuyModal({
 const createOrderMutation = useCreateOrder();
 const backendPaymentMutation = useBackendPaymentInitiation();
 // Juspay UPI-intent gateway (new); the Easebuzz path stays as-is.
-const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
+const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
 const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
 const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
 const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
@@ -146,7 +146,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
     }
   };
 
-const handlePayNow = async (choice: "EASEBUZZ" | "JUSPAY_UPI" = "EASEBUZZ") => {
+const handlePayNow = async (choice: "EASEBUZZ" | "CHOOSE" = "EASEBUZZ") => {
   if (!isValidAmount()) {
     toast({
       title: "Invalid amount",
@@ -277,8 +277,8 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
           return;
         }
         console.log("Payment required. Amount:", validationResponse.amountToPay);
-        if (choice === "JUSPAY_UPI") {
-          setUpiIntentOrder(orderNumber);
+        if (choice === "CHOOSE") {
+          setPayUsingOrder(orderNumber);
           return;
         }
         initiateBackendPaymentNow(orderNumber);
@@ -295,11 +295,11 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
   );
 };
 
-const initiateBackendPaymentNow = (orderNumber: string) => {
+const initiateBackendPaymentNow = (orderNumber: string, methodCode?: string) => {
   backendPaymentMutation.mutate(
     {
       orderNumber,
-      paymentMethod: paymentMethodCode,
+      paymentMethod: methodCode ?? paymentMethodCode,
       // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
       paymentModes:
         paymentMethods.length > 0 ? easebuzzPaymentModes(paymentMethods) : undefined,
@@ -498,38 +498,36 @@ const isProcessing =
               </div>
             )}
 
-            {isValidAmount() && paymentMethodCode && (
-              <PaymentMethodSelector
-                methods={paymentMethods}
-                value={paymentMethodCode}
-                onChange={setSelectedPaymentMethod}
-                cashAmount={Number(amount) * quantity}
-                disabled={isProcessing}
-                showTotal
-              />
-            )}
-              </>
+            </>
 )}
 
           </div>
 
 {/* Footer */}
 <div className="p-4 sm:p-6 border-t border-border">
-  <div className="flex gap-3">
+  <button
+    onClick={handleAddToCart}
+    className={`w-full h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all border-2 ${
+      isValidAmount()
+        ? "border-primary text-primary hover:bg-primary/10"
+        : "border-muted text-muted-foreground opacity-60 hover:bg-muted/40"
+    }`}
+  >
+    <ShoppingCart className="h-5 w-5" />
+    Add to Cart
+  </button>
+  <div className="mt-3 flex gap-3">
     <button
-      onClick={handleAddToCart}
-      className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all border-2 ${
-        isValidAmount()
-          ? "border-primary text-primary hover:bg-primary/10"
-          : "border-muted text-muted-foreground opacity-60 hover:bg-muted/40"
-      }`}
+      type="button"
+      onClick={() => handlePayNow("CHOOSE")}
+      disabled={isProcessing || !isValidAmount()}
+      className="h-12 flex-1 rounded-lg text-base font-bold border-2 border-primary text-primary transition-all hover:bg-primary/10 active:scale-[0.98] disabled:opacity-60"
     >
-      <ShoppingCart className="h-5 w-5" />
-      Add to Cart
+      Pay using
     </button>
     <button
       disabled={isProcessing}
-      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ")}
+      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ")}
       className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
         isValidAmount() && !isProcessing
           ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
@@ -547,18 +545,32 @@ const isProcessing =
         </div>
       </div>
 
-      <UpiIntentSheet
-        open={!!upiIntentOrder}
-        orderNumber={upiIntentOrder ?? ""}
-        onClose={() => setUpiIntentOrder(null)}
-        onFallbackToOtherMethods={() => {
-          const ref = upiIntentOrder;
-          if (!ref) return;
-          initiateBackendPaymentNow(ref);
-        }}
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={Number(amount) * quantity}
+        methods={paymentMethods}
+        amountLabel={`₹${(Number(amount) * quantity).toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
         onPaid={() => {
-          setUpiIntentOrder(null);
+          setPayUsingOrder(null);
           window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          setSelectedPaymentMethod(code);
+          setPayUsingOrder(null);
+          initiateBackendPaymentNow(ref, code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) setSelectedPaymentMethod(fallback);
+          setPayUsingOrder(null);
+          initiateBackendPaymentNow(ref, fallback);
         }}
       />
     </>

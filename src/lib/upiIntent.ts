@@ -77,10 +77,9 @@ export const buildHostAppUrl = (deeplink: string, prefix?: string): string | nul
 
 /**
  * Resolves the URL to open for the current platform.
- * - Android/desktop: the backend deeplink unchanged (system chooser).
- * - iOS: ONLY an app-specific scheme. Returns null when no app was chosen or
- *   no safe scheme is known — callers must then show our own app list + QR
- *   instead of navigating.
+ * - Any platform, app chosen: ONLY that app's scheme (prefix swap).
+ * - Android/desktop, no app chosen: the backend deeplink (system chooser).
+ * - iOS, no app chosen: null (show our own app list + QR; never `upi://`).
  */
 export const resolveUpiUrl = (
   deeplink: string,
@@ -88,18 +87,27 @@ export const resolveUpiUrl = (
   app?: string,
   ios: boolean = isIOS()
 ): string | null => {
-  if (!ios) return deeplink;
-  if (!app) return null;
-  const fromBackend = hostUrlsForIOS?.[app];
+  const chosenApp = app?.trim();
+  if (!chosenApp) {
+    return ios ? null : deeplink;
+  }
+  const fromBackend = hostUrlsForIOS?.[chosenApp];
   const candidate = fromBackend && !isGenericUpi(fromBackend) ? fromBackend : undefined;
-  const prefix = candidate ?? IOS_SCHEME_PREFIXES[app];
+  const prefix = candidate ?? IOS_SCHEME_PREFIXES[chosenApp];
   if (!prefix || isGenericUpi(prefix)) return null;
   return buildHostAppUrl(deeplink, prefix);
 };
 
+/** Navigates to a URL from a user gesture. */
+export const launchUrl = (url: string): boolean => {
+  if (!url) return false;
+  window.location.href = url;
+  return true;
+};
+
 /**
- * Opens the payment app. Returns false on iOS when no safe, app-specific URL
- * could be built (the sheet then keeps showing our app buttons + QR).
+ * Opens the payment app. Returns false when no safe URL could be built (the
+ * sheet then keeps showing our app buttons + QR instead).
  */
 export const openUpiApp = (
   deeplink: string,
@@ -110,8 +118,7 @@ export const openUpiApp = (
   if (!url) return false;
   // A real user gesture is required for iOS; this is always called from a tap
   // (or immediately after create on Android).
-  window.location.href = url;
-  return true;
+  return launchUrl(url);
 };
 
 /** Fires whenever the user returns to this page (tab focus / app resume). */

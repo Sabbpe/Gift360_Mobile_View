@@ -22,12 +22,12 @@ import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, Loader2, ShoppingBag }
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+
 import { trackEvent } from "@/lib/analytics";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { initiateRetryPayment } from "@/api/paymentApi";
-import UpiIntentSheet from "@/components/UpiIntentSheet";
+import PayUsingSheet from "@/components/PayUsingSheet";
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
@@ -335,7 +335,7 @@ export default function OrderCheckout() {
   const paymentInFlightRef = useRef(false);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
   // Juspay UPI-intent gateway (new); the Easebuzz retry path stays untouched.
-  const [upiIntentOrder, setUpiIntentOrder] = useState<string | null>(null);
+  const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
   const [superCoinHoldExpiryMs, setSuperCoinHoldExpiryMs] = useState<number | null>(null);
   const [transactionTime, setTransactionTime] = useState<string | null>(null);
   const [countdown, setCountdown] = useState<SuperCoinCountdownState>({
@@ -670,7 +670,60 @@ export default function OrderCheckout() {
   // ── Pay orchestration (mirrors Cart minus order creation) ────────────────
   const isProcessing = isRetryingPayment;
 
-  const handlePayNow = async (choice: 'EASEBUZZ' | 'JUSPAY_UPI' = 'EASEBUZZ') => {
+  const lastPrepRef = useRef<{
+    selectedWalletUsage: boolean;
+    walletDeduction: number;
+    finalPayable: number;
+  } | null>(null);
+
+  const preparePayment = async () => {
+    const selectedWalletUsage = rewardMode === "cashbackWallet" && useWalletBalance;
+    const paymentBreakdown = buildPaymentBreakdown(selectedWalletUsage);
+    await persistSuperCoinHoldForPayment(orderNumber, paymentBreakdown.superCoinDeduction);
+    if (rewardMode === "cashbackWallet" && previousSuperCoinTxnId) {
+      await unholdSuperCoin(orderNumber);
+    }
+    const prep = {
+      selectedWalletUsage,
+      walletDeduction: paymentBreakdown.walletDeduction,
+      finalPayable: paymentBreakdown.finalPayable,
+    };
+    lastPrepRef.current = prep;
+    return prep;
+  };
+
+  const initiateEasebuzz = async (
+    methodCode: string | undefined,
+    prep: { selectedWalletUsage: boolean; walletDeduction: number; finalPayable: number }
+  ) => {
+    const response = await initiateRetryPayment(
+      orderNumber,
+      prep.selectedWalletUsage,
+      prep.walletDeduction,
+      rewardMode === "cashbackWallet",
+      useMethodFee ? methodCode : undefined,
+      // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+      useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined
+    );
+    const paymentUrl = response.payment_url || response.paymentUrl || response.data;
+    if (!(response.status === 1 || response.status === true) || !paymentUrl) {
+      throw new Error(response.message || "Unable to initiate payment. Please try again.");
+    }
+    paymentInFlightRef.current = true;
+    clearActiveSuperCoinHold();
+    trackEvent("payment_initiated", {
+      value: prep.finalPayable,
+      currency: "INR",
+      transaction_id: orderNumber,
+      gateway: "sabbpe",
+    });
+    window.location.href = paymentUrl;
+  };
+
+  const handlePayNow = async (
+    choice: 'EASEBUZZ' | 'CHOOSE' = 'EASEBUZZ',
+    methodCode?: string
+  ) => {
     if (!isAuthenticated) {
       toast({ title: "Login required", description: "Please login to place an order", variant: "destructive" });
       setLocation("/login");
@@ -680,43 +733,45 @@ export default function OrderCheckout() {
       toast({ title: "Error", description: "User client ID not found. Please login again.", variant: "destructive" });
       return;
     }
-    if (choice === "JUSPAY_UPI") {
-      // UPI intent: no hosted redirect - the sheet opens the UPI app and polls.
-      setUpiIntentOrder(orderNumber);
-      return;
-    }
     try {
       setIsRetryingPayment(true);
       setPaymentSheetOpen(true);
-      const selectedWalletUsage = rewardMode === "cashbackWallet" && useWalletBalance;
-      const paymentBreakdown = buildPaymentBreakdown(selectedWalletUsage);
-      await persistSuperCoinHoldForPayment(orderNumber, paymentBreakdown.superCoinDeduction);
-      if (rewardMode === "cashbackWallet" && previousSuperCoinTxnId) {
-        await unholdSuperCoin(orderNumber);
+      const prep = await preparePayment();
+      if (choice === "CHOOSE") {
+        // UPI intent / card chooser: opened after the SuperCoin hold is in place.
+        setPaymentSheetOpen(false);
+        setIsRetryingPayment(false);
+        setPayUsingOrder(orderNumber);
+        return;
       }
-      setIsRetryingPayment(true);
-      const response = await initiateRetryPayment(
-        orderNumber,
-        selectedWalletUsage,
-        paymentBreakdown.walletDeduction,
-        rewardMode === "cashbackWallet",
-        useMethodFee ? activePaymentMethod?.code : undefined,
-        // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
-        useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined
-      );
-      const paymentUrl = response.payment_url || response.paymentUrl || response.data;
-      if (!(response.status === 1 || response.status === true) || !paymentUrl) {
-        throw new Error(response.message || "Unable to initiate payment. Please try again.");
-      }
-      paymentInFlightRef.current = true;
-      clearActiveSuperCoinHold();
-      trackEvent("payment_initiated", {
-        value: paymentBreakdown.finalPayable,
-        currency: "INR",
-        transaction_id: orderNumber,
-        gateway: "sabbpe",
+      await initiateEasebuzz(methodCode ?? activePaymentMethod?.code, prep);
+    } catch (error) {
+      await cancelSuperCoinHoldIfNeeded(orderNumber);
+      toast({
+        title: "Checkout Failed",
+        description:
+          (error as any)?.response?.data?.message ||
+          (error as Error)?.message ||
+          "Failed to continue checkout. Please try again.",
+        variant: "destructive",
       });
-      window.location.href = paymentUrl;
+      setPaymentSheetOpen(false);
+    } finally {
+      setIsRetryingPayment(false);
+    }
+  };
+
+  // The chooser already ran preparePayment, so pay the chosen card method directly.
+  const handleCardMethod = async (code: string) => {
+    setPayUsingOrder(null);
+    const prep = lastPrepRef.current;
+    if (!prep) {
+      void handlePayNow("EASEBUZZ", code);
+      return;
+    }
+    setIsRetryingPayment(true);
+    try {
+      await initiateEasebuzz(code, prep);
     } catch (error) {
       await cancelSuperCoinHoldIfNeeded(orderNumber);
       toast({
@@ -1111,13 +1166,10 @@ export default function OrderCheckout() {
                     <Separator />
 
                     {useMethodFee && (
-                      <PaymentMethodSelector
-                        methods={paymentMethods}
-                        value={activePaymentMethod?.code ?? ""}
-                        onChange={setSelectedPaymentMethod}
-                        cashAmount={cashBeforeFee}
-                        disabled={isProcessing}
-                      />
+                      <div className="flex items-center justify-between rounded-xl bg-[#F7F2FF] px-3 py-2 text-[11px] font-semibold text-[#5B2B99]">
+                        <span>Paying via {activePaymentMethod?.label ?? "UPI"}</span>
+                        <span>Fee ₹{PLATFORM_FEE.toFixed(2)}</span>
+                      </div>
                     )}
 
                     {PLATFORM_FEE > 0 && (
@@ -1138,14 +1190,25 @@ export default function OrderCheckout() {
                         </div>
                       </div>
 
-                    <Button
-                      type="button"
-                      className="w-full cart-gradient-fill h-12 text-base font-bold"
-                      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "JUSPAY_UPI" : "EASEBUZZ")}
-                      disabled={isProcessing || orderLoading || cartItems.length === 0}
-                    >
-                      {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="h-12 flex-1 text-sm font-bold"
+                        onClick={() => void handlePayNow("CHOOSE")}
+                        disabled={isProcessing || orderLoading || cartItems.length === 0}
+                      >
+                        Pay using
+                      </Button>
+                      <Button
+                        type="button"
+                        className="cart-gradient-fill h-12 flex-[1.35] text-base font-bold"
+                        onClick={() => void handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ")}
+                        disabled={isProcessing || orderLoading || cartItems.length === 0}
+                      >
+                        {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -1186,18 +1249,28 @@ export default function OrderCheckout() {
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
 
-      <UpiIntentSheet
-        open={!!upiIntentOrder}
-        orderNumber={upiIntentOrder ?? ""}
-        onClose={() => setUpiIntentOrder(null)}
-        onFallbackToOtherMethods={() => {
-          const ref = upiIntentOrder;
-          if (!ref) return;
-          void handlePayNow("EASEBUZZ");
-        }}
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={cashBeforeFee}
+        methods={paymentMethods}
+        amountLabel={`₹${uiTotalToPay.toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
         onPaid={() => {
-          setUpiIntentOrder(null);
+          setPayUsingOrder(null);
           window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          setSelectedPaymentMethod(code);
+          void handleCardMethod(code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) {
+            setSelectedPaymentMethod(fallback);
+            void handleCardMethod(fallback);
+          }
         }}
       />
 

@@ -44,6 +44,7 @@ interface Options {
 
 export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Options) => {
   const [phase, setPhase] = useState<UpiIntentPhase>("idle");
+  const [startedAt, setStartedAt] = useState<number | null>(null);
   const [intent, setIntent] = useState<UpiIntentCreateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -101,8 +102,8 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
     }, POLL_INTERVAL_MS);
   }, [pollOnce, setPhaseSafe]);
 
-  const start = useCallback(async () => {
-    if (!orderNumber) return;
+  const start = useCallback(async (): Promise<UpiIntentCreateResponse | null> => {
+    if (!orderNumber) return null;
     stoppedRef.current = false;
     setError(null);
     window.clearTimeout(timerRef.current);
@@ -111,17 +112,19 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
     if (saved && saved.orderNumber === orderNumber && isFreshPendingIntent(saved)) {
       // Page reloaded mid-payment: resume polling, don't accidentally reopen
       // the UPI app (the user may be paying right now).
-      setIntent({
+      const resumed: UpiIntentCreateResponse = {
         status: "SUCCESS",
         orderNumber: saved.orderNumber,
         merchantRequestId: saved.merchantRequestId,
         deeplink: saved.deeplink,
         hostUrlsForIOS: saved.hostUrlsForIOS,
         amount: saved.amount,
-      });
+      };
+      setIntent(resumed);
+      setStartedAt(saved.startedAt);
       setPhaseSafe("awaiting");
       schedule();
-      return;
+      return resumed;
     }
 
     setPhaseSafe("initiating");
@@ -131,14 +134,16 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
         throw new Error(response.responseMessage || "Unable to start the UPI payment.");
       }
       setIntent(response);
+      const attemptStartedAt = Date.now();
       savePendingIntent({
         orderNumber,
         merchantRequestId: response.merchantRequestId,
         deeplink: response.deeplink,
         hostUrlsForIOS: response.hostUrlsForIOS,
         amount: response.amount,
-        startedAt: Date.now(),
+        startedAt: attemptStartedAt,
       });
+      setStartedAt(attemptStartedAt);
       setPhaseSafe("awaiting");
       // iOS has no system UPI chooser: opening `upi://` would hand the payment
       // to whichever app claims it (e.g. WhatsApp). All iOS builds (native AND
@@ -147,6 +152,7 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
         openUpiApp(response.deeplink);
       }
       schedule();
+      return response;
     } catch (err) {
       const message =
         (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
@@ -154,6 +160,7 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
         "Unable to start the UPI payment. Please try again.";
       setError(message);
       setPhaseSafe("failed");
+      return null;
     }
   }, [orderNumber, schedule, setPhaseSafe, autoOpen]);
 
@@ -165,14 +172,21 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
     [intent]
   );
 
-  const checkNow = useCallback(async () => {
-    if (stoppedRef.current) return;
+  /** One backend status check; returns the raw status so callers can react. */
+  const checkNow = useCallback(async (): Promise<UpiIntentStatusResponse | null> => {
+    if (stoppedRef.current) return null;
     const current = phaseRef.current;
-    if (current === "paid" || current === "failed" || current === "expired") return;
+    if (current === "paid" || current === "failed" || current === "expired") return null;
     if (current === "awaiting") setPhaseSafe("confirming");
-    const done = await pollOnce();
-    if (!done && phaseRef.current === "confirming") setPhaseSafe("confirming");
-  }, [pollOnce, setPhaseSafe]);
+    try {
+      const status = await fetchUpiIntentStatus(orderNumber);
+      applyStatus(status);
+      if (phaseRef.current === "confirming") setPhaseSafe("confirming");
+      return status;
+    } catch {
+      return null;
+    }
+  }, [applyStatus, orderNumber, setPhaseSafe]);
 
   useEffect(() => {
     return () => {
@@ -221,5 +235,5 @@ export const useUpiIntentPayment = ({ orderNumber, onPaid, autoOpen = true }: Op
     window.clearTimeout(timerRef.current);
   }, []);
 
-  return { phase, intent, error, start, reopen, checkNow, stop };
+  return { phase, intent, error, start, reopen, checkNow, stop, startedAt };
 };
