@@ -102,9 +102,19 @@ export default function PaymentProcessingModal({
         <div className="px-5 py-5">
           {waiting && !pendingPrompt && (
             <div className="flex flex-col items-center text-center">
+              <style>{`
+                @keyframes upi-processing-slide {
+                  0% { transform: translateX(-110%); }
+                  100% { transform: translateX(340%); }
+                }
+                .upi-processing-bar {
+                  animation: upi-processing-slide 1.6s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+                }
+              `}</style>
+
               {qrValue ? (
-                <div className="mb-2">
-                  <UpiQrCode value={qrValue} size={168} />
+                <div className="mb-1">
+                  <UpiQrCode value={qrValue} size={156} />
                 </div>
               ) : (
                 <div className="relative grid h-20 w-20 place-items-center">
@@ -112,43 +122,33 @@ export default function PaymentProcessingModal({
                   <Loader2 className="h-9 w-9 animate-spin text-[#7C3AED]" />
                 </div>
               )}
-              <p className="mt-4 text-sm font-semibold text-gray-800">
-                {qrValue
-                  ? "Scan the QR with any UPI app"
-                  : phase === "confirming"
-                    ? "Checking with the gateway…"
-                    : "Waiting for you to finish in your UPI app"}
+
+              {/* Sliding gradient progress bar — the "processing" animation */}
+              <div className="mt-5 w-full max-w-[280px] overflow-hidden rounded-full bg-[#EEE6FF]">
+                <div className="upi-processing-bar h-[6px] w-2/5 rounded-full bg-[linear-gradient(90deg,#9747FF,#7C3AED)]" />
+              </div>
+
+              <p className="mt-3 text-[14px] font-bold text-[#3B1E78]">
+                {phase === "confirming" ? "Confirming payment…" : "Payment processing"}
               </p>
-              <p className="mt-1 text-xs text-gray-500">
+              <p className="mt-0.5 text-[11px] leading-snug text-gray-500">
                 {qrValue
-                  ? "Complete the payment on your phone — this screen confirms it automatically."
-                  : "Complete the payment in the app, then come back here. We confirm it automatically."}
+                  ? "Scan the QR to pay — we confirm automatically."
+                  : "We'll confirm the payment automatically. Keep this screen open."}
               </p>
-              <div className="mt-4 flex items-center gap-1.5 rounded-full bg-[#F7F2FF] px-3 py-1.5 text-[12px] font-bold text-[#5B2B99]">
+
+              <div className="mt-3 flex items-center gap-1.5 rounded-full bg-[#F7F2FF] px-3 py-1.5 text-[12px] font-bold text-[#5B2B99]">
                 <Clock3 className="h-3.5 w-3.5" />
                 {elapsed}
               </div>
-              <div className="mt-5 flex w-full gap-2">
-                <button
-                  type="button"
-                  onClick={onCheckStatus}
-                  disabled={checking}
-                  className="flex h-11 flex-1 items-center justify-center gap-1.5 rounded-xl border border-[#E2D9FF] text-[12px] font-bold text-[#5B2B99] active:scale-[0.98] disabled:opacity-60"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${checking ? "animate-spin" : ""}`} />
-                  Check status
-                </button>
-                <button
-                  type="button"
-                  onClick={onRequestClose}
-                  className="h-11 flex-1 rounded-xl bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[12px] font-bold text-white active:scale-[0.98]"
-                >
-                  Close
-                </button>
-              </div>
-              <p className="mt-3 text-center text-[10px] leading-snug text-gray-400">
-                Do not close this screen until you see the confirmation.
-              </p>
+
+              <button
+                type="button"
+                onClick={onRequestClose}
+                className="mt-5 h-11 w-full rounded-xl bg-[linear-gradient(90deg,#9747FF,#5B2B99)] text-[13px] font-bold text-white active:scale-[0.98]"
+              >
+                Close
+              </button>
             </div>
           )}
 
