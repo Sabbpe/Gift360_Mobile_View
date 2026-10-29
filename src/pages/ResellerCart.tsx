@@ -20,6 +20,7 @@ import {
   saveResellerCart,
   clearResellerCart,
   getResellerBuyer,
+  MAX_QTY_PER_SKU,
   saveResellerBuyer,
   fetchResellerWallet,
   createResellerOrder,
@@ -75,10 +76,18 @@ export default function ResellerCart() {
   };
 
   const setQty = (sku: string, qty: number) => {
+    if (qty > MAX_QTY_PER_SKU) {
+      toast({
+        title: `Maximum ${MAX_QTY_PER_SKU} per voucher`,
+        description: `You can buy at most ${MAX_QTY_PER_SKU} of the same voucher in one order. Place another order for more.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
     persist(
       items.map((i) =>
         i.brandSku === sku
-          ? { ...i, quantity: Math.max(1, Math.min(50, qty)) }
+          ? { ...i, quantity: Math.max(1, Math.min(MAX_QTY_PER_SKU, qty)) }
           : i
       )
     );
@@ -396,7 +405,8 @@ export default function ResellerCart() {
                         </span>
                         <button
                           onClick={() => setQty(item.brandSku, item.quantity + 1)}
-                          className="grid h-7 w-7 place-items-center rounded-full border border-gray-200 text-gray-600 active:scale-90"
+                          disabled={item.quantity >= MAX_QTY_PER_SKU}
+                          className="grid h-7 w-7 place-items-center rounded-full border border-gray-200 text-gray-600 active:scale-90 disabled:opacity-40"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>

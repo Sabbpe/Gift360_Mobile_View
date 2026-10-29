@@ -19,6 +19,7 @@ import {
   fetchResellerProducts,
   getResellerCart,
   saveResellerCart,
+  MAX_QTY_PER_SKU,
   type ResellerProduct,
   type ResellerCartItem,
 } from "@/api/resellerApi";
@@ -134,7 +135,7 @@ export default function ResellerCatalog() {
 
   const stockQty = () => {
     const s = parseInt(picked?.stockAvailable ?? "10", 10);
-    return Number.isFinite(s) && s > 0 ? s : 10;
+    return Math.min(MAX_QTY_PER_SKU, Number.isFinite(s) && s > 0 ? s : MAX_QTY_PER_SKU);
   };
 
   const unitPrice = (): number | null => {
@@ -169,6 +170,13 @@ export default function ResellerCatalog() {
     const next = [...getResellerCart()];
     const existing = next.find((i) => i.brandSku === picked.brandSku);
     if (existing) {
+      if (existing.quantity + qty > MAX_QTY_PER_SKU) {
+        toast({
+          title: `Maximum ${MAX_QTY_PER_SKU} per voucher`,
+          description: `Your cart already has ${existing.quantity} of this voucher. Only ${MAX_QTY_PER_SKU} are allowed per order.`,
+          variant: "destructive",
+        });
+      }
       existing.quantity = Math.min(existing.quantity + qty, stockQty());
       existing.unitPrice = unit;
     } else {

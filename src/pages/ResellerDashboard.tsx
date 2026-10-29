@@ -4,7 +4,9 @@
 //             (GET /v1/reseller/orders/{orderNumber}, incl. credentials).
 //   Vouchers— credentials aggregated from completed order details; date
 //             filter; click a row for PIN / card / activation details.
-//   Failed  — orders whose status is FAILED; click for detail.
+//   Pending — unsent cart (click -> cart) + orders still PENDING/PROCESSING.
+//   Failed  — FAILED / PARTIALLY_FAILED orders; expand to see which line failed.
+//   Excel   — ONE .xlsx per order (all its line items) from any order/voucher group.
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -21,7 +23,11 @@ import {
   Copy,
   X,
   Receipt,
-  Download,
+  Clock,
+  XCircle,
+  ChevronDown,
+  FileSpreadsheet,
+  Loader2,
 } from "lucide-react";
 import {
   getResellerSession,
@@ -33,8 +39,9 @@ import {
   fetchResellerJwt,
   resellerLogout,
   getResellerCart,
-  vouchersToCsv,
-  downloadTextFile,
+  downloadBlob,
+  orderToXlsx,
+  type ResellerCartItem,
   fetchResellerProfile,
   type ResellerOrderRow,
   type ResellerOrderResult,
@@ -45,7 +52,7 @@ import {
 } from "@/api/resellerApi";
 import { useToast } from "@/hooks/use-toast";
 
-type Tab = "orders" | "vouchers" | "transactions";
+type Tab = "orders" | "pending" | "failed" | "vouchers" | "transactions";
 
 const money = (n: number) =>
   `₹${Number(n || 0).toLocaleString("en-IN", {
@@ -77,6 +84,12 @@ export default function ResellerDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(0);
+  const [cartItems, setCartItems] = useState<ResellerCartItem[]>([]);
+  const [exporting, setExporting] = useState<string | null>(null);
+  const [failedOpen, setFailedOpen] = useState<Record<string, boolean>>({});
+  const [failedDetails, setFailedDetails] = useState<
+    Record<string, ResellerOrderResult | "loading" | "error">
+  >({});
 
   // Tabs
   const [tab, setTab] = useState<Tab>("orders");
@@ -100,8 +113,11 @@ export default function ResellerDashboard() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
 
-  const refreshCartCount = () =>
-    setCartCount(getResellerCart().reduce((s, i) => s + i.quantity, 0));
+  const refreshCartCount = () => {
+    const items = getResellerCart();
+    setCartItems(items);
+    setCartCount(items.reduce((s, i) => s + i.quantity, 0));
+  };
 
   /** Flatten credentials from completed order details into voucher rows. */
   const loadVouchers = useCallback(async (allOrders: ResellerOrderRow[]) => {
@@ -241,34 +257,39 @@ export default function ResellerDashboard() {
       .catch(() => undefined);
   };
 
-  /** Export-all: every voucher matching the current date filter. */
-  const handleExportAll = () => {
-    if (filteredVouchers.length === 0) {
+  /** ONE Excel file for ONE order (all its line items). */
+  const handleExportOrder = async (orderNumber: string, createdAt?: string) => {
+    setExporting(orderNumber);
+    try {
+      const details = await fetchResellerOrderDetails(orderNumber);
+      const blob = await orderToXlsx(details, createdAt);
+      const name = `order-${details.clientOrderRef || details.orderNumber}.xlsx`;
+      downloadBlob(blob, name);
+      toast({ title: "Excel downloaded", description: name, duration: 2500 });
+    } catch {
       toast({
-        title: "Nothing to export",
-        description: "No vouchers match the current filter.",
+        title: "Couldn't create the Excel file",
+        description: "Please try again.",
         variant: "destructive",
       });
-      return;
+    } finally {
+      setExporting(null);
     }
-    const name =
-      dateFrom || dateTo
-        ? `vouchers-${dateFrom || "open"}_${dateTo || "open"}.csv`
-        : "vouchers.csv";
-    downloadTextFile(vouchersToCsv(filteredVouchers), name);
-    toast({
-      title: "Export downloaded",
-      description: `${filteredVouchers.length} voucher${filteredVouchers.length === 1 ? "" : "s"} · ${name}`,
-      duration: 2500,
-    });
   };
 
-  /** Export-one: a single voucher from the detail view. */
-  const handleExportOne = (v: ResellerVoucherRow) => {
-    const tag = (v.cardNumber || v.brandSku || "voucher").slice(-6);
-    const name = `voucher-${tag}.csv`;
-    downloadTextFile(vouchersToCsv([v]), name);
-    toast({ title: "Export downloaded", description: name, duration: 2000 });
+  /** Failed tab: expand/collapse an order, loading its lines on first open. */
+  const toggleFailed = async (orderNumber: string) => {
+    const open = !failedOpen[orderNumber];
+    setFailedOpen((m) => ({ ...m, [orderNumber]: open }));
+    if (open && !failedDetails[orderNumber]) {
+      setFailedDetails((m) => ({ ...m, [orderNumber]: "loading" }));
+      try {
+        const d = await fetchResellerOrderDetails(orderNumber);
+        setFailedDetails((m) => ({ ...m, [orderNumber]: d }));
+      } catch {
+        setFailedDetails((m) => ({ ...m, [orderNumber]: "error" }));
+      }
+    }
   };
 
   const filteredVouchers = vouchers.filter((v) => {
@@ -278,23 +299,31 @@ export default function ResellerDashboard() {
     return true;
   });
 
-  // Display shows every order under a hardcoded "Completed" badge (product
-  // decision); server truth stays in the detail view + Transactions ledger.
-  const completedOrders = orders;
+  const completedOrders = orders.filter((o) => o.status === "COMPLETED");
+  const pendingOrders = orders.filter((o) =>
+    ["PENDING", "PROCESSING", "PLACED"].includes(o.status)
+  );
+  const failedOrders = orders.filter((o) =>
+    ["FAILED", "PARTIALLY_FAILED"].includes(o.status)
+  );
+
+  // Vouchers grouped by order, so each order gets its own Excel download.
+  const voucherGroups = (() => {
+    const map = new Map<string, ResellerVoucherRow[]>();
+    for (const v of filteredVouchers) {
+      const list = map.get(v.orderNumber) ?? [];
+      list.push(v);
+      map.set(v.orderNumber, list);
+    }
+    return Array.from(map.entries());
+  })();
+
   const stats: { key: Tab; icon: typeof ShoppingBag; label: string; value: number }[] = [
     { key: "orders", icon: ShoppingBag, label: "Completed", value: completedOrders.length },
-    {
-      key: "vouchers",
-      icon: TrendingUp,
-      label: "Vouchers",
-      value: vouchers.length,
-    },
-    {
-      key: "transactions",
-      icon: Receipt,
-      label: "Transactions",
-      value: transactions.length,
-    },
+    { key: "pending", icon: Clock, label: "Pending", value: cartItems.length + pendingOrders.length },
+    { key: "failed", icon: XCircle, label: "Failed", value: failedOrders.length },
+    { key: "vouchers", icon: TrendingUp, label: "Vouchers", value: vouchers.length },
+    { key: "transactions", icon: Receipt, label: "Txns", value: transactions.length },
   ];
 
   /* ----------------------------------------------------------- detail views */
@@ -461,6 +490,19 @@ export default function ResellerDashboard() {
                 }
               />
             </div>
+            <button
+              onClick={() =>
+                void handleExportOrder(
+                  selectedOrder.orderNumber,
+                  orders.find((o) => o.orderNumber === selectedOrder.orderNumber)?.createdAt
+                )
+              }
+              disabled={exporting === selectedOrder.orderNumber}
+              className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-full border border-purple-300 bg-white text-xs font-bold text-purple-700 transition-all active:scale-95 disabled:opacity-60"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Download order (Excel)
+            </button>
           </div>
 
           {(selectedOrder.items ?? []).map((item) => (
@@ -547,11 +589,14 @@ export default function ResellerDashboard() {
               <Row label="Order date" value={shortDate(selectedVoucher.orderDate)} />
             </div>
             <button
-              onClick={() => handleExportOne(selectedVoucher)}
-              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-purple-300 bg-white text-sm font-bold text-purple-700 transition-all active:scale-95"
+              onClick={() =>
+                void handleExportOrder(selectedVoucher.orderNumber, selectedVoucher.orderDate)
+              }
+              disabled={exporting === selectedVoucher.orderNumber}
+              className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full border border-purple-300 bg-white text-sm font-bold text-purple-700 transition-all active:scale-95 disabled:opacity-60"
             >
-              <Download className="h-4 w-4" />
-              Download voucher (CSV)
+              <FileSpreadsheet className="h-4 w-4" />
+              Download this order (Excel)
             </button>
             {selectedVoucher.activationUrl && (
               <a
@@ -676,8 +721,8 @@ export default function ResellerDashboard() {
               </button>
             </section>
 
-            {/* Stats — Orders / Vouchers / Transactions (tab switchers) */}
-            <section className="mt-4 grid grid-cols-3 gap-3">
+            {/* Stats — Completed / Pending / Failed / Vouchers / Txns (tab switchers) */}
+            <section className="mt-4 grid grid-cols-5 gap-1.5">
               {stats.map((stat) => (
                 <button
                   key={stat.key}
@@ -686,14 +731,14 @@ export default function ResellerDashboard() {
                     setSelectedOrder(null);
                     setSelectedVoucher(null);
                   }}
-                  className={`rounded-xl p-3 text-center shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-95 ${
+                  className={`rounded-xl px-1 py-2.5 text-center shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-95 ${
                     tab === stat.key
                       ? "bg-gradient-to-r from-purple-500 to-blue-500 text-white"
                       : "bg-white text-gray-900"
                   }`}
                 >
                   <div
-                    className={`mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-lg ${
+                    className={`mx-auto mb-1 flex h-7 w-7 items-center justify-center rounded-lg ${
                       tab === stat.key ? "bg-white/20" : "bg-purple-50"
                     }`}
                   >
@@ -713,7 +758,7 @@ export default function ResellerDashboard() {
                     )}
                   </p>
                   <p
-                    className={`text-[10px] font-medium leading-tight ${
+                    className={`text-[9px] font-medium leading-tight ${
                       tab === stat.key ? "text-white/90" : "text-gray-500"
                     }`}
                   >
@@ -732,26 +777,171 @@ export default function ResellerDashboard() {
                   ) : (
                     <div className="space-y-2">
                       {completedOrders.map((o) => (
-                        <OrderRow key={o.orderNumber} order={o} onOpen={openOrder} />
+                        <OrderRow
+                          key={o.orderNumber}
+                          order={o}
+                          onOpen={openOrder}
+                          onExport={handleExportOrder}
+                          exporting={exporting === o.orderNumber}
+                        />
                       ))}
                     </div>
                   )}
                 </TabList>
               )}
 
+              {tab === "pending" && (
+                <TabList title="Pending">
+                  {cartItems.length === 0 && pendingOrders.length === 0 ? (
+                    <Empty text="Nothing pending" />
+                  ) : (
+                    <div className="space-y-2">
+                      {cartItems.length > 0 && (
+                        <button
+                          onClick={() => setLocation("/reseller/cart")}
+                          className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left shadow-[0px_4px_12px_rgba(0,0,0,0.06)] ring-1 ring-purple-200 transition-all active:scale-[0.99]"
+                        >
+                          <div className="min-w-0">
+                            <p className="text-xs font-bold text-gray-900">
+                              Cart — not ordered yet
+                            </p>
+                            <p className="truncate text-[10px] text-gray-500">
+                              {cartItems
+                                .map((i) => `${i.brandName} × ${i.quantity}`)
+                                .join(", ")}
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <span className="rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700">
+                              Continue
+                            </span>
+                            <ChevronRight className="h-4 w-4 text-gray-300" />
+                          </div>
+                        </button>
+                      )}
+                      {pendingOrders.map((o) => (
+                        <button
+                          key={o.orderNumber}
+                          onClick={() => openOrder(o.orderNumber)}
+                          className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-[0.99]"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate text-xs font-bold text-gray-900">
+                              {o.clientOrderRef || o.orderNumber}
+                            </p>
+                            <p className="truncate text-[10px] text-gray-500">
+                              {o.orderNumber} · {shortDate(o.createdAt)} · being processed
+                            </p>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2">
+                            <div className="text-right">
+                              <p className="text-xs font-bold tabular-nums text-gray-900">
+                                {money(Number(o.totalAmount))}
+                              </p>
+                              <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusChip(o.status)}`}>
+                                {o.status}
+                              </span>
+                            </div>
+                            <ChevronRight className="h-4 w-4 text-gray-300" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </TabList>
+              )}
+
+              {tab === "failed" && (
+                <TabList title="Failed orders">
+                  {failedOrders.length === 0 ? (
+                    <Empty text="No failed orders" />
+                  ) : (
+                    <div className="space-y-2">
+                      {failedOrders.map((o) => {
+                        const open = !!failedOpen[o.orderNumber];
+                        const d = failedDetails[o.orderNumber];
+                        return (
+                          <div
+                            key={o.orderNumber}
+                            className="overflow-hidden rounded-xl bg-white shadow-[0px_4px_12px_rgba(0,0,0,0.06)]"
+                          >
+                            <button
+                              onClick={() => void toggleFailed(o.orderNumber)}
+                              className="flex w-full items-center justify-between px-4 py-3 text-left"
+                              aria-expanded={open}
+                            >
+                              <div className="min-w-0">
+                                <p className="truncate text-xs font-bold text-gray-900">
+                                  {o.clientOrderRef || o.orderNumber}
+                                </p>
+                                <p className="truncate text-[10px] text-gray-500">
+                                  {o.orderNumber} · {shortDate(o.createdAt)}
+                                </p>
+                              </div>
+                              <div className="flex shrink-0 items-center gap-2">
+                                <div className="text-right">
+                                  <p className="text-xs font-bold tabular-nums text-gray-900">
+                                    {money(Number(o.totalAmount))}
+                                  </p>
+                                  <span className={`inline-block rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusChip(o.status)}`}>
+                                    {o.status.replace("_", " ")}
+                                  </span>
+                                </div>
+                                <ChevronDown
+                                  className={`h-4 w-4 text-gray-400 transition-transform ${open ? "rotate-180" : ""}`}
+                                />
+                              </div>
+                            </button>
+                            {open && (
+                              <div className="space-y-1.5 border-t border-gray-100 bg-gray-50/60 px-4 py-3">
+                                {d === "loading" || d === undefined ? (
+                                  <p className="text-[11px] text-gray-500">Loading items…</p>
+                                ) : d === "error" ? (
+                                  <p className="text-[11px] text-red-500">
+                                    Couldn't load the items. Collapse and open again to retry.
+                                  </p>
+                                ) : (
+                                  <>
+                                    {(d.items ?? []).map((it) => {
+                                      const bad = (it.fulfillmentStatus || "").toUpperCase() === "FAILED";
+                                      return (
+                                        <div
+                                          key={it.itemId}
+                                          className={`flex items-center justify-between rounded-lg px-3 py-2 ${
+                                            bad ? "bg-red-50 ring-1 ring-red-100" : "bg-white"
+                                          }`}
+                                        >
+                                          <div className="min-w-0">
+                                            <p className="truncate text-xs font-bold text-gray-900">
+                                              {it.brandName}
+                                            </p>
+                                            <p className="truncate text-[10px] text-gray-500">
+                                              {it.brandSku} · {it.quantity} × {money(Number(it.unitPrice))}
+                                            </p>
+                                          </div>
+                                          <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusChip(it.fulfillmentStatus)}`}>
+                                            {it.fulfillmentStatus}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                    <p className="pt-1 text-[10px] text-gray-500">
+                                      Any wallet amount charged for a failed order is refunded automatically.
+                                    </p>
+                                  </>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </TabList>
+              )}
+
               {tab === "vouchers" && (
-                <TabList
-                  title="Vouchers"
-                  action={
-                    <button
-                      onClick={handleExportAll}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-purple-700 shadow ring-1 ring-purple-200 transition-all active:scale-95"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      Export all
-                    </button>
-                  }
-                >
+                <TabList title="Vouchers">
                   {/* Date filter */}
                   <div className="mb-3 rounded-xl bg-white p-3 shadow-sm">
                     <div className="flex items-center gap-2">
@@ -815,29 +1005,54 @@ export default function ResellerDashboard() {
                       }
                     />
                   ) : (
-                    <div className="space-y-2">
-                      {filteredVouchers.map((v, i) => (
-                        <button
-                          key={`${v.orderNumber}-${v.cardNumber ?? i}`}
-                          onClick={() => setSelectedVoucher(v)}
-                          className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-[0.99]"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-xs font-bold text-gray-900">
-                              {v.brandName}
-                            </p>
-                            <p className="truncate text-[10px] text-gray-500">
-                              {v.cardNumber
-                                ? `•••• ${v.cardNumber.slice(-4)}`
-                                : v.brandSku}{" "}
-                              · {shortDate(v.orderDate)}
-                            </p>
+                    <div className="space-y-4">
+                      {voucherGroups.map(([orderNumber, rows]) => (
+                        <div key={orderNumber}>
+                          <div className="mb-1.5 flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="truncate text-[11px] font-bold text-gray-800">
+                                {rows[0].clientOrderRef || orderNumber}
+                              </p>
+                              <p className="truncate text-[10px] text-gray-500">
+                                {shortDate(rows[0].orderDate)} · {rows.length} voucher{rows.length === 1 ? "" : "s"}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => void handleExportOrder(orderNumber, rows[0].orderDate)}
+                              disabled={exporting === orderNumber}
+                              className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-[11px] font-semibold text-purple-700 shadow ring-1 ring-purple-200 transition-all active:scale-95 disabled:opacity-60"
+                            >
+                              {exporting === orderNumber ? (
+                                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              ) : (
+                                <FileSpreadsheet className="h-3.5 w-3.5" />
+                              )}
+                              Excel
+                            </button>
                           </div>
-                          <div className="flex shrink-0 items-center gap-1 text-[10px] text-gray-400">
-                            {v.cardPin ? "PIN" : ""}
-                            <ChevronRight className="h-4 w-4" />
+                          <div className="space-y-2">
+                            {rows.map((v, i) => (
+                              <button
+                                key={`${v.orderNumber}-${v.cardNumber ?? i}`}
+                                onClick={() => setSelectedVoucher(v)}
+                                className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-[0.99]"
+                              >
+                                <div className="min-w-0">
+                                  <p className="truncate text-xs font-bold text-gray-900">
+                                    {v.brandName}
+                                  </p>
+                                  <p className="truncate text-[10px] text-gray-500">
+                                    {v.cardNumber ? `•••• ${v.cardNumber.slice(-4)}` : v.brandSku}
+                                  </p>
+                                </div>
+                                <div className="flex shrink-0 items-center gap-1 text-[10px] text-gray-400">
+                                  {v.cardPin ? "PIN" : ""}
+                                  <ChevronRight className="h-4 w-4" />
+                                </div>
+                              </button>
+                            ))}
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   )}
@@ -1105,36 +1320,49 @@ function TransactionRow({
 function OrderRow({
   order,
   onOpen,
+  onExport,
+  exporting,
 }: {
   order: ResellerOrderRow;
   onOpen: (orderNumber: string) => void;
+  onExport: (orderNumber: string, createdAt?: string) => void;
+  exporting: boolean;
 }) {
   return (
-    <button
-      onClick={() => onOpen(order.orderNumber)}
-      className="flex w-full items-center justify-between rounded-xl bg-white px-4 py-3 text-left shadow-[0px_4px_12px_rgba(0,0,0,0.06)] transition-all active:scale-[0.99]"
-    >
-      <div className="min-w-0">
-        <p className="truncate text-xs font-bold text-gray-900">
-          {order.clientOrderRef || order.orderNumber}
-        </p>
-        <p className="truncate text-[10px] text-gray-500">
-          {order.orderNumber} · {shortDate(order.createdAt)}
-        </p>
-      </div>
-      <div className="flex shrink-0 items-center gap-2">
+    <div className="flex items-center gap-2 rounded-xl bg-white pr-3 shadow-[0px_4px_12px_rgba(0,0,0,0.06)]">
+      <button
+        onClick={() => onOpen(order.orderNumber)}
+        className="flex min-w-0 flex-1 items-center justify-between px-4 py-3 text-left transition-all active:scale-[0.99]"
+      >
+        <div className="min-w-0">
+          <p className="truncate text-xs font-bold text-gray-900">
+            {order.clientOrderRef || order.orderNumber}
+          </p>
+          <p className="truncate text-[10px] text-gray-500">
+            {order.orderNumber} · {shortDate(order.createdAt)}
+          </p>
+        </div>
         <div className="text-right">
           <p className="text-xs font-bold text-gray-900 tabular-nums">
             {money(Number(order.totalAmount))}
           </p>
-          {/* Display hardcodes Completed per product decision — the server
-              status remains available in the detail view & Transactions tab. */}
           <span className="inline-block rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
             COMPLETED
           </span>
         </div>
-        <ChevronRight className="h-4 w-4 text-gray-300" />
-      </div>
-    </button>
+      </button>
+      <button
+        onClick={() => onExport(order.orderNumber, order.createdAt)}
+        disabled={exporting}
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-purple-50 text-purple-700 transition-all active:scale-95 disabled:opacity-60"
+        aria-label="Download order as Excel"
+      >
+        {exporting ? (
+          <Loader2 className="h-4 w-4 animate-spin" />
+        ) : (
+          <FileSpreadsheet className="h-4 w-4" />
+        )}
+      </button>
+    </div>
   );
 }
