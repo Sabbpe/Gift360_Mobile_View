@@ -5,6 +5,7 @@ import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
@@ -516,30 +517,15 @@ const isProcessing =
     <ShoppingCart className="h-5 w-5" />
     Add to Cart
   </button>
-  <div className="mt-3 flex gap-3">
-    <button
-      type="button"
-      onClick={() => handlePayNow("CHOOSE")}
-      disabled={isProcessing || !isValidAmount()}
-      className="h-12 flex-1 rounded-lg text-base font-bold border-2 border-primary text-primary transition-all hover:bg-primary/10 active:scale-[0.98] disabled:opacity-60"
-    >
-      Pay using
-    </button>
-    <button
-      disabled={isProcessing}
-      onClick={() => handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ")}
-      className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
-        isValidAmount() && !isProcessing
-          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-          : "bg-muted text-muted-foreground opacity-60 hover:bg-muted/70"
-      }`}
-    >
-      {createOrderMutation.isPending && "Creating..."}
-      {validateOrderMutation.isPending && "Validating..."}
-      {backendPaymentMutation.isPending && "Processing..."}
-      {!isProcessing && "Pay Now"}
-    </button>
-  </div>
+  <PayUsingField
+    label={activePaymentMethod?.label ?? "UPI"}
+    subtext={payMethodSubtext(activePaymentMethod?.code)}
+    amountLabel={isValidAmount() ? `Pay ₹${(Number(amount) * quantity).toFixed(2)}` : "Pay Now"}
+    onClick={() => handlePayNow("CHOOSE")}
+    disabled={isProcessing || !isValidAmount()}
+    loading={isProcessing}
+    className="mt-3"
+  />
 </div>
 
         </div>

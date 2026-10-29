@@ -11,6 +11,7 @@ import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import { isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
 import AddToCartSuccessModal from "@/components/AddToCartSuccessModal";
@@ -699,29 +700,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     }
   };
 
-  const handlePayPressed = () => {
-    // ONE Pay button: UPI goes to the Juspay intent flow, every other mode
-    // (NB / Debit / Credit) keeps the Easebuzz hosted checkout.
-    const choice = isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ";
-    payViaRef.current = choice;
-    if (!user?.clientId) {
-      toast({
-        description: "Please login to continue payment",
-        variant: "destructive",
-      });
-      window.setTimeout(() => navigate("/login"), 1500);
-      return;
-    }
-    // Same as Cart's onPayPressed: coins selected but not yet authorised ->
-    // ask with the "Use X SuperCoins?" prompt first, then the Flipkart OTP.
-    if (inSuperCoinMode && !scAuthorized && scPreviewDeduction > 0) {
-      setScPromptOpen(true);
-      return;
-    }
-    void doPay(choice);
-  };
-
-  // Left-hand "Pay using" button: always opens the full payment chooser.
+  // Single checkout button: always opens the full payment chooser (after the
+  // SuperCoin prompt when coins are selected but not yet authorised).
   const handlePayUsingPressed = () => {
     payViaRef.current = "CHOOSE";
     if (!user?.clientId) {
@@ -1638,26 +1618,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handlePayUsingPressed}
-                      disabled={isProcessing || displayTotal <= 0}
-                      className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      Pay using
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePayPressed}
-                      disabled={isProcessing || displayTotal <= 0}
-                      className="flex h-12 flex-[1.35] items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {isProcessing
-                        ? "Processing..."
-                        : `Pay ₹${displayTotal.toFixed(2)}`}
-                    </button>
-                  </div>
+                  <PayUsingField
+                    label={activePaymentMethod?.label ?? "UPI"}
+                    subtext={payMethodSubtext(activePaymentMethod?.code)}
+                    amountLabel={`Pay ₹${displayTotal.toFixed(2)}`}
+                    onClick={handlePayUsingPressed}
+                    disabled={isProcessing || displayTotal <= 0}
+                    loading={isProcessing}
+                  />
                 </div>
               )}
 
@@ -1817,26 +1785,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={handlePayUsingPressed}
-                      disabled={isProcessing || displayTotal <= 0}
-                      className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      Pay using
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePayPressed}
-                      disabled={isProcessing || displayTotal <= 0}
-                      className="flex h-12 flex-[1.35] items-center justify-center rounded-2xl bg-gradient-to-r from-[#9747FF] to-[#5B2B99] text-[15px] font-bold text-white shadow-lg shadow-[rgba(151,71,255,0.3)] transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                      {isProcessing
-                        ? "Processing..."
-                        : `Pay ₹${displayTotal.toFixed(2)}`}
-                    </button>
-                  </div>
+                  <PayUsingField
+                    label={activePaymentMethod?.label ?? "UPI"}
+                    subtext={payMethodSubtext(activePaymentMethod?.code)}
+                    amountLabel={`Pay ₹${displayTotal.toFixed(2)}`}
+                    onClick={handlePayUsingPressed}
+                    disabled={isProcessing || displayTotal <= 0}
+                    loading={isProcessing}
+                  />
                 </div>
               )}
             </div>

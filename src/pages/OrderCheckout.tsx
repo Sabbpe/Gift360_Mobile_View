@@ -18,7 +18,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, Loader2, ShoppingBag } from "lucide-react";
+import { Minus, Plus, Sparkles, Clock, Wallet, ArrowLeft, ShoppingBag } from "lucide-react";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
@@ -28,6 +28,7 @@ import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { initiateRetryPayment } from "@/api/paymentApi";
 import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
@@ -1165,13 +1166,6 @@ export default function OrderCheckout() {
 
                     <Separator />
 
-                    {useMethodFee && (
-                      <div className="flex items-center justify-between rounded-xl bg-[#F7F2FF] px-3 py-2 text-[11px] font-semibold text-[#5B2B99]">
-                        <span>Paying via {activePaymentMethod?.label ?? "UPI"}</span>
-                        <span>Fee ₹{PLATFORM_FEE.toFixed(2)}</span>
-                      </div>
-                    )}
-
                     {PLATFORM_FEE > 0 && (
                       <div className="flex items-center justify-between">
                         <span className="text-sm sm:text-base cart-text-secondary">
@@ -1190,25 +1184,14 @@ export default function OrderCheckout() {
                         </div>
                       </div>
 
-                    <div className="flex gap-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="h-12 flex-1 text-sm font-bold"
-                        onClick={() => void handlePayNow("CHOOSE")}
-                        disabled={isProcessing || orderLoading || cartItems.length === 0}
-                      >
-                        Pay using
-                      </Button>
-                      <Button
-                        type="button"
-                        className="cart-gradient-fill h-12 flex-[1.35] text-base font-bold"
-                        onClick={() => void handlePayNow(isUpiPaymentMethod(activePaymentMethod?.code) ? "CHOOSE" : "EASEBUZZ")}
-                        disabled={isProcessing || orderLoading || cartItems.length === 0}
-                      >
-                        {isProcessing ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Starting payment...</> : "Pay Now"}
-                      </Button>
-                    </div>
+                    <PayUsingField
+                      label={activePaymentMethod?.label ?? "UPI"}
+                      subtext={payMethodSubtext(activePaymentMethod?.code)}
+                      amountLabel={`Pay ₹${uiTotalToPay.toFixed(2)}`}
+                      onClick={() => void handlePayNow("CHOOSE")}
+                      disabled={isProcessing || orderLoading || cartItems.length === 0}
+                      loading={isProcessing}
+                    />
                   </CardContent>
                 </Card>
               </div>

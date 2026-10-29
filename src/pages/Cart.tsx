@@ -17,6 +17,7 @@ import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
@@ -1631,21 +1632,8 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
     setPayOpen(true);
   };
 
-  // Pay inside the sheet: UPI continues on Juspay, every other mode keeps the
-  // Easebuzz hosted checkout. Ask about SuperCoins first when needed.
-  const onPayPressed = () => {
-    const gateway = isUpiPaymentMethod(activePaymentMethod?.code) ? "choose" : "easebuzz";
-    payViaRef.current = gateway;
-    if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
-      setPayOpen(false);
-      setScPromptOpen(true);
-      return;
-    }
-    setPayOpen(false);
-    void handlePayNow(gateway);
-  };
-
-  // Left-hand "Pay using" button: always opens the full payment chooser.
+  // Single checkout button: opens the full payment chooser. Ask about
+  // SuperCoins first when coins are selected but not yet authorised.
   const onPayUsingPressed = () => {
     payViaRef.current = "choose";
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
@@ -2713,35 +2701,14 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
               </button>
             </div>
 
-            <div className="flex items-center justify-between rounded-xl bg-[#F7F2FF] px-3 py-2 text-[11px] font-semibold text-[#5B2B99]">
-              <span>Paying via {activePaymentMethod?.label ?? "UPI"}</span>
-              <span>Fee ₹{displayFee.toFixed(2)}</span>
-            </div>
-
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={onPayUsingPressed}
-                disabled={isProcessing}
-                className="h-12 flex-1 rounded-2xl border border-[#E2D9FF] bg-white text-[13px] font-bold text-[#5B2B99] shadow-sm transition-all active:scale-[0.98] disabled:opacity-50"
-              >
-                Pay using
-              </button>
-              <button
-                type="button"
-                className="cart-gradient-fill h-12 flex-[1.35] rounded-2xl font-bold shadow-lg shadow-[rgba(108,92,231,0.25)] transition-all active:scale-[0.98] disabled:opacity-50"
-                onClick={onPayPressed}
-                disabled={isProcessing || easebuzzScriptStatus !== "ready"}
-              >
-              {easebuzzScriptStatus === "loading"
-                ? "Loading..."
-                : easebuzzScriptStatus === "error"
-                  ? "Payment unavailable"
-                    : isProcessing
-                      ? "Processing..."
-                      : `Pay ₹${displayTotal.toFixed(2)}`}
-              </button>
-            </div>
+            <PayUsingField
+              label={activePaymentMethod?.label ?? "UPI"}
+              subtext={payMethodSubtext(activePaymentMethod?.code)}
+              amountLabel={`Pay ₹${displayTotal.toFixed(2)}`}
+              onClick={onPayUsingPressed}
+              disabled={isProcessing}
+              loading={isProcessing}
+            />
           </div>
         </div>
       )}
