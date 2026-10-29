@@ -29,7 +29,18 @@ export type UpiIntentPhase =
   | "failed"
   | "expired";
 
-const POLL_INTERVAL_MS = 2000;
+const DEFAULT_POLL_INTERVAL_MS = 2000;
+const MIN_POLL_INTERVAL_MS = 500;
+
+/** Status-poll interval from .env: VITE_UPI_POLL_INTERVAL_MS (default 2000ms). */
+const resolvePollIntervalMs = (): number => {
+  const raw = Number(import.meta.env.VITE_UPI_POLL_INTERVAL_MS);
+  return Number.isFinite(raw) && raw > 0
+    ? Math.max(MIN_POLL_INTERVAL_MS, Math.round(raw))
+    : DEFAULT_POLL_INTERVAL_MS;
+};
+
+const POLL_INTERVAL_MS = resolvePollIntervalMs();
 
 interface Options {
   orderNumber: string;
