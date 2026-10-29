@@ -225,7 +225,7 @@ const orderRequest = {
       console.log("Order created successfully:", orderResponse);
       // Use the backend-confirmed order number for validation and payment.
       const confirmedOrderNumber = orderResponse.orderNumber || orderNumber;
-      validateOrder(confirmedOrderNumber, totalAmount);
+      validateOrder(confirmedOrderNumber, totalAmount, choice);
     },
     onError: (error: any) => {
       console.error("Order creation error:", error);
@@ -257,7 +257,7 @@ const orderRequest = {
 };
 
 
-const validateOrder = (orderNumber: string, totalAmount: number) => {
+const validateOrder = (orderNumber: string, totalAmount: number, choice: "EASEBUZZ" | "CHOOSE" = "EASEBUZZ") => {
   console.log("Validating order:", orderNumber);
   validateOrderMutation.mutate(
     {

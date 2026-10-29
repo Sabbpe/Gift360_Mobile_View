@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowUp, Minus, Plus } from "lucide-react";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { useAuthContext } from "@/contexts/AuthContext";
@@ -70,7 +70,7 @@ export default function BrandBuySheet({
       brandName: brand.BrandName,
       quantity,
       unitValue: amount,
-      image: getImage(brand) !== FALLBACK ? getImage(brand) : undefined,
+      image: getImage(brand) !== FALLBACK_IMAGE ? getImage(brand) : undefined,
     });
     // close sheet first for UX
     onClose();
