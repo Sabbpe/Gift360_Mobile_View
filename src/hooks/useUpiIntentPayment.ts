@@ -29,7 +29,7 @@ export type UpiIntentPhase =
   | "failed"
   | "expired";
 
-const POLL_INTERVAL_MS = 3500;
+const POLL_INTERVAL_MS = 2000;
 
 interface Options {
   orderNumber: string;
