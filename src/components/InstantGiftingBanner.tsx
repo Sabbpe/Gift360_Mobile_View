@@ -1,23 +1,24 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation } from "wouter";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Gift, Coins, RefreshCw, BadgeDollarSign } from "lucide-react";
+import { ArrowRight, Gift, RefreshCw, BadgeDollarSign } from "lucide-react";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { useOccasions } from "@/hooks/useOccasions";
-import { occasionSlug } from "@/lib/occasionSlug";
 import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
 import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import partnerImg from "@/assets/coorp.png";
-import occasionImg from "@/assets/occasion.png";
-import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
-import superCoinsAppPromotionImg from "@/assets/Gift360 SuperCoins App Promotion.png";
-import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
-import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
+import appBanner480 from "@/assets/banners/app-download-banner-480.webp";
+import appBanner800 from "@/assets/banners/app-download-banner-800.webp";
+import quizBanner480 from "@/assets/banners/quiz-banner-480.webp";
+import quizBanner800 from "@/assets/banners/quiz-banner-800.webp";
+import coinsBanner480 from "@/assets/banners/coins-to-voucher-banner-480.webp";
+import coinsBanner800 from "@/assets/banners/coins-to-voucher-banner-800.webp";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 
-const BLINKIT_BRAND_ID = "a5fea1a3-3e17-414f-a953-407125080d77";
-const BATA_BRAND_ID = "335f53f7-68f6-4eb0-be45-e571c1044cf9";
-const TOTAL_SLIDES = 7;
+const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.gift360.gift360";
+const TOTAL_SLIDES = 4;
+/** Banner is full card width: ~92vw on phones, capped near 520px on wider screens. */
+const BANNER_SIZES = "(max-width: 560px) 92vw, 520px";
+const bannerSrc = (small: string, large: string) => ({ src: small, srcSet: `${small} 480w, ${large} 800w` });
 
 type InstantGiftingBannerProps = {
   onExplore?: () => void;
@@ -39,7 +40,7 @@ function usePrefersReducedMotion(): boolean {
 
 function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   return (
-    <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3">
+    <div className="relative w-full h-full flex items-center justify-between px-4 py-3 gap-3">
       <div className="flex-1 min-w-0 space-y-1.5">
         <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-white bg-[#7C3AED]">
           PARTNER
@@ -86,140 +87,89 @@ function PartnerSlide({ onPartnerClick }: { onPartnerClick?: () => void }) {
   );
 }
 
-/** Slide 2 — points at the existing "convert coins" guide (SuperCoinGuideSheet). */
-function ConvertCoinsSlide({ onViewGuide }: { onViewGuide: () => void }) {
-  return (
-    <div
-      className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3"
-      style={{ background: "linear-gradient(135deg, #5B2B99 0%, #7C3AED 100%)" }}
-    >
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
-          CONVERT COINS
-        </span>
-        <h2 className="text-[15px] font-bold text-white leading-tight">
-          Turn SuperCoins into gift vouchers
-        </h2>
-        <p className="text-[10px] text-white/85 leading-snug">
-          See how converting coins cuts what you pay — the full step-by-step guide.
-        </p>
-        <button
-          type="button"
-          onClick={onViewGuide}
-          className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[10px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all"
-        >
-          View guide
-          <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
-        </button>
-      </div>
-      <div className="w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
-        <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-10 w-10 object-contain anim-sc-wiggle" />
-      </div>
-    </div>
-  );
-}
-
 /**
- * Slide 3 — occasion shortcuts. Chips come straight from /v1/occasions (the
- * same ordered list the Home occasion sections are built from); tapping one
- * smooth-scrolls to that section. Chip styling mirrors the SuperCoins intro
- * tabs so it reads like the rest of the app.
+ * Full-bleed artwork banner. The artwork already carries the headline, the
+ * CTA button and (for the app slide) the Google Play badge, so the whole
+ * slide is the tap target. A gold shine sweeps across it and a small callout
+ * chip pulses in the corner to draw the eye; both are skipped for users who
+ * prefer reduced motion.
  */
-function OccasionSlide({
-  occasions,
-  pending,
-  selected,
-  onSelect,
+function ImageBannerSlide({
+  src,
+  srcSet,
+  alt,
+  callout,
+  calloutPosition = "top-right",
+  href,
+  onClick,
+  busy,
+  note,
+  reduced,
+  eager,
 }: {
-  occasions: string[];
-  pending: boolean;
-  selected: string | null;
-  onSelect: (occasion: string) => void;
+  src: string;
+  srcSet?: string;
+  alt: string;
+  callout?: string;
+  /** Corner for the callout chip, chosen per artwork so it never covers the copy. */
+  calloutPosition?: "top-right" | "bottom-left";
+  href?: string;
+  onClick?: () => void;
+  busy?: boolean;
+  note?: string | null;
+  reduced: boolean;
+  eager?: boolean;
 }) {
-  const list = occasions.filter((o) => o.trim().toLowerCase() !== "top brands");
-  return (
-    <div className="relative w-full h-[185px] flex items-center px-4 py-3 overflow-hidden">
-      {/* Festive backdrop — empty cream space on the left carries the content */}
+  const inner = (
+    <>
       <img
-        loading="lazy"
+        src={src}
+        srcSet={srcSet}
+        sizes={srcSet ? BANNER_SIZES : undefined}
+        width={480}
+        height={268}
+        alt={alt}
+        loading={eager ? "eager" : "lazy"}
         decoding="async"
-        src={occasionImg}
-        alt=""
-        className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
+        draggable={false}
+        className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none select-none"
       />
-      {/* Left column only — clears the gift-box/arch art on the right */}
-      <div className="relative flex-1 max-w-[50%] space-y-1.5">
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-extrabold tracking-[0.14em] text-white bg-[#7C3AED] shadow-[0_2px_6px_rgba(124,58,237,0.35)]">
-          OCCASIONS
+      {!reduced && <span aria-hidden className="g360-banner-shine pointer-events-none absolute inset-0" />}
+      {callout && (
+        <span
+          className={`absolute ${calloutPosition === "bottom-left" ? "left-2.5 bottom-2.5" : "right-2.5 top-2.5"} inline-flex items-center gap-1 rounded-full bg-[#F7D46B] px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#5B2B99] shadow-[0_4px_12px_rgba(0,0,0,0.25)] ${reduced ? "" : "g360-callout-pulse"}`}
+        >
+          {callout}
         </span>
-        <h2 className="text-[16px] font-extrabold text-gray-900 leading-[1.15] tracking-[-0.01em]">
-          Offers for <span className="text-[#7C3AED]">every occasion</span>
-        </h2>
-        <p className="text-[10px] font-semibold text-gray-600 leading-snug">
-          Pick one — jump straight to its picks.
-        </p>
-        <div className="no-scrollbar flex max-h-[76px] flex-wrap gap-1.5 overflow-y-auto pt-0.5">
-          {pending ? (
-            [0, 1, 2, 3].map((i) => (
-              <span key={i} className="g-skeleton h-[26px] w-[64px] rounded-full" />
-            ))
-          ) : list.length ? (
-            list.map((occasion) => {
-              const active = selected === occasion;
-              return (
-                <button
-                  key={occasion}
-                  type="button"
-                  onClick={() => onSelect(occasion)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-bold leading-none transition-all active:scale-95 ${
-                    active
-                      ? "bg-gradient-to-r from-[#9747FF] to-[#7C3AED] text-white shadow-[0_4px_10px_rgba(124,58,237,0.4)]"
-                      : "border border-[#E2D9FF] bg-white text-[#7C3AED] shadow-[0_2px_6px_rgba(124,58,237,0.10)] hover:border-[#7C3AED]/50"
-                  }`}
-                >
-                  {occasion}
-                </button>
-              );
-            })
-          ) : (
-            <span className="text-[10px] font-semibold text-gray-400">Loading occasions…</span>
-          )}
-        </div>
-      </div>
-    </div>
+      )}
+      {(busy || note) && (
+        <span className="absolute inset-x-2.5 bottom-2.5 rounded-lg bg-black/70 px-3 py-1.5 text-center text-[11px] font-semibold text-white backdrop-blur-sm">
+          {busy ? "Opening quiz..." : note}
+        </span>
+      )}
+    </>
   );
-}
 
-function QuizSlide({ title, sub, cta, onPlay, busy }: { title: string; sub: string; cta?: string; onPlay?: () => void; busy?: boolean }) {
+  const className =
+    "relative block h-full w-full overflow-hidden text-left active:scale-[0.995] transition-transform focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#7C3AED]";
+
+  if (href) {
+    return (
+      <a href={href} target="_blank" rel="noopener noreferrer" className={className} aria-label={alt}>
+        {inner}
+      </a>
+    );
+  }
   return (
-    <div className="relative w-full h-[185px] flex items-center justify-between px-4 py-3 gap-3"
-      style={{ background: "linear-gradient(135deg, #7C3AED 0%, #5B2B99 100%)" }}>
-      <div className="flex-1 min-w-0 space-y-1.5">
-        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[8px] font-bold tracking-wider text-[#5B2B99] bg-[#F7D46B]">
-          QUIZ
-        </span>
-        <h2 className="text-[15px] font-bold text-white leading-tight">{title}</h2>
-        <p className="text-[10px] text-white/85 leading-snug">{sub}</p>
-        {cta && (
-          <button
-            type="button"
-            onClick={onPlay}
-            disabled={busy}
-            className="mt-1 inline-flex items-center gap-1 rounded-lg px-3.5 py-1.5 text-[10px] font-bold text-[#5B2B99] bg-white shadow-md active:scale-[0.97] transition-all disabled:opacity-60"
-          >
-            {busy ? "Opening..." : cta}
-            <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
-          </button>
-        )}
-      </div>
-      <div className="w-[80px] h-[80px] flex-shrink-0 flex items-center justify-center rounded-full bg-white/15">
-        <Coins className="h-10 w-10 text-[#F7D46B]" strokeWidth={1.8} />
-      </div>
-    </div>
+    <button type="button" onClick={onClick} disabled={busy} className={className} aria-label={alt}>
+      {inner}
+    </button>
   );
 }
 
-export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyNow }: InstantGiftingBannerProps) {
+// onExplore / onBuyNow are kept in the props type for existing callers; the
+// Blinkit/Bata nudge slides that used them have been retired.
+export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingBannerProps) {
   const reduced = usePrefersReducedMotion();
   const scrollRef = useRef<HTMLDivElement>(null);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -316,24 +266,6 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
     [scrollTo, stopAutoplay]
   );
 
-  // Slide 3 — occasion shortcuts. The sections below render one block per
-  // occasion from the SAME /v1/occasions list, so the chip just smooth-scrolls
-  // to its anchor (and holds the carousel so the user can read the section).
-  const { data: occasions = [], isPending: occasionsPending } = useOccasions();
-  const [selectedOccasion, setSelectedOccasion] = useState<string | null>(null);
-
-  const scrollToOccasion = useCallback(
-    (occasion: string) => {
-      setSelectedOccasion(occasion);
-      userPausedRef.current = true;
-      stopAutoplay();
-      document
-        .getElementById(`occasion-${occasionSlug(occasion)}`)
-        ?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-    },
-    [reduced, stopAutoplay]
-  );
-
   useEffect(() => {
     startAutoplay();
     return () => stopAutoplay();
@@ -346,6 +278,23 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.7; }
           50% { transform: translateY(-8px) rotate(10deg); opacity: 1; }
         }
+        @keyframes g360-shine {
+          0% { transform: translateX(-120%) skewX(-20deg); }
+          60%, 100% { transform: translateX(220%) skewX(-20deg); }
+        }
+        .g360-banner-shine::after {
+          content: "";
+          position: absolute;
+          top: 0; bottom: 0; left: 0;
+          width: 35%;
+          background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,236,170,0.35) 50%, rgba(255,255,255,0) 100%);
+          animation: g360-shine 3.2s ease-in-out infinite;
+        }
+        @keyframes g360-callout {
+          0%, 100% { transform: scale(1); box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 0 0 rgba(247,212,107,0.7); }
+          50% { transform: scale(1.06); box-shadow: 0 4px 12px rgba(0,0,0,0.25), 0 0 0 6px rgba(247,212,107,0); }
+        }
+        .g360-callout-pulse { animation: g360-callout 1.6s ease-in-out infinite; }
         @keyframes gold-pulse {
           0%, 100% { filter: drop-shadow(0 0 4px rgba(255,200,0,0.3)); transform: scale(1); }
           25% { filter: drop-shadow(0 0 12px rgba(255,200,0,0.7)) drop-shadow(0 0 24px rgba(255,180,0,0.4)); transform: scale(1.05); }
@@ -367,59 +316,49 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
             scrollbarWidth: "none",
           }}
         >
-          <div className="flex-shrink-0 w-full snap-start">
-            <a
-              href="https://play.google.com/store/apps/details?id=com.gift360.gift360"
-              className="relative block h-[185px] w-full overflow-hidden text-left active:scale-[0.995] transition-transform"
-              aria-label="Download the Gift360 app from Google Play"
-            >
-              <img
-                loading="lazy"
-                decoding="async"
-                src={superCoinsAppPromotionImg}
-                alt="Download the Gift360 SuperCoins app"
-                className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
-              />
-            </a>
-          </div>
-          <div className="flex-shrink-0 w-full snap-start">
-            <ConvertCoinsSlide onViewGuide={() => setGuideOpen(true)} />
-          </div>
-          <div className="flex-shrink-0 w-full snap-start">
-            <OccasionSlide
-              occasions={occasions}
-              pending={occasionsPending}
-              selected={selectedOccasion}
-              onSelect={scrollToOccasion}
+          {/* 1 — App download */}
+          <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
+            <ImageBannerSlide
+              {...bannerSrc(appBanner480, appBanner800)}
+              alt="Gift360 is now on Google Play. Get it on Google Play"
+              callout="Get the app"
+              calloutPosition="bottom-left"
+              href={PLAY_STORE_URL}
+              reduced={reduced}
+              eager
             />
           </div>
-          <div className="flex-shrink-0 w-full snap-start">
-            {quizEarned ? (
-              <QuizSlide title="Quiz reward earned" sub="Your 5 bonus SuperCoins have been credited. Thanks for playing." />
-            ) : quizWon ? (
-              <QuizSlide
-                title="You won! Buy now to get 5 SuperCoins"
-                sub="Complete a purchase within 5 minutes of your win and 5 bonus SuperCoins are credited after your voucher is issued."
-                cta="Buy now"
-                onPlay={handleQuizPlay}
-              />
-            ) : (
-              <QuizSlide
-                title="Answer 5 questions, win 5 SuperCoins"
-                sub={quizNote || "Get all 5 right, then buy within 5 minutes and we credit 5 bonus SuperCoins."}
-                cta="Play now"
-                onPlay={handleQuizPlay}
-                busy={quizBusy}
-              />
-            )}
+          {/* 2 — Quiz */}
+          <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
+            <ImageBannerSlide
+              {...bannerSrc(quizBanner480, quizBanner800)}
+              alt="Quiz: answer 5 questions and win 5 SuperCoins"
+              callout={quizEarned ? "Reward earned" : quizWon ? "You won! Buy now" : "Play now"}
+              onClick={quizEarned ? undefined : handleQuizPlay}
+              busy={quizBusy}
+              note={
+                quizEarned
+                  ? "Your 5 bonus SuperCoins have been credited."
+                  : quizWon
+                    ? "Buy within 5 minutes of your win to get 5 SuperCoins."
+                    : quizNote
+              }
+              reduced={reduced}
+            />
           </div>
-          <div className="flex-shrink-0 w-full snap-start">
-            <BlinkitSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BLINKIT_BRAND_ID) : undefined} />
+          {/* 3 — Convert SuperCoins to vouchers */}
+          <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
+            <ImageBannerSlide
+              {...bannerSrc(coinsBanner480, coinsBanner800)}
+              alt="Turn SuperCoins into gift vouchers. View the guide"
+              callout="How it works"
+              calloutPosition="bottom-left"
+              onClick={() => setGuideOpen(true)}
+              reduced={reduced}
+            />
           </div>
-          <div className="flex-shrink-0 w-full snap-start">
-            <BataSuperCoinNudge onExplore={onExplore} onBuyNow={onBuyNow ? () => onBuyNow(BATA_BRAND_ID) : undefined} />
-          </div>
-          <div className="flex-shrink-0 w-full snap-start">
+          {/* 4 — Partner / bulk pricing */}
+          <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
             <PartnerSlide onPartnerClick={onPartnerClick} />
           </div>
         </div>
