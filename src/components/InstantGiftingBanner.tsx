@@ -8,9 +8,9 @@ import { occasionSlug } from "@/lib/occasionSlug";
 import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
 import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import partnerImg from "@/assets/coorp.png";
-import cashBannerImg from "@/assets/cashhbanner.png";
 import occasionImg from "@/assets/occasion.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
+import superCoinsAppPromotionImg from "@/assets/Gift360 SuperCoins App Promotion.png";
 import BlinkitSuperCoinNudge from "@/components/BlinkitSuperCoinNudge";
 import BataSuperCoinNudge from "@/components/BataSuperCoinNudge";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
@@ -368,54 +368,19 @@ export default function InstantGiftingBanner({ onExplore, onPartnerClick, onBuyN
           }}
         >
           <div className="flex-shrink-0 w-full snap-start">
-            {/* Cashback banner — opens Brands with the "Upto 15%" filter on */}
-            <button
-              type="button"
-              onClick={() =>
-                setLocation(
-                  "/brands?discount=Up%20to%205%25&discount=5%25%20-%2015%25"
-                )
-              }
+            <a
+              href="https://play.google.com/store/apps/details?id=com.gift360.gift360"
               className="relative block h-[185px] w-full overflow-hidden text-left active:scale-[0.995] transition-transform"
-              aria-label="Shop now — save upto 30% with Cashback wallet points"
+              aria-label="Download the Gift360 app from Google Play"
             >
               <img
                 loading="lazy"
                 decoding="async"
-                src={cashBannerImg}
-                alt="Save upto 30% with Cashback wallet points"
+                src={superCoinsAppPromotionImg}
+                alt="Download the Gift360 SuperCoins app"
                 className="absolute inset-0 h-full w-full object-cover object-center pointer-events-none"
               />
-              <style>{`
-                @keyframes save-wiggle {
-                  0%, 100% { transform: rotate(-5deg) translateY(0); }
-                  25%      { transform: rotate(3deg) translateY(-4px); }
-                  75%      { transform: rotate(5deg) translateY(-2px); }
-                }
-                .save-wiggle-1 { animation: save-wiggle 1.4s ease-in-out infinite;       transform-origin: 50% 75%; }
-                .save-wiggle-2 { animation: save-wiggle 1.4s ease-in-out 0.16s infinite; transform-origin: 50% 75%; }
-                .save-wiggle-3 { animation: save-wiggle 1.4s ease-in-out 0.32s infinite; transform-origin: 50% 75%; }
-                @media (prefers-reduced-motion: reduce) {
-                  .save-wiggle-1, .save-wiggle-2, .save-wiggle-3 { animation: none !important; }
-                }
-              `}</style>
-              {/* Left column only — starts at the slide's standard left margin (px-4,
-                  same as the other slides); max-w keeps the right-side art free */}
-              <div className="relative flex h-full max-w-[56%] flex-col justify-center gap-1.5 pl-4 pr-2">
-                <div aria-hidden="true" className="flex items-baseline gap-1.5 text-[21px] font-black italic leading-none tracking-tight">
-                  <span className="save-wiggle-1 text-[#4C1D95] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
-                  <span className="save-wiggle-2 text-[#7C3AED] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
-                  <span className="save-wiggle-3 text-[#4C1D95] drop-shadow-[0_1px_0_rgba(255,255,255,0.6)]">Save</span>
-                </div>
-                <p className="text-[11.5px] font-extrabold leading-[1.2] text-[#5B2B99]">
-                  Save upto 30% with Cashback wallet points
-                </p>
-                <span className="inline-flex w-fit items-center gap-1 rounded-lg bg-[#7C3AED] px-3.5 py-1.5 text-[10px] font-bold text-white shadow-md">
-                  Shop Now
-                  <ArrowRight className="h-3 w-3" strokeWidth={2.5} />
-                </span>
-              </div>
-            </button>
+            </a>
           </div>
           <div className="flex-shrink-0 w-full snap-start">
             <ConvertCoinsSlide onViewGuide={() => setGuideOpen(true)} />

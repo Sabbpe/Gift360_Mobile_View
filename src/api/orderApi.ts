@@ -1,4 +1,4 @@
-import { giftcardApiClient } from "@/lib/valuedesignApi";
+import { brandApi, giftcardApiClient } from "@/lib/valuedesignApi";
 import type { OrderRequest, OrderResponse } from "@/types/cart";
 import type { GiftcardOrderDetailsResponse, OrdersResponse } from "@/types/order";
 import type { FetchCouponsRequest, FetchCouponsResponse } from "@/types/coupon";
@@ -14,6 +14,23 @@ export const fetchOrders = async (
   clientId: string
 ): Promise<OrdersResponse> => {
   const response = await giftcardApiClient.post(`/orders/json/${clientId}`);
+  return response.data;
+};
+
+export interface NewOrdersResponse {
+  data?: { orders?: any[] };
+  orders?: any[];
+}
+
+export const fetchNewOrders = async (
+  clientId: string,
+  type: "NORMAL" | "SUPERCOIN"
+): Promise<NewOrdersResponse> => {
+  const response = await brandApi.post("/v1/neworders", {
+    clientId,
+    timeline: 12,
+    type,
+  });
   return response.data;
 };
 

@@ -411,11 +411,11 @@ export default function SupportChatWidget() {
 
   return (
     <>
-      <div className="support-fab fixed bottom-[72px] right-4 z-40">
+      <div className="support-fab fixed bottom-[76px] right-3 z-40 sm:right-4">
         <button
           onClick={toggleOpen}
           className={`relative flex items-center justify-center active:scale-90 transition-all duration-500 ease-in-out ${
-            !open && askLabelVisible ? "h-12 rounded-full pl-3.5 pr-4 gap-2" : "h-12 w-12 rounded-full"
+            !open && askLabelVisible ? "h-10 rounded-full pl-3 pr-3.5 gap-1.5" : "h-10 w-10 rounded-full sm:h-12 sm:w-12"
           }`}
           style={{
             background: "linear-gradient(135deg, #2563EB, #1D4ED8)",
@@ -427,9 +427,9 @@ export default function SupportChatWidget() {
             <X className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
           ) : (
             <>
-              <MessageCircle className="h-5 w-5 text-white flex-shrink-0" strokeWidth={2.2} />
+              <MessageCircle className="h-4 w-4 text-white flex-shrink-0 sm:h-5 sm:w-5" strokeWidth={2.2} />
               <span
-                className={`text-xs font-bold text-white whitespace-nowrap overflow-hidden transition-all duration-500 ${
+                className={`text-[11px] font-bold text-white whitespace-nowrap overflow-hidden transition-all duration-500 sm:text-xs ${
                   askLabelVisible ? "max-w-[90px] opacity-100" : "max-w-0 opacity-0"
                 }`}
               >

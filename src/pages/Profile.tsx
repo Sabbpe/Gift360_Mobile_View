@@ -2,12 +2,16 @@ import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
 import { useSuperCoinAccount } from "@/hooks/useSuperCoin";
 import { extractSuperCoinBalance } from "@/api/supercoinApi";
-import { ArrowLeft, LogOut, Check, Pencil, Mail, X, Store } from "lucide-react";
+import { ArrowLeft, LogOut, Check, Pencil, Mail, X, Store, Tag, Zap, Coins, UserRound, ArrowRight, ChevronRight, Package, Gift, HelpCircle } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { useLocation } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { useEffect, useState } from "react";
 import RewardsTab from "@/components/RewardsTab";
+import Header from "@/components/Header";
+import { fetchNewOrders } from "@/api/orderApi";
+import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const DISPLAY_NAME_KEY = "displayName";
 
@@ -17,6 +21,80 @@ function Avatar({ username }: { username: string }) {
   return (
     <div className="grid h-[86px] w-[86px] place-items-center rounded-full bg-[#df9ca9] text-[34px] font-bold leading-none text-white">
       {initial}
+    </div>
+  );
+}
+
+function GuestFeatureRow({
+  icon: Icon,
+  title,
+  color,
+}: {
+  icon: LucideIcon;
+  title: string;
+  color: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 border-b border-[#F0ECF8] py-4 last:border-b-0">
+      <div className="grid h-10 w-10 flex-none place-items-center rounded-full" style={{ backgroundColor: "hsl(var(--primary) / 0.1)" }}>
+        <Icon className="h-5 w-5" style={{ color }} strokeWidth={2} />
+      </div>
+      <span className="flex-1 text-[14px] font-semibold text-[#40365B]">{title}</span>
+      <ArrowRight className="h-4 w-4 text-[#A59BBE]" />
+    </div>
+  );
+}
+
+function AccountMenuRow({
+  icon: Icon,
+  label,
+  description,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  description?: string;
+  onClick: () => void;
+}) {
+  return (
+    <button type="button" onClick={onClick} className="flex min-h-[64px] w-full items-center gap-3 border-b border-[#F0ECF8] px-4 py-3 text-left last:border-b-0 active:bg-primary/5">
+      <span className="grid h-10 w-10 flex-none place-items-center rounded-full bg-primary/10 text-primary">
+        <Icon className="h-5 w-5" strokeWidth={1.9} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[14px] font-semibold text-[#30284A]">{label}</span>
+        {description && <span className="mt-0.5 block truncate text-[11px] text-[#81789A]">{description}</span>}
+      </span>
+      <ChevronRight className="h-4 w-4 flex-none text-[#A59BBE]" />
+    </button>
+  );
+}
+
+function OrderPreviewCard({ order }: { order: any }) {
+  const firstItem = order?.items?.[0];
+  const meta = firstItem?.meta || {};
+  const merchant = meta.brand_name || meta.brandName || firstItem?.brand_name || "Gift voucher";
+  const itemCount = (order?.items || []).reduce((total: number, item: any) => total + Number(item?.quantity || 1), 0);
+  const dateValue = order?.created_at || order?.createdAt;
+  const image = getImageUrlUtil(meta) || FALLBACK_IMAGE;
+  return (
+    <div className="rounded-2xl border border-[#E8E3F2] bg-white p-3">
+      <div className="flex items-center gap-3">
+        <img src={image} alt="" className="h-12 w-12 rounded-xl object-cover" />
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[14px] font-semibold text-[#30284A]">{merchant}</p>
+          <p className="mt-1 text-[11px] text-[#81789A]">
+            {itemCount} {itemCount === 1 ? "item" : "items"} · {dateValue ? new Date(dateValue).toLocaleDateString("en-IN") : "Date unavailable"}
+          </p>
+        </div>
+        <span className="rounded-full bg-primary/10 px-2 py-1 text-[10px] font-semibold text-primary">
+          {String(order?.status || "PROCESSING")}
+        </span>
+      </div>
+      <div className="mt-3 flex items-center justify-between border-t border-[#F0ECF8] pt-3 text-[12px]">
+        <span className="text-[#81789A]">Total bill</span>
+        <span className="font-bold text-[#30284A]">₹{Number(order?.pricing?.final_payable ?? order?.pricing?.subtotal ?? order?.total_amount ?? 0).toLocaleString("en-IN")}</span>
+      </div>
     </div>
   );
 }
@@ -70,11 +148,11 @@ function EditableField({ label, value, onSave }: { label: string; value: string;
 function InputField({ label, value }: { label: string; value: string }) {
   return (
     <label className="block">
-      <span className="block text-[14px] font-normal leading-none text-white">{label}</span>
+      <span className="block text-[11px] font-medium leading-none text-[#81789A]">{label}</span>
       <input
         readOnly
         value={value}
-        className="mt-[8px] h-[44px] w-full rounded-[7px] border-0 bg-white px-[13px] text-[14px] font-medium text-[#333333] outline-none"
+        className="mt-[8px] h-[44px] w-full rounded-[10px] border border-[#E8E3F2] bg-[#F8F7FB] px-[13px] text-[14px] font-medium text-[#333333] outline-none"
       />
     </label>
   );
@@ -200,6 +278,10 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState(() => localStorage.getItem(DISPLAY_NAME_KEY) || user?.name || "User");
   const [showContactModal, setShowContactModal] = useState(false);
+  const [showRewards, setShowRewards] = useState(() => new URLSearchParams(window.location.search).get("tab") === "rewards");
+  const [recentOrders, setRecentOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState(false);
 
   // Auto-fetch SuperCoin search + balance
   useEffect(() => {
@@ -217,6 +299,30 @@ export default function ProfilePage() {
       balanceMutation.mutate();
     }
   }, [identity, searchUserMutation.data]);
+
+  useEffect(() => {
+    if (!user?.clientId) return;
+    let active = true;
+    setOrdersLoading(true);
+    setOrdersError(false);
+    Promise.all([
+      fetchNewOrders(user.clientId, "NORMAL"),
+      fetchNewOrders(user.clientId, "SUPERCOIN"),
+    ]).then(([normal, superCoin]) => {
+      if (!active) return;
+      const normalOrders = normal.data?.orders || normal.orders || [];
+      const superCoinOrders = superCoin.data?.orders || superCoin.orders || [];
+      const orders = [...normalOrders, ...superCoinOrders]
+        .sort((a, b) => new Date(b.created_at || b.createdAt || 0).getTime() - new Date(a.created_at || a.createdAt || 0).getTime())
+        .slice(0, 3);
+      setRecentOrders(orders);
+    }).catch(() => {
+      if (active) setOrdersError(true);
+    }).finally(() => {
+      if (active) setOrdersLoading(false);
+    });
+    return () => { active = false; };
+  }, [user?.clientId]);
 
   const superCoinBalance = extractSuperCoinBalance(balanceMutation.data);
   const isSuperCoinUser = searchUserMutation.data?.userExists === true ||
@@ -254,46 +360,122 @@ export default function ProfilePage() {
 
   if (!isAuthenticated) {
     return (
-      <main className="flex min-h-screen w-full items-center justify-center bg-white px-6 font-body">
-        <button
-          onClick={() => setLocation("/login")}
-          className="h-12 rounded-[10px] bg-[#6b55ee] px-8 text-[15px] font-semibold text-white active:scale-95"
-        >
-          Login / Register
-        </button>
+      <main className="min-h-screen w-full bg-[#F8F7FF] px-5 pb-32 font-body text-[#332A4A] sm:px-8">
+        <Header />
+        <div className="mx-auto max-w-[560px] pt-7 sm:pt-10">
+          <section className="rounded-[24px] border border-[#DCD2FF] bg-[#EDE9FE] px-5 py-5 text-center">
+            <div className="mx-auto grid h-20 w-20 place-items-center rounded-full bg-white/90 shadow-[0_10px_22px_rgba(82,61,169,0.16)]">
+              <UserRound className="h-12 w-12 text-primary" strokeWidth={1.7} />
+            </div>
+            <h1 className="mt-4 text-[22px] font-bold leading-tight text-[#28165F]">Your Account</h1>
+            <p className="mt-1.5 text-[13px] leading-relaxed text-[#665A83]">
+              Everything you love, all in one place.
+            </p>
+          </section>
+
+          <section className="mt-[18px] rounded-[22px] border border-[#E7E1F7] bg-white px-[18px] py-2 shadow-[0_8px_18px_rgba(63,26,85,0.06)]">
+            <GuestFeatureRow icon={Tag} title="370+ brand vouchers" color="hsl(var(--primary))" />
+            <GuestFeatureRow icon={Zap} title="Instant delivery" color="hsl(var(--primary))" />
+            <GuestFeatureRow icon={Coins} title="SuperCoins cashback rewards" color="hsl(var(--primary))" />
+          </section>
+
+          <button
+            type="button"
+            onClick={() => setLocation("/login")}
+            className="mt-[22px] flex h-14 w-full items-center justify-center rounded-2xl bg-primary text-[16px] font-bold text-primary-foreground shadow-[0_5px_12px_hsl(var(--primary)/0.28)] transition-transform active:scale-[0.98]"
+          >
+            Sign in / Create account
+          </button>
+          <p className="mt-3 text-center text-[11px] text-[#81789A]">
+            Sign in to unlock your personalised Gift360 experience.
+          </p>
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen w-full overflow-hidden bg-white font-body text-[#3f3f3f]">
-      <section className="relative h-[238px] bg-white px-[20px] pt-[22px]">
-        <button
-          onClick={() => window.history.back()}
-          className="grid h-[26px] w-[26px] place-items-center text-black active:scale-95"
-          aria-label="Go back"
-        >
-          <ArrowLeft className="h-[20px] w-[20px]" strokeWidth={2.2} />
+    <main className="min-h-screen w-full bg-[#F8F7FB] pb-24 font-body text-[#30284A]">
+      <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b border-[#ECE8F4] bg-white px-4">
+        <button type="button" onClick={() => window.history.back()} className="grid h-10 w-10 place-items-center" aria-label="Go back">
+          <ArrowLeft className="h-5 w-5" />
         </button>
+        <h1 className="text-[15px] font-bold tracking-wide">MY ACCOUNT</h1>
+        <button type="button" onClick={() => setShowContactModal(true)} className="flex h-10 items-center gap-1 rounded-lg px-2 text-[12px] font-semibold text-primary">
+          <HelpCircle className="h-4 w-4" /> Help
+        </button>
+      </header>
 
-        <div className="mt-[16px] flex flex-col items-center">
-          <Avatar username={profile.username} />
-          <h1 className="mt-[18px] text-center text-[21px] font-semibold leading-none tracking-[-0.02em] text-[#454545]">
-            {profile.username}
-          </h1>
-        </div>
-      </section>
+      <div className="mx-auto max-w-[620px] space-y-4 px-4 py-4">
+        <section className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+          <div className="flex items-center gap-3">
+            <Avatar username={profile.username} />
+            <div className="min-w-0 flex-1">
+              <h2 className="truncate text-[18px] font-bold">{profile.username}</h2>
+              <p className="mt-1 truncate text-[12px] text-[#81789A]">{profile.email || "Email unavailable"}</p>
+              <p className="mt-0.5 text-[12px] text-[#81789A]">{profile.phone || "Phone unavailable"}</p>
+            </div>
+            <button type="button" onClick={() => handleUsernameSave(window.prompt("Update your name", profile.username) || profile.username)} className="rounded-lg px-2 py-2 text-[11px] font-semibold text-primary">
+              Edit
+            </button>
+          </div>
+        </section>
 
-      <ProfileForm
-        profile={profile}
-        clientId={user?.clientId}
-        initialTab={new URLSearchParams(window.location.search).get("tab") === "rewards" ? "rewards" : "profile"}
-        isLoggingOut={false}
-        onLogout={handleLogout}
-        onUsernameSave={handleUsernameSave}
-        onContactUs={() => setShowContactModal(true)}
-        onPartnerUs={() => setLocation("/reseller")}
-      />
+        <section className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+            <p className="text-[11px] text-[#81789A]">Balance</p>
+            <p className="mt-1 text-[18px] font-bold">₹{profile.balance.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          </div>
+          <div className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+            <p className="text-[11px] text-[#81789A]">SuperCoins</p>
+            <p className="mt-1 text-[18px] font-bold text-primary">{profile.isSuperCoinUser ? profile.superCoinBalance.toLocaleString("en-IN") : "0"}</p>
+          </div>
+        </section>
+
+        {showRewards ? (
+          <section className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-[16px] font-bold">Rewards & SuperCoins</h2>
+              <button type="button" onClick={() => setShowRewards(false)} className="text-[12px] font-semibold text-primary">Back</button>
+            </div>
+            <RewardsTab clientId={user?.clientId} />
+          </section>
+        ) : null}
+
+        <section className="overflow-hidden rounded-2xl border border-[#E8E3F2] bg-white">
+          <AccountMenuRow icon={UserRound} label="Profile details" description="Name, email and phone number" onClick={() => document.getElementById("profile-details")?.scrollIntoView({ behavior: "smooth" })} />
+          <AccountMenuRow icon={Coins} label="Rewards / SuperCoins" description="View your rewards balance" onClick={() => { setShowRewards(true); window.history.replaceState(null, "", "/profile?tab=rewards"); }} />
+          <AccountMenuRow icon={Package} label="Past Orders" description="View your recent voucher orders" onClick={() => setLocation("/orders")} />
+          <AccountMenuRow icon={Gift} label="My Vouchers" description="Open your purchased and redeemed vouchers" onClick={() => setLocation("/orders?tab=vouchers")} />
+          <AccountMenuRow icon={Store} label="Partner with us" description="Sell gift vouchers at your own margins" onClick={() => setLocation("/reseller")} />
+          <AccountMenuRow icon={Mail} label="Contact Us" description="Get help with vouchers or payments" onClick={() => setShowContactModal(true)} />
+        </section>
+
+        <section id="profile-details" className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+          <h2 className="text-[16px] font-bold">Profile details</h2>
+          <div className="mt-3 space-y-3">
+            <InputField label="Email" value={profile.email} />
+            <InputField label="Phone Number" value={profile.phone} />
+          </div>
+        </section>
+
+        <section className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-[16px] font-bold">Past Orders</h2>
+            <button type="button" onClick={() => setLocation("/orders")} className="text-[12px] font-semibold text-primary">View all</button>
+          </div>
+          <div className="mt-3 space-y-3">
+            {ordersLoading && [1, 2].map((item) => <div key={item} className="h-[92px] animate-pulse rounded-2xl bg-[#F0ECF8]" />)}
+            {!ordersLoading && ordersError && <p className="rounded-xl bg-red-50 p-3 text-[12px] text-red-600">Unable to load orders right now.</p>}
+            {!ordersLoading && !ordersError && recentOrders.length === 0 && <p className="rounded-xl bg-[#F8F7FB] p-4 text-center text-[12px] text-[#81789A]">No orders yet.</p>}
+            {!ordersLoading && !ordersError && recentOrders.map((order) => <OrderPreviewCard key={order.order_id || order.order_number} order={order} />)}
+          </div>
+        </section>
+
+        <button type="button" onClick={handleLogout} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-red-200 bg-white text-[14px] font-semibold text-red-600 active:bg-red-50">
+          <LogOut className="h-4 w-4" /> Log out
+        </button>
+      </div>
 
       {showContactModal && (
         <div

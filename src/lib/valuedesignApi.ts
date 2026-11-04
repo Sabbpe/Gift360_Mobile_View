@@ -12,9 +12,13 @@ const GIFTCARD_API_URL = import.meta.env.VITE_GIFTCARD_API_URL;
 const addAuthToken = (config: InternalAxiosRequestConfig) => {
   const authUser = localStorage.getItem("authUser");
   if (authUser) {
-    const user = JSON.parse(authUser);
-    if (user.token) {
-      config.headers.Authorization = `Bearer ${user.token}`;
+    try {
+      const user = JSON.parse(authUser) as { token?: unknown };
+      if (typeof user.token === "string" && user.token.trim()) {
+        config.headers.Authorization = `Bearer ${user.token.trim()}`;
+      }
+    } catch {
+      // Ignore malformed stale storage; the API will return the correct auth error.
     }
   }
   return config;
