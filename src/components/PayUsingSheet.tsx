@@ -17,6 +17,7 @@ import { isUpiPaymentMethod } from "@/lib/paymentModes";
 import { openUpiUrlNative } from "@/plugins/upi";
 import UpiQrCode from "@/components/UpiQrCode";
 import PaymentProcessingModal from "@/components/PaymentProcessingModal";
+import CardTypeSheet from "@/components/CardTypeSheet";
 
 interface PayUsingSheetProps {
   open: boolean;
@@ -68,6 +69,7 @@ export default function PayUsingSheet({
   const [checking, setChecking] = useState(false);
   const [qrValue, setQrValue] = useState<string | null>(null);
   const [launchError, setLaunchError] = useState<string | null>(null);
+  const [cardTypeOpen, setCardTypeOpen] = useState(false);
 
   const upiMethod = methods.find((m) => isUpiPaymentMethod(m.code));
   const upiFee = upiMethod ? computeMethodFee(upiMethod, cashAmount) : null;
@@ -84,6 +86,7 @@ export default function PayUsingSheet({
       setPendingPrompt(false);
       setQrValue(null);
       setLaunchError(null);
+      setCardTypeOpen(false);
     }
   }, [open, stop]);
 
@@ -171,6 +174,11 @@ export default function PayUsingSheet({
     setProcessingOpen(false);
     onClose();
     onFallbackToOtherMethods?.();
+  };
+
+  const handleCardTypeSelect = (code: string) => {
+    setCardTypeOpen(false);
+    onCardMethod(code);
   };
 
   if (!open) return null;
@@ -347,7 +355,7 @@ export default function PayUsingSheet({
             {onFallbackToOtherMethods && (
               <button
                 type="button"
-                onClick={handleFallback}
+                onClick={() => setCardTypeOpen(true)}
                 className="w-full rounded-xl border border-[#E2D9FF] bg-[#F7F2FF] py-2.5 text-[12px] font-bold text-[#5B2B99] active:scale-95"
               >
                 Pay with NetBanking / Debit / Credit card instead
@@ -376,6 +384,14 @@ export default function PayUsingSheet({
         onViewOrders={handleViewOrders}
         onOtherMethods={onFallbackToOtherMethods ? handleFallback : undefined}
         onRequestClose={() => void handleRequestClose()}
+      />
+
+      <CardTypeSheet
+        open={cardTypeOpen}
+        methods={cardMethods}
+        cashAmount={cashAmount}
+        onClose={() => setCardTypeOpen(false)}
+        onSelect={handleCardTypeSelect}
       />
     </>
   );

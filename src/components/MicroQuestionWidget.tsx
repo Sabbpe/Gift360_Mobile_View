@@ -8,7 +8,7 @@ import {
   submitMicroFeedback,
 } from "@/api/microFeedbackApi";
 import { trackEvent } from "@/lib/analytics";
-import RewardsModal from "@/components/RewardsModal";
+// import RewardsModal from "@/components/RewardsModal";
 
 type MicroQuestion = {
   key: string;
@@ -79,7 +79,7 @@ export default function MicroQuestionWidget() {
   const [question, setQuestion] = useState<MicroQuestion | null>(null);
   const [visible, setVisible] = useState(false);
   const [thanks, setThanks] = useState(false);
-  const [rewardsOpen, setRewardsOpen] = useState(false);
+  // const [rewardsOpen, setRewardsOpen] = useState(false);
   const [resumeTick, setResumeTick] = useState(0);
   const [sourceQuestions, setSourceQuestions] = useState<MicroQuestion[]>(FALLBACK_QUESTIONS);
 
@@ -195,7 +195,7 @@ export default function MicroQuestionWidget() {
     } catch {
       /* non-blocking: the widget is best-effort */
     }
-    if (q.reward && val === "yes") setRewardsOpen(true);
+    // if (q.reward && val === "yes") setRewardsOpen(true);
     setThanks(true);
     if (q.href && val === "yes") {
       window.setTimeout(() => setLocation(q.href!), 700);
@@ -204,7 +204,8 @@ export default function MicroQuestionWidget() {
   };
 
   if (!user?.clientId || blocked || pool.length === 0) {
-    return rewardsOpen ? <RewardsModal open={rewardsOpen} onClose={() => setRewardsOpen(false)} /> : null;
+    // return rewardsOpen ? <RewardsModal open={rewardsOpen} onClose={() => setRewardsOpen(false)} /> : null;
+    return null;
   }
 
   return (
@@ -267,9 +268,11 @@ export default function MicroQuestionWidget() {
         </>
       )}
 
+      {/*
       {rewardsOpen && (
         <RewardsModal open={rewardsOpen} onClose={() => setRewardsOpen(false)} />
       )}
+      */}
     </>
   );
 }

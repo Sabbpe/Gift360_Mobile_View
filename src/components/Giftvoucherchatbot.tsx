@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, MessageCircle, X, Minimize2, Maximize2, Bot, AlertCircle, CheckCircle, Package, CreditCard, RotateCcw, Phone, Mail, HelpCircle, Coins } from 'lucide-react';
-import RewardsModal from '@/components/RewardsModal';
+// import RewardsModal from '@/components/RewardsModal';
 
 interface Message {
     id: string;
@@ -29,7 +29,7 @@ const GiftVoucherChatbot: React.FC = () => {
     const [inputValue, setInputValue] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [showTicketForm, setShowTicketForm] = useState(false);
-    const [showRewards, setShowRewards] = useState(false);
+    // const [showRewards, setShowRewards] = useState(false);
     const [conversationContext, setConversationContext] = useState<string[]>([]);
     const [ticketData, setTicketData] = useState({
         subject: '',
@@ -1293,12 +1293,14 @@ Is there anything else I can help you with?`,
                                     label="Support"
                                     onClick={() => handleSendMessage('I need help with an issue')}
                                 />
+                                {/*
                                 <QuickActionButton
                                     icon={<Coins className="w-4 h-4" />}
                                     label="Rewards"
                                     onClick={() => setShowRewards(true)}
                                     className="col-span-2 justify-center border-purple-300 text-purple-700 hover:border-purple-500 hover:bg-purple-50 hover:text-purple-700"
                                 />
+                                */}
                             </div>
                         </div>
                     )}
@@ -1517,9 +1519,11 @@ Is there anything else I can help you with?`,
                 </>
             )}
         </div>
+        {/*
         {showRewards && (
             <RewardsModal open={showRewards} onClose={() => setShowRewards(false)} />
         )}
+        */}
         </>
     );
 };

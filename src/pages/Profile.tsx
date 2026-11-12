@@ -278,7 +278,7 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState(() => localStorage.getItem(DISPLAY_NAME_KEY) || user?.name || "User");
   const [showContactModal, setShowContactModal] = useState(false);
-  const [showRewards, setShowRewards] = useState(() => new URLSearchParams(window.location.search).get("tab") === "rewards");
+  // const [showRewards, setShowRewards] = useState(() => new URLSearchParams(window.location.search).get("tab") === "rewards");
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState(false);
@@ -432,6 +432,7 @@ export default function ProfilePage() {
           </div>
         </section>
 
+        {/*
         {showRewards ? (
           <section className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
             <div className="mb-3 flex items-center justify-between">
@@ -441,10 +442,11 @@ export default function ProfilePage() {
             <RewardsTab clientId={user?.clientId} />
           </section>
         ) : null}
+        */}
 
         <section className="overflow-hidden rounded-2xl border border-[#E8E3F2] bg-white">
           <AccountMenuRow icon={UserRound} label="Profile details" description="Name, email and phone number" onClick={() => document.getElementById("profile-details")?.scrollIntoView({ behavior: "smooth" })} />
-          <AccountMenuRow icon={Coins} label="Rewards / SuperCoins" description="View your rewards balance" onClick={() => { setShowRewards(true); window.history.replaceState(null, "", "/profile?tab=rewards"); }} />
+          {/* <AccountMenuRow icon={Coins} label="Rewards / SuperCoins" description="View your rewards balance" onClick={() => { setShowRewards(true); window.history.replaceState(null, "", "/profile?tab=rewards"); }} /> */}
           <AccountMenuRow icon={Package} label="Past Orders" description="View your recent voucher orders" onClick={() => setLocation("/orders")} />
           <AccountMenuRow icon={Gift} label="My Vouchers" description="Open your purchased and redeemed vouchers" onClick={() => setLocation("/orders?tab=vouchers")} />
           <AccountMenuRow icon={Store} label="Partner with us" description="Sell gift vouchers at your own margins" onClick={() => setLocation("/reseller")} />

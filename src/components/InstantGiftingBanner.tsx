@@ -1,21 +1,21 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useLocation } from "wouter";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+// import { useLocation } from "wouter";
+// import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, Gift, RefreshCw, BadgeDollarSign } from "lucide-react";
-import { useAuthContext } from "@/contexts/AuthContext";
-import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
-import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
+// import { useAuthContext } from "@/contexts/AuthContext";
+// import { getRewardStatus, startQuizFromBanner, type QuizRewardStatus } from "@/api/rewardApi";
+// import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
 import partnerImg from "@/assets/coorp.png";
 import appBanner480 from "@/assets/banners/app-download-banner-480.webp";
 import appBanner800 from "@/assets/banners/app-download-banner-800.webp";
-import quizBanner480 from "@/assets/banners/quiz-banner-480.webp";
-import quizBanner800 from "@/assets/banners/quiz-banner-800.webp";
+// import quizBanner480 from "@/assets/banners/quiz-banner-480.webp";
+// import quizBanner800 from "@/assets/banners/quiz-banner-800.webp";
 import coinsBanner480 from "@/assets/banners/coins-to-voucher-banner-480.webp";
 import coinsBanner800 from "@/assets/banners/coins-to-voucher-banner-800.webp";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 
 const PLAY_STORE_URL = "https://play.google.com/store/apps/details?id=com.gift360.gift360";
-const TOTAL_SLIDES = 4;
+const TOTAL_SLIDES = 3;
 /** Banner is full card width: ~92vw on phones, capped near 520px on wider screens. */
 const BANNER_SIZES = "(max-width: 560px) 92vw, 520px";
 const bannerSrc = (small: string, large: string) => ({ src: small, srcSet: `${small} 480w, ${large} 800w` });
@@ -176,8 +176,10 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
   const intervalRef = useRef<number>(0);
   const userPausedRef = useRef(false);
 
-  // Quiz slide: starts the quiz for the logged-in customer. Win = all 5 correct, then buy within
-  // 5 minutes and 5 bonus SuperCoins are credited. After a win we send the customer to the SuperCoin modal.
+  // Quiz slide (commented out): starts the quiz for the logged-in customer. Win = all 5 correct,
+  // then buy within 5 minutes and 5 bonus SuperCoins are credited. After a win we send the
+  // customer to the SuperCoin modal.
+  /*
   const [, setLocation] = useLocation();
   const { user } = useAuthContext();
   const queryClient = useQueryClient();
@@ -185,8 +187,10 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizBusy, setQuizBusy] = useState(false);
   const [quizNote, setQuizNote] = useState<string | null>(null);
+  */
   const [guideOpen, setGuideOpen] = useState(false);
 
+  /*
   const { data: rewardStatus } = useQuery({
     queryKey: ["rewardStatus", user?.clientId],
     queryFn: () => getRewardStatus(user!.clientId),
@@ -227,8 +231,9 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
       const fresh = await getRewardStatus(user.clientId, quizReward?.publicId ?? undefined);
       queryClient.invalidateQueries({ queryKey: ["rewardStatus", user.clientId] });
       if (fresh?.status === "PENDING") setLocation("/supercoin-voucher");
-    } catch { /* ignore */ }
+    } catch { // ignore }
   }, [user?.clientId, quizReward?.publicId, queryClient, setLocation]);
+  */
 
   const scrollTo = useCallback(
     (index: number) => {
@@ -328,7 +333,8 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
               eager
             />
           </div>
-          {/* 2 — Quiz */}
+          {/* 2 — Quiz (commented out) */}
+          {/*
           <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
             <ImageBannerSlide
               {...bannerSrc(quizBanner480, quizBanner800)}
@@ -346,6 +352,7 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
               reduced={reduced}
             />
           </div>
+          */}
           {/* 3 — Convert SuperCoins to vouchers */}
           <div className="flex-shrink-0 w-full snap-start aspect-[1376/768]">
             <ImageBannerSlide
@@ -375,6 +382,7 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
           ))}
         </div>
       </div>
+      {/*
       {quizReward?.publicId && quizReward.quizStartExpiresAt && (
         <JanmashtamiQuizModal
           open={quizOpen}
@@ -383,6 +391,7 @@ export default function InstantGiftingBanner({ onPartnerClick }: InstantGiftingB
           quizStartExpiresAt={quizReward.quizStartExpiresAt}
         />
       )}
+      */}
       <SuperCoinIntroModal open={guideOpen} onClose={() => setGuideOpen(false)} initialTab="convert" />
     </section>
   );

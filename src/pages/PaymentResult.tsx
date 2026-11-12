@@ -22,8 +22,8 @@ import type { AuthUser } from "@/types/auth";
 import type { GiftcardOrderDetailsResponse } from "@/types/order";
 import { trackEvent } from "@/lib/analytics";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
-import { registerPaymentCancellation, type QuizRewardStatus } from "@/api/rewardApi";
+// import JanmashtamiQuizModal from "@/components/JanmashtamiQuizModal";
+// import { registerPaymentCancellation, type QuizRewardStatus } from "@/api/rewardApi";
 import { promptFeedback } from "@/components/FeedbackOrchestrator";
 
 // ── Success view: animated reward reveal + 10s auto-redirect to the vouchers page ──
@@ -312,12 +312,12 @@ export default function PaymentResult() {
   const [orderDetails, setOrderDetails] = useState<GiftcardOrderDetailsResponse | null>(null);
   const [orderDetailsLoading, setOrderDetailsLoading] = useState(false);
   const [orderDetailsError, setOrderDetailsError] = useState<string | null>(null);
-  const [calloutLoading, setCalloutLoading] = useState(false);
-  const [calloutReward, setCalloutReward] = useState<QuizRewardStatus | null>(null);
-  const [calloutSecondsLeft, setCalloutSecondsLeft] = useState(0);
-  const [quizOpen, setQuizOpen] = useState(false);
+  // const [calloutLoading, setCalloutLoading] = useState(false);
+  // const [calloutReward, setCalloutReward] = useState<QuizRewardStatus | null>(null);
+  // const [calloutSecondsLeft, setCalloutSecondsLeft] = useState(0);
+  // const [quizOpen, setQuizOpen] = useState(false);
   const purchaseTrackedRef = useRef(false);
-  const cancellationCalloutAttemptedRef = useRef(false);
+  // const cancellationCalloutAttemptedRef = useRef(false);
   const resumeAttemptedRef = useRef(false);
   const resumePromiseRef = useRef<Promise<void> | null>(null);
 
@@ -475,6 +475,7 @@ export default function PaymentResult() {
 
   // The payment return is the source of truth for making the offer visible.
   // The backend also verifies ownership and that the order is still PENDING.
+  /*
   useEffect(() => {
     if (loading || !paymentData.wasCancelled || !decryptedOrderNumber || cancellationCalloutAttemptedRef.current) return;
     cancellationCalloutAttemptedRef.current = true;
@@ -509,6 +510,7 @@ export default function PaymentResult() {
     const timer = window.setInterval(tick, 250);
     return () => window.clearInterval(timer);
   }, [calloutReward?.quizStartExpiresAt]);
+  */
 
   // Decrypt transaction ID and extract the order number (read-only).
   useEffect(() => {
@@ -714,6 +716,7 @@ export default function PaymentResult() {
                   </div>
                 )}
 
+                {/*
                 {paymentData.wasCancelled && calloutLoading && (
                   <div className="flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm font-medium text-orange-900">
                     <Loader2 className="h-4 w-4 animate-spin" /> Preparing your Dussehra quiz offer…
@@ -750,6 +753,7 @@ export default function PaymentResult() {
                     )}
                   </div>
                 )}
+                */}
 
                 {paymentData.status === "success" &&
                   (orderDetailsLoading ||
@@ -878,6 +882,7 @@ export default function PaymentResult() {
         </Card>
       </main>
 
+      {/*
       {calloutReward?.publicId && calloutReward.quizStartExpiresAt && (
         <JanmashtamiQuizModal
           open={quizOpen}
@@ -886,6 +891,7 @@ export default function PaymentResult() {
           quizStartExpiresAt={calloutReward.quizStartExpiresAt}
         />
       )}
+      */}
 
       <Footer />
     </div>

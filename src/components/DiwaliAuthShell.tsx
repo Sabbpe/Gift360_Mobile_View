@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "wouter";
 import { ShieldCheck, Sparkles } from "lucide-react";
 import gift360Logo from "@/assets/gift360full.png";
-import diwaliBg from "@/assets/diwali-bg.jpg";
+import authBg from "@/assets/LoginBackground.png";
 import diwaliGift from "@/assets/diwali-gift.png";
 import amazon from "@/assets/amazon.png";
 import flipkart from "@/assets/flipkart.png";
@@ -57,7 +57,7 @@ export default function DiwaliAuthShell({ switchPrompt, children }: Props) {
       style={{ fontFamily: "'Poppins', sans-serif" }}
     >
       <img
-        src={diwaliBg}
+        src={authBg}
         alt=""
         aria-hidden="true"
         width={1024}

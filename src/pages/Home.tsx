@@ -44,7 +44,6 @@ import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
@@ -52,7 +51,7 @@ import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
-import giftCARD from "@/assets/Dussehracard.png";
+import giftCARD from "@/assets/GiftCARD.jpeg";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
@@ -182,7 +181,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
     { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
     { label: "Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
-    { label: "Rewards", Icon: Coins, href: "/rewards" },
+    // { label: "Rewards", Icon: Coins, href: "/rewards" },
   ];
 
   return (
@@ -202,7 +201,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
           100% { left: 200%; }
         }
       `}</style>
-      <div className="grid grid-cols-5 gap-[8px] pt-[4px]">
+      <div className="grid grid-cols-4 gap-[8px] pt-[4px]">
         {actions.map(({ label, Icon, href, onClick, isNew }) => (
           <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
             {isNew && (
@@ -1005,10 +1004,6 @@ function MobileHomeScreen() {
       <Header />
       <main className="min-h-screen w-full overflow-x-hidden pb-[84px] font-body text-[#101010] md:hidden relative">
         <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-        <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${homebackImg})` }}
-        />
         <div className="relative z-10">
         <div className="relative overflow-visible pb-[118px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />

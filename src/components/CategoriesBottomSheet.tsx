@@ -43,45 +43,6 @@ function CategoryGrid({
   );
 }
 
-function FilterPanel({
-  open,
-  filterChips,
-  onClose,
-}: {
-  open: boolean;
-  filterChips: string[];
-  onClose: () => void;
-}) {
-  return (
-    <aside
-      className={`absolute bottom-0 right-0 top-0 z-20 w-[78%] rounded-tl-[24px] bg-white px-[18px] py-[22px] shadow-[-12px_0_28px_rgba(30,28,64,0.20)] transition-transform duration-300 ease-in-out ${
-        open ? "translate-x-0" : "translate-x-full"
-      }`}
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="text-[18px] font-bold leading-none text-[#151722]">Filters</h3>
-        <button
-          onClick={onClose}
-          className="rounded-full bg-[#f0f1f7] px-[14px] py-[8px] text-[12px] font-semibold text-[#313447] active:scale-95"
-        >
-          Close
-        </button>
-      </div>
-
-      <div className="mt-[24px] space-y-[12px]">
-        {filterChips.map((chip) => (
-          <button
-            key={chip}
-            className="w-full rounded-[13px] border border-[#e5e7f2] bg-[#f8f8fb] px-[14px] py-[13px] text-left text-[14px] font-semibold text-[#303241] active:scale-[0.99]"
-          >
-            {chip}
-          </button>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
 function BottomSheet({
   open,
   categoriesData,
@@ -97,15 +58,6 @@ function BottomSheet({
   onClose: () => void;
   onCategoryClick: (category: string) => void;
 }) {
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const filterChips = ["Super Cashbacks", "Today’s Pick", "Under ₹50"];
-
-  useEffect(() => {
-    if (!open) {
-      setIsFilterOpen(false);
-    }
-  }, [open]);
-
   return (
     <>
       <div
@@ -132,24 +84,7 @@ function BottomSheet({
           </button>
         </div>
 
-        <div className="flex gap-[9px] overflow-x-auto px-[20px] pb-[13px] pt-[18px] no-scrollbar">
-          {filterChips.map((chip) => (
-            <button
-              key={chip}
-              className="h-[34px] flex-shrink-0 rounded-full bg-white px-[14px] text-[12px] font-semibold text-[#2e3140] shadow-[0_4px_12px_rgba(31,33,59,0.08)] active:scale-95"
-            >
-              {chip}
-            </button>
-          ))}
-          <button
-            onClick={() => setIsFilterOpen((value) => !value)}
-            className="h-[34px] flex-shrink-0 rounded-full bg-[#5b43c9] px-[17px] text-[12px] font-semibold text-white shadow-[0_6px_14px_rgba(91,67,201,0.24)] active:scale-95"
-          >
-            Filter
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-[20px] pb-[82px] pt-[2px]">
+        <div className="flex-1 overflow-y-auto px-[20px] pb-[82px] pt-[18px]">
           {isLoading ? (
             <div className="rounded-[14px] bg-white px-[16px] py-[18px] text-center text-[14px] font-medium text-[#707587] shadow-[0_7px_18px_rgba(31,33,59,0.10)]">
               Loading categories...
@@ -168,12 +103,6 @@ function BottomSheet({
             {totalBrands || 0} brands
           </p>
         </div>
-
-        <FilterPanel
-          open={isFilterOpen}
-          filterChips={filterChips}
-          onClose={() => setIsFilterOpen(false)}
-        />
       </section>
     </>
   );

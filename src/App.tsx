@@ -48,7 +48,7 @@ import FAQTopicPage from "./pages/FAQTopicPage";
 import LoginIssues from "./pages/LoginIssues";
 import BulkPurchase from "./pages/BulkPurchase";
 import SuperCoinVoucherPreview from "./pages/SuperCoinVoucherPreview";
-import RewardsPage from "./pages/RewardsPage";
+// import RewardsPage from "./pages/RewardsPage";
 import ResellerResetPassword from "./pages/ResellerResetPassword";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import { NotificationProvider } from "./contexts/NotificationContext";
@@ -147,7 +147,7 @@ function AppRoutes() {
       <Route path="/login-issues" component={LoginIssues} />
       <Route path="/bulk-purchase" component={BulkPurchase} />
       <Route path="/supercoin-voucher" component={SuperCoinVoucherPreview} />
-      <Route path="/rewards" component={RewardsPage} />
+      {/* <Route path="/rewards" component={RewardsPage} /> */}
       <Route path="/admin" component={AdminDashboard} />
       <Route component={NotFound} />
     </Switch>

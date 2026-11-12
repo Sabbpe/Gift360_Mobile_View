@@ -28,7 +28,6 @@ import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
@@ -62,10 +61,10 @@ import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
-import {
-  getRewardStatus,
-  type QuizRewardStatus,
-} from "@/api/rewardApi";
+// import {
+//   getRewardStatus,
+//   type QuizRewardStatus,
+// } from "@/api/rewardApi";
 
 const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
@@ -302,9 +301,10 @@ export default function Cart() {
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
   // Juspay UPI-intent gateway (new); Easebuzz path below stays untouched.
   const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
-  const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
-  const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
+  // const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
+  // const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
+  /*
   useEffect(() => {
     if (!user?.clientId) {
       setPendingQuizReward(null);
@@ -341,6 +341,7 @@ export default function Cart() {
     const timer = window.setInterval(updateCountdown, 250);
     return () => window.clearInterval(timer);
   }, [pendingQuizReward?.expiresAt]);
+  */
 
   // NEW: Wallet feature
   const [useWalletBalance, setUseWalletBalance] = useState(false);
@@ -2214,10 +2215,6 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
       <main className="relative flex-1 overflow-hidden">
         {/* Home backdrop */}
         <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-        <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${homebackImg})` }}
-        />
 
         <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 sm:pt-8 sm:pb-6">
@@ -2308,6 +2305,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                 <CardContent className="p-4 sm:p-5 space-y-3">
                   <h2 className="text-lg font-extrabold cart-text-primary">Order Summary</h2>
 
+                  {/*
                   {pendingQuizReward?.status === "PENDING" && (
                     <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
                       <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 shrink-0" />
@@ -2320,6 +2318,7 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                       </span>
                     </div>
                   )}
+                  */}
 
                   {/* Mode toggle */}
                   <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1" role="tablist" aria-label="Reward type">
