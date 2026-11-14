@@ -124,6 +124,17 @@ export default function DiwaliAuthShell({ switchPrompt, children }: Props) {
             </div>
           ))}
         </div>
+        {/* Fresh-signups liner between the stats and the auth card */}
+        <div className="mx-auto mt-2.5 flex w-full max-w-[342px] items-center justify-center gap-2 rounded-full border border-[hsl(var(--primary)/0.3)] bg-white/95 px-3.5 py-1.5 shadow-[0_6px_16px_-8px_hsl(var(--primary)/0.55)] backdrop-blur">
+          <span className="relative flex h-1.5 w-1.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
+          </span>
+          <p className="text-[11px] font-semibold leading-none text-[#3F1A55]">
+            <span className="text-[13px] font-extrabold text-primary">500+</span> App
+            Registrations<span className="font-medium text-[#6B7280]"> in Last 10 Days</span>
+          </p>
+        </div>
         {/* Auth card */}
         <section className="mx-auto mt-2 w-full max-w-[342px] rounded-2xl border border-[#E5E0D8] bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(63,26,85,0.35)] backdrop-blur">
           <div className="mb-2 flex items-center justify-between">
