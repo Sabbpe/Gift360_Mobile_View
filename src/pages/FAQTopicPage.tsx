@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { FAQ_TOPICS, fillFacts, type ScFacts } from "@/data/faqTopics";
 import { fetchScFacts } from "@/api/supportFactsApi";
 
-/** Linkable single-answer FAQ page: /faq/:id  (Sahil's replies point here). */
+/** Linkable single-answer FAQ page: /faq/:id  (Shebby's replies point here). */
 export default function FAQTopicPage() {
   const [, params] = useRoute<{ id: string }>("/faq/:id");
   const [facts, setFacts] = useState<ScFacts | null>(null);
@@ -35,8 +35,8 @@ export default function FAQTopicPage() {
             <h1 className="mt-3 text-2xl font-bold">{topic.title}</h1>
             <p className="mt-4 whitespace-pre-line leading-relaxed text-muted-foreground">{linkify(fillFacts(topic.answer, facts))}</p>
             <div className="mt-8 rounded-xl border bg-card p-4 flex items-center justify-between gap-3">
-              <p className="text-sm">Still stuck? Your chatbot friend <b>Sahil</b> is here to help.</p>
-              <Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("gift360:open-support-chat"))}>Chat with Sahil</Button>
+              <p className="text-sm">Still stuck? Your chatbot friend <b>Shebby</b> is here to help.</p>
+              <Button size="sm" onClick={() => window.dispatchEvent(new CustomEvent("gift360:open-support-chat"))}>Chat with Shebby</Button>
             </div>
             {related.length > 0 && (
               <div className="mt-8">

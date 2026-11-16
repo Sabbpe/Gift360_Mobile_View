@@ -281,6 +281,8 @@
 @keyframes marquee-ltr { from { transform: translateX(-50%); }  to { transform: translateX(0); } }
 @keyframes tile-float  { 0%, 100% { transform: translateY(0) rotate(0deg); } 50% { transform: translateY(-6px) rotate(1.5deg); } }
 @keyframes twinkle     { 0%, 100% { opacity: 0; transform: scale(0.6) rotate(0deg); } 50% { opacity: 1; transform: scale(1.2) rotate(180deg); } }
+/* SuperCoin coin in the cashback-points card: soft side-to-side wiggle */
+@keyframes sc-wiggle   { 0%, 100% { transform: rotate(-7deg) scale(1); } 25% { transform: rotate(5deg) scale(1.07); } 50% { transform: rotate(-5deg) scale(1.04); } 75% { transform: rotate(7deg) scale(1.07); } }
 @keyframes orb-drift   { 0%, 100% { transform: translate(0,0) scale(1); opacity: 0.55; } 33% { transform: translate(30px,-20px) scale(1.15); opacity: 0.8; } 66% { transform: translate(-20px,15px) scale(0.9); opacity: 0.45; } }
 @keyframes title-shimmer { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
 @keyframes g-fade-up-kf { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
@@ -326,6 +328,7 @@
 .anim-marquee-rtl     { animation: marquee-rtl 22s linear infinite; }
 .anim-marquee-ltr     { animation: marquee-ltr 26s linear infinite; }
 .anim-twinkle         { animation: twinkle 2.6s ease-in-out infinite; }
+.anim-sc-wiggle       { animation: sc-wiggle 2.4s ease-in-out infinite; transform-origin: 50% 60%; }
 .anim-orb             { animation: orb-drift 9s ease-in-out infinite; }
 
 /* g-* aliases for backward compat */
@@ -760,7 +763,7 @@ input[type="search"]::-webkit-search-cancel-button { display: none; }
 @media (prefers-reduced-motion: reduce) {
   .anim-coin-rise, .anim-coin-spin, .anim-badge-pop, .anim-cart-jiggle,
   .anim-tab-in, .anim-tab-in-1, .anim-tab-in-2, .anim-tab-in-3,
-  .anim-count-flash, .anim-sparkle-fly, .anim-ring-ping {
+  .anim-count-flash, .anim-sparkle-fly, .anim-ring-ping, .anim-sc-wiggle {
     animation: none !important;
   }
 }

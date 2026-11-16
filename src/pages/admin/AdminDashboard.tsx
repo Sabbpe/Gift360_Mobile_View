@@ -2274,7 +2274,7 @@ export default function AdminDashboard() {
                           : "self-start bg-white border"
                       }`}
                     >
-                      {m.sender_type === "BOT" && <p className="text-[10px] font-semibold mb-0.5">Sahil (bot)</p>}
+                      {m.sender_type === "BOT" && <p className="text-[10px] font-semibold mb-0.5">Shebby (bot)</p>}
                       <p className="whitespace-pre-wrap break-words">{m.message.replace(/\n?\[\[options:[^\]]*\]\]\s*$/, "")}</p>
                       <p className={`mt-1 text-[10px] ${m.sender_type === "ADMIN" ? "text-white/70" : "text-[#9CA3AF]"}`}>
                         {m.created_at ? new Date(m.created_at).toLocaleString("en-IN") : ""}

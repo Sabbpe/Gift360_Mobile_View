@@ -44,7 +44,6 @@ import InstantGiftingBanner from "@/components/InstantGiftingBanner";
 import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/SuperCoinsBrandModal";
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
 import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
@@ -52,15 +51,17 @@ import { useRecommendations } from "@/hooks/useRecommendations";
 import { useBrandNames } from "@/hooks/useBrandNames";
 import type { Brand } from "@/types/brand";
 import gWord from "@/assets/G word.png";
-import giftCARD from "@/assets/Dussehracard.png";
+import giftCARD from "@/assets/GiftCARD.jpeg";
 import giftLogo from "@/assets/Gift.png";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import certfLogo from "@/assets/certf logo.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
+import { occasionSlug } from "@/lib/occasionSlug";
 import { getImageUrl } from "@/utils/imageUrl";
 import { fetchBrandVoucherList, fetchTopBrands, fetchPersonalRecommendations, type TopBrandVoucher } from "@/api/brandSearchApi";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
 import { brandApi } from "@/lib/valuedesignApi";
 
 type BrandItem = {
@@ -102,6 +103,7 @@ function BalanceCard() {
   const [visible, setVisible] = useState(true);
   const { user } = useAuthContext();
   const { data: walletData, isPending, isError, refetch } = useFetchWallet(user?.clientId);
+  const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const hasClient = !!user?.clientId;
   const hasBalance = typeof walletData?.totalBalance === "number";
   // "0" only when the server actually said 0 (or for a guest). A loading or failed
@@ -139,6 +141,22 @@ function BalanceCard() {
             Couldn&apos;t load your balance. Tap to retry
           </button>
         )}
+        {/* SuperCoins balance — pinned top-right of the card */}
+        <div className="absolute right-[12px] top-[12px] z-10 flex items-center gap-1 rounded-full bg-white/75 px-2 py-[3px] shadow-[0_1px_3px_rgba(0,0,0,0.12)]">
+          <img loading="lazy" decoding="async" src={superCoinImg} alt="" className="h-[13px] w-[13px] shrink-0 object-contain anim-sc-wiggle" />
+          <span className="text-[10px] font-medium leading-none text-black/70">SuperCoins balance:</span>
+          <span className="text-[11px] font-bold leading-none tabular-nums text-[#5B3FFF]">
+            {!visible
+              ? "••••••"
+              : scBalance.isLoading
+              ? "…"
+              : scBalance.data == null
+              ? "—"
+              : scBalance.data === "NA"
+              ? "NA"
+              : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+          </span>
+        </div>
         <div className="absolute bottom-[6px] right-[10px] flex items-center gap-1.5 bg-white/90 rounded-full pl-2 pr-3 py-1 shadow-sm">
           <style>{`
             @keyframes gold-pulse-badge {
@@ -163,7 +181,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
     { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
     { label: "Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
-    { label: "Rewards", Icon: Coins, href: "/rewards" },
+    // { label: "Rewards", Icon: Coins, href: "/rewards" },
   ];
 
   return (
@@ -183,7 +201,7 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
           100% { left: 200%; }
         }
       `}</style>
-      <div className="grid grid-cols-5 gap-[8px] pt-[4px]">
+      <div className="grid grid-cols-4 gap-[8px] pt-[4px]">
         {actions.map(({ label, Icon, href, onClick, isNew }) => (
           <button key={label} onClick={onClick || (() => setLocation(href))} className="flex flex-col items-center active:scale-95 relative">
             {isNew && (
@@ -423,7 +441,10 @@ function OccasionPicksSection({
   const title = occasion;
 
   return (
-    <section className="px-[21px] pt-[26px]">
+    <section
+      id={`occasion-${occasionSlug(occasion)}`}
+      className="scroll-mt-[76px] px-[21px] pt-[26px]"
+    >
       <div className="inline-block bg-white rounded-xl px-3 py-1">
         <h2 className="text-[17px] font-bold leading-none tracking-[-0.02em] text-black">{title}</h2>
       </div>
@@ -983,10 +1004,6 @@ function MobileHomeScreen() {
       <Header />
       <main className="min-h-screen w-full overflow-x-hidden pb-[84px] font-body text-[#101010] md:hidden relative">
         <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-        <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${homebackImg})` }}
-        />
         <div className="relative z-10">
         <div className="relative overflow-visible pb-[118px]">
           <HomeHeader onSuperCoinClick={openSuperCoinsModal} />

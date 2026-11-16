@@ -392,6 +392,9 @@ export const clearOrderIdempotencyKey = (): void => {
 const CART_KEY = "resellerCart";
 const BUYER_KEY = "resellerBuyer";
 
+/** Max vouchers of the same SKU in a single order (also enforced by the API). */
+export const MAX_QTY_PER_SKU = 3;
+
 export interface ResellerCartItem {
   brandSku: string;
   brandName: string;
@@ -406,7 +409,11 @@ export const getResellerCart = (): ResellerCartItem[] => {
   try {
     const raw = localStorage.getItem(CART_KEY);
     if (!raw) return [];
-    return JSON.parse(raw) as ResellerCartItem[];
+    // Clamp anything saved before the cap existed.
+    return (JSON.parse(raw) as ResellerCartItem[]).map((i) => ({
+      ...i,
+      quantity: Math.min(i.quantity, MAX_QTY_PER_SKU),
+    }));
   } catch {
     return [];
   }
@@ -490,6 +497,126 @@ export const downloadTextFile = (content: string, filename: string): void => {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+/** Save a Blob as a file download. */
+export const downloadBlob = (blob: Blob, filename: string): void => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+const XLSX_MIME =
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+/**
+ * ONE Excel workbook for ONE order (any number of line items).
+ *   Sheet "Vouchers": one row per voucher (card no. / PIN written as TEXT so
+ *                     Excel never turns 16-digit numbers into 1.2E+15 or
+ *                     drops leading zeros).
+ *   Sheet "Order":    order summary + one row per line item with its status.
+ * exceljs is loaded on demand so it never bloats the main bundle.
+ */
+export const orderToXlsx = async (
+  order: ResellerOrderResult,
+  orderDate?: string
+): Promise<Blob> => {
+  const mod: any = await import("exceljs");
+  const Workbook = (mod.default ?? mod).Workbook;
+  const wb = new Workbook();
+
+  const v = wb.addWorksheet("Vouchers");
+  v.columns = [
+    { header: "Order Number", key: "order", width: 24 },
+    { header: "Client Reference", key: "ref", width: 18 },
+    { header: "Order Date", key: "date", width: 12 },
+    { header: "Brand", key: "brand", width: 22 },
+    { header: "Brand SKU", key: "sku", width: 16 },
+    { header: "Face Value (INR)", key: "face", width: 16 },
+    { header: "Cost to You (INR)", key: "net", width: 16 },
+    { header: "Card Number", key: "card", width: 24 },
+    { header: "Card PIN", key: "pin", width: 16 },
+    { header: "Activation Code", key: "code", width: 20 },
+    { header: "Activation URL", key: "url", width: 36 },
+    { header: "Expiry", key: "exp", width: 12 },
+    { header: "Line Status", key: "status", width: 14 },
+  ];
+  const date = (orderDate || "").slice(0, 10);
+  for (const item of order.items ?? []) {
+    const qty = Math.max(Number(item.quantity) || 1, 1);
+    const perUnitNet = Number(item.netAmount || 0) / qty;
+    const creds = item.credentials ?? [];
+    const base = {
+      order: order.orderNumber,
+      ref: order.clientOrderRef ?? "",
+      date,
+      brand: item.brandName,
+      sku: item.brandSku,
+      face: Number(item.unitPrice),
+      net: Math.round(perUnitNet * 100) / 100,
+      status: item.fulfillmentStatus,
+    };
+    if (creds.length === 0) {
+      v.addRow({ ...base, card: "", pin: "", code: "", url: "", exp: "" });
+    } else {
+      for (const c of creds) {
+        v.addRow({
+          ...base,
+          card: c.cardNumber ?? "",
+          pin: c.cardPin ?? "",
+          code: c.activationCode ?? "",
+          url: c.activationUrl ?? "",
+          exp: (c.expiry ?? "").slice(0, 10),
+        });
+      }
+    }
+  }
+  v.getRow(1).font = { bold: true };
+  v.views = [{ state: "frozen", ySplit: 1 }];
+  for (const col of ["card", "pin", "code"]) {
+    v.getColumn(col).numFmt = "@"; // text, never a number
+  }
+
+  const o = wb.addWorksheet("Order");
+  o.columns = [
+    { header: "Field", key: "k", width: 22 },
+    { header: "Value", key: "v", width: 34 },
+  ];
+  o.addRows([
+    { k: "Order Number", v: order.orderNumber },
+    { k: "Client Reference", v: order.clientOrderRef ?? "" },
+    { k: "Order Date", v: date },
+    { k: "Status", v: order.status },
+    { k: "Total Charged (INR)", v: Number(order.totalAmount) },
+    { k: "Total Discount (INR)", v: Number(order.discountAmount ?? 0) },
+    { k: "Line Items", v: (order.items ?? []).length },
+  ]);
+  o.addRow({});
+  const hdr = o.addRow({ k: "Line item", v: "" });
+  hdr.font = { bold: true };
+  o.addRow(["Brand", "SKU", "Qty", "Unit Price", "Discount %", "Net Amount", "Status"]).font = {
+    bold: true,
+  };
+  for (const item of order.items ?? []) {
+    o.addRow([
+      item.brandName,
+      item.brandSku,
+      item.quantity,
+      Number(item.unitPrice),
+      Number(item.discountPercent),
+      Number(item.netAmount),
+      item.fulfillmentStatus,
+    ]);
+  }
+  o.getRow(1).font = { bold: true };
+
+  const buf = await wb.xlsx.writeBuffer();
+  return new Blob([buf], { type: XLSX_MIME });
 };
 
 export const getResellerBuyer = (): ResellerBuyer | null => {

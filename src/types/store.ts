@@ -82,18 +82,21 @@ export interface NearbyBrandApiResponse {
   min_price: number;
   max_price: number;
   stock_available: number;
-  description: string;
-  tnc: string;
+  description?: string;
+  tnc?: string;
   images: string;
-  important_instruction: Record<string, string>;
-  redeem_steps: Array<{
+  important_instruction?: Record<string, string>;
+  redeem_steps?: Array<{
     title: string;
     image: string;
   }>;
   availability: string;
-  created_at: string;
-  updated_at: string;
+  created_at?: string;
+  updated_at?: string;
   nearest_distance_km: number;
+  nearest_store_address?: string | null;
+  nearest_store_city?: string | null;
+  stores_nearby?: number | null;
 }
 
 export interface NearbyBrandsResponse {
@@ -116,4 +119,7 @@ export interface NearbyBrand {
   maxPrice: number;
   images: any;
   nearestDistanceKm: number;
+  nearestStoreAddress?: string | null;
+  nearestStoreCity?: string | null;
+  storesNearby?: number | null;
 }

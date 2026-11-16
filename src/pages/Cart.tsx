@@ -16,15 +16,18 @@ import { useExternalScript } from "@/hooks/useExternalScript";
 import { fetchPlatformFeeConfig } from "@/api/brandsApi";
 import { usePaymentMethodFees, computeMethodFee } from "@/hooks/usePaymentMethodFees";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { trackEvent } from "@/lib/analytics";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useFetchWallet } from "@/hooks/useFetchWallet";
+import { useStoredSuperCoinBalance } from "@/hooks/useStoredSuperCoinBalance";
+
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { fetchOrderDetails } from "@/api/orderApi";
 import { Wallet } from "lucide-react";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import { encrypt } from "@/utils/encryption";
 import { useCart } from "@/hooks/useCart";
 import {
@@ -58,10 +61,10 @@ import { brandApi } from "@/lib/valuedesignApi";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcluded } from "@/lib/supercoin-excluded-brands";
-import {
-  getRewardStatus,
-  type QuizRewardStatus,
-} from "@/api/rewardApi";
+// import {
+//   getRewardStatus,
+//   type QuizRewardStatus,
+// } from "@/api/rewardApi";
 
 const FALLBACK = FALLBACK_IMAGE;
 const COUPON_RESERVATION_MAP_KEY = "couponReservationByOrder";
@@ -296,9 +299,12 @@ export default function Cart() {
   const [sheetAmount, setSheetAmount] = useState<number | undefined>(undefined);
   const [sheetQuantity, setSheetQuantity] = useState<number | undefined>(undefined);
   const [paymentSheetOpen, setPaymentSheetOpen] = useState(false);
-  const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
-  const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
+  // Juspay UPI-intent gateway (new); Easebuzz path below stays untouched.
+  const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
+  // const [pendingQuizReward, setPendingQuizReward] = useState<QuizRewardStatus | null>(null);
+  // const [quizRewardSecondsLeft, setQuizRewardSecondsLeft] = useState(0);
 
+  /*
   useEffect(() => {
     if (!user?.clientId) {
       setPendingQuizReward(null);
@@ -335,6 +341,7 @@ export default function Cart() {
     const timer = window.setInterval(updateCountdown, 250);
     return () => window.clearInterval(timer);
   }, [pendingQuizReward?.expiresAt]);
+  */
 
   // NEW: Wallet feature
   const [useWalletBalance, setUseWalletBalance] = useState(false);
@@ -414,6 +421,7 @@ useEffect(() => {
   });
   const timerRef = useRef<number>(0);
   const { data: walletData } = useFetchWallet(user?.clientId);
+const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
   const superCoinMerchantWalletId =
     import.meta.env.VITE_SUPERCOIN_MERCHANT_WALLET_ID?.trim() || "";
   const normalizedSuperCoinMobile = useMemo(
@@ -1256,6 +1264,14 @@ useEffect(() => {
   }
   const maxSuperCoinRedeemable = discountsLoaded ? totalCoinCap : superCoinState.balance;
   const effectiveSupercoinMultiplier = totalRupeeCap > 0 ? totalCoinCap / totalRupeeCap : 1.25;
+  // Cap percent to DISPLAY: the brand's own DB share (lowest across the cart), else the global cap.
+  // Same rule as the cap maths above, so the label always matches what can actually be applied.
+  const displayCapPercent = (() => {
+    const caps = cartItems
+      .filter((item) => !isScExcluded(item.brandId, item.brandName))
+      .map((item) => brandCapShare(item.brandId) ?? superCoinCapPercent);
+    return caps.length > 0 ? Math.min(...caps) : superCoinCapPercent;
+  })();
   // Rate caption: the brands' own DB multiplier (coins needed per Rs 1), shown as-is.
   // (effectiveSupercoinMultiplier is rounded up per item, so it is not used for display.)
   const scRateValues = discountsLoaded
@@ -1556,8 +1572,12 @@ useEffect(() => {
     };
   }, [superCoinIdentity]);
 
+  // ONE Pay button + the method selector. The selected mode decides the
+  // gateway: UPI -> Juspay UPI intent; NB / Debit / Credit -> Easebuzz.
+  const payViaRef = useRef<"easebuzz" | "choose">("easebuzz");
+
   // Step 1: Create Order in Database
-  const handlePayNow = async (gateway: "ntt" | "easebuzz") => {
+  const handlePayNow = async (gateway: "ntt" | "easebuzz" | "choose") => {
     if (!isAuthenticated) {
       toast({
         title: "Login required",
@@ -1621,15 +1641,17 @@ useEffect(() => {
     setPayOpen(true);
   };
 
-  // Pay inside the sheet: ask about SuperCoins first when coins are selected but not applied.
-  const onPayPressed = () => {
+  // Single checkout button: opens the full payment chooser. Ask about
+  // SuperCoins first when coins are selected but not yet authorised.
+  const onPayUsingPressed = () => {
+    payViaRef.current = "choose";
     if (rewardMode === 'superCoins' && !superCoinAuthorized && scPreviewDeduction > 0) {
       setPayOpen(false);
       setScPromptOpen(true);
       return;
     }
     setPayOpen(false);
-    void handlePayNow("easebuzz");
+    void handlePayNow("choose");
   };
 
   // After the Flipkart OTP succeeds, show the redeemed countdown; it calls
@@ -1652,9 +1674,9 @@ useEffect(() => {
 
   const validateOrder = (
     orderNumber: string,
-    gateway: "ntt" | "easebuzz",
+    gateway: "ntt" | "easebuzz" | "choose",
     paymentBreakdown: ReturnType<typeof buildPaymentBreakdown>
-  ) => {
+    ) => {
     console.log("ðŸ” Validating order:", orderNumber);
     console.log("Payment breakdown", paymentBreakdown);
 
@@ -1686,6 +1708,11 @@ useEffect(() => {
           );
           // Proceed to payment without storing snapshot
           // Post-payment pages fetch fresh data from backend
+          if (gateway === "choose") {
+            setPaymentSheetOpen(false);
+            setPayUsingOrder(orderNumber);
+            return;
+          }
           startBackendPayment(orderNumber);
         },
         onError: (error) => {
@@ -1703,9 +1730,14 @@ useEffect(() => {
     );
   };
 
-  const startBackendPayment = (orderNumber: string) => {
+  const startBackendPayment = (orderNumber: string, methodCode?: string) => {
     backendPaymentMutation.mutate(
-      { orderNumber, paymentMethod: useMethodFee ? activePaymentMethod?.code : undefined },
+      {
+        orderNumber,
+        paymentMethod: useMethodFee ? methodCode ?? activePaymentMethod?.code : undefined,
+        // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+        paymentModes: useMethodFee ? easebuzzPaymentModes(paymentMethods) : undefined,
+      },
       {
       onSuccess: (response) => {
         console.log("Backend payment initiation response:", response);
@@ -2183,10 +2215,6 @@ useEffect(() => {
       <main className="relative flex-1 overflow-hidden">
         {/* Home backdrop */}
         <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-        <div
-          className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${homebackImg})` }}
-        />
 
         <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-4 pb-2 sm:pt-8 sm:pb-6">
@@ -2277,6 +2305,7 @@ useEffect(() => {
                 <CardContent className="p-4 sm:p-5 space-y-3">
                   <h2 className="text-lg font-extrabold cart-text-primary">Order Summary</h2>
 
+                  {/*
                   {pendingQuizReward?.status === "PENDING" && (
                     <div className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50 px-3 py-2 text-xs font-semibold text-violet-900">
                       <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 shrink-0" />
@@ -2289,6 +2318,7 @@ useEffect(() => {
                       </span>
                     </div>
                   )}
+                  */}
 
                   {/* Mode toggle */}
                   <div className="grid grid-cols-2 gap-1 rounded-full bg-muted p-1" role="tablist" aria-label="Reward type">
@@ -2337,7 +2367,7 @@ useEffect(() => {
                   <p className="-mt-1 text-center text-xs font-medium text-muted-foreground">
                     {(rewardMode === 'cashbackWallet' || allItemsSuperCoinExcluded)
                       ? "Earn cashback points · 1 point = ₹1"
-                      : `${scRateText ? `${scRateText} · ` : ""}up to ${superCoinCapPercent}% of voucher value`}
+                      : `${scRateText ? `${scRateText} · ` : ""}up to ${displayCapPercent}% of voucher value`}
                   </p>
 
                   {/* One redeem control per mode, same footprint */}
@@ -2348,7 +2378,7 @@ useEffect(() => {
                       aria-checked={useWalletBalance}
                       disabled={walletBalance <= 0}
                       onClick={() => setUseWalletBalance(!useWalletBalance)}
-                      className="flex w-full items-center gap-3 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
+                      className="flex w-full flex-wrap items-center gap-x-3 gap-y-2 rounded-2xl border border-[rgba(151,71,255,0.25)] bg-[rgba(151,71,255,0.05)] px-3 py-3 text-left disabled:opacity-60"
                     >
                       <Wallet className="h-5 w-5 shrink-0 text-[var(--cart-primary)]" />
                       <span className="min-w-0 flex-1">
@@ -2361,6 +2391,19 @@ useEffect(() => {
                       </span>
                       <span className={`relative h-6 w-11 shrink-0 rounded-full transition-colors ${useWalletBalance ? 'bg-[var(--cart-primary)]' : 'bg-gray-300'}`}>
                         <span className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all ${useWalletBalance ? 'left-[22px]' : 'left-0.5'}`} />
+                      </span>
+                      <span className="flex w-full items-center gap-1.5 border-t border-[rgba(151,71,255,0.15)] pt-1.5 text-xs">
+                        <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-4 w-4 shrink-0 object-contain anim-sc-wiggle" />
+                        <span className="text-muted-foreground">SuperCoins balance:</span>
+                        <span className="font-bold tabular-nums text-[var(--cart-primary)]">
+                          {scBalance.isLoading
+                            ? "…"
+                            : scBalance.data == null
+                            ? "—"
+                            : scBalance.data === "NA"
+                            ? "NA"
+                            : scBalance.data.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+                        </span>
                       </span>
                     </button>
                   ) : (
@@ -2665,30 +2708,14 @@ useEffect(() => {
               </button>
             </div>
 
-            {useMethodFee && (
-              <PaymentMethodSelector
-                methods={paymentMethods}
-                value={activePaymentMethod?.code ?? ""}
-                onChange={setSelectedPaymentMethod}
-                cashAmount={displayCash}
-                disabled={isProcessing}
-              />
-            )}
-
-            <button
-              type="button"
-              className="cart-gradient-fill h-12 w-full rounded-2xl font-bold shadow-lg shadow-[rgba(108,92,231,0.25)] transition-all active:scale-[0.98] disabled:opacity-50"
-              onClick={onPayPressed}
-              disabled={isProcessing || easebuzzScriptStatus !== "ready"}
-            >
-              {easebuzzScriptStatus === "loading"
-                ? "Loading..."
-                : easebuzzScriptStatus === "error"
-                  ? "Payment unavailable"
-                  : isProcessing
-                    ? "Processing..."
-                    : `Pay ₹${displayTotal.toFixed(2)}`}
-            </button>
+            <PayUsingField
+              label={activePaymentMethod?.label ?? "UPI"}
+              subtext={payMethodSubtext(activePaymentMethod?.code)}
+              amountLabel={`Pay ₹${displayTotal.toFixed(2)}`}
+              onClick={onPayUsingPressed}
+              disabled={isProcessing}
+              loading={isProcessing}
+            />
           </div>
         </div>
       )}
@@ -2708,7 +2735,7 @@ useEffect(() => {
                 setScPromptOpen(false);
                 setScPreviewOff(true);
                 setPayOpen(false);
-                void handlePayNow("easebuzz");
+                void handlePayNow(payViaRef.current);
               }}
             >
               Pay without coins
@@ -2732,12 +2759,45 @@ useEffect(() => {
 
       <PaymentFlowSheet open={paymentSheetOpen} state="loading" />
 
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={displayCash}
+        methods={paymentMethods}
+        amountLabel={`₹${displayTotal.toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
+        onLeavePending={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
+        onPaid={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          setSelectedPaymentMethod(code);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) setSelectedPaymentMethod(fallback);
+          setPayUsingOrder(null);
+          startBackendPayment(ref, fallback);
+        }}
+      />
+
       {/* Redeemed → 3·2·1 → payment (cosmetic; always continues) */}
       <SuperCoinRedeemedModal
         open={scRedeemedOpen}
         onContinue={() => {
           setScRedeemedOpen(false);
-          void handlePayNow("easebuzz");
+          void handlePayNow(payViaRef.current);
         }}
       />
 

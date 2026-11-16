@@ -26,7 +26,17 @@ const CATEGORY_CHIPS = [
   "Food & Beverages",
   "Jewellery",
   "Gaming",
+  "Hotels",
+  "Electronics",
+  "Health & Wellness",
 ];
+
+// Source addresses are often ALL CAPS: title-case long shouted words, keep short
+// abbreviations (MG, NH) and anything containing digits as they are.
+const tidyAddress = (raw: string | null | undefined): string =>
+  raw
+    ? raw.replace(/\s+/g, " ").trim().replace(/[A-Z][A-Z']{3,}/g, (w) => w.charAt(0) + w.slice(1).toLowerCase())
+    : "";
 
 type LocationStatus = "idle" | "requesting" | "granted" | "denied" | "confirming";
 
@@ -127,9 +137,10 @@ function NearbyBrandCard({
   const imgSrc = getImageUrl(brand.images) ?? getImageUrl(brand);
   const distance = brand.nearestDistanceKm != null
     ? brand.nearestDistanceKm < 1
-      ? `${Math.round(brand.nearestDistanceKm * 1000)} m away`
-      : `${brand.nearestDistanceKm.toFixed(1)} km away`
+      ? "< 1 km away"
+      : `~${Math.round(brand.nearestDistanceKm)} km away`
     : null;
+  const nearestAddress = tidyAddress(brand.nearestStoreAddress);
 
   return (
     <article className="flex items-center gap-3 rounded-[18px] bg-white px-3 py-3 shadow-[0_12px_24px_rgba(36,43,77,0.08)]">
@@ -152,7 +163,15 @@ function NearbyBrandCard({
           <div className="mt-1 flex items-center gap-1">
             <MapPin className="h-3 w-3 text-[#6a53ff] shrink-0" strokeWidth={2.2} />
             <span className="text-[12px] font-semibold text-[#6a53ff]">{distance}</span>
+            {brand.storesNearby != null && brand.storesNearby > 1 && (
+              <span className="text-[11px] text-[#9aa1b4]">· {brand.storesNearby} stores nearby</span>
+            )}
           </div>
+        )}
+        {nearestAddress && (
+          <p className="mt-1 text-[11px] leading-snug text-[#6b7086] break-words">
+            {nearestAddress}
+          </p>
         )}
         {(brand.minPrice > 0 || brand.maxPrice > 0) && (
           <p className="mt-0.5 text-[11px] text-[#9aa1b4]">

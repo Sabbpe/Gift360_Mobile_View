@@ -4,7 +4,8 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { useAuthContext } from "@/contexts/AuthContext";
-import { brandApi, giftcardApiClient } from "@/lib/valuedesignApi";
+import { giftcardApiClient } from "@/lib/valuedesignApi";
+import { fetchNewOrders } from "@/api/orderApi";
 import { ScratchCard } from "@/components/ScratchCard";
 import { FloatingCoins } from "@/components/FloatingCoins";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
@@ -780,12 +780,14 @@ export default function Orders() {
     setLoading(true); setError(false);
     try {
       const [cashRes, scRes] = await Promise.all([
-        brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12, type: "NORMAL" }),
-        brandApi.post("/v1/neworders", { clientId: user.clientId, timeline: 12, type: "SUPERCOIN" }),
+        fetchNewOrders(user.clientId, "NORMAL"),
+        fetchNewOrders(user.clientId, "SUPERCOIN"),
       ]);
       const sortFn = (a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      setCashOrders((Array.isArray(cashRes?.data?.orders) ? cashRes.data.orders : []).map(mapOrder).sort(sortFn));
-      setSuperCoinOrders((Array.isArray(scRes?.data?.orders) ? scRes.data.orders : []).map(mapOrder).sort(sortFn));
+      const cashOrdersData = cashRes?.orders || cashRes?.data?.orders || [];
+      const superCoinOrdersData = scRes?.orders || scRes?.data?.orders || [];
+      setCashOrders((Array.isArray(cashOrdersData) ? cashOrdersData : []).map(mapOrder).sort(sortFn));
+      setSuperCoinOrders((Array.isArray(superCoinOrdersData) ? superCoinOrdersData : []).map(mapOrder).sort(sortFn));
     } catch { setError(true); setCashOrders([]); setSuperCoinOrders([]); }
     finally { setLoading(false); }
   }, [user?.clientId]);
@@ -876,10 +878,6 @@ export default function Orders() {
   return (
     <div className="min-h-screen flex flex-col relative">
       <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-      <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${homebackImg})` }}
-      />
       <Header />
       <main className="flex-1 pb-24 md:pb-0 relative z-10">
         <FloatingCoins count={6} />

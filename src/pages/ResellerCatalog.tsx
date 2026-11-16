@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
+  Home,
   Search,
   ShoppingCart,
   Plus,
@@ -19,6 +20,7 @@ import {
   fetchResellerProducts,
   getResellerCart,
   saveResellerCart,
+  MAX_QTY_PER_SKU,
   type ResellerProduct,
   type ResellerCartItem,
 } from "@/api/resellerApi";
@@ -134,7 +136,7 @@ export default function ResellerCatalog() {
 
   const stockQty = () => {
     const s = parseInt(picked?.stockAvailable ?? "10", 10);
-    return Number.isFinite(s) && s > 0 ? s : 10;
+    return Math.min(MAX_QTY_PER_SKU, Number.isFinite(s) && s > 0 ? s : MAX_QTY_PER_SKU);
   };
 
   const unitPrice = (): number | null => {
@@ -169,6 +171,13 @@ export default function ResellerCatalog() {
     const next = [...getResellerCart()];
     const existing = next.find((i) => i.brandSku === picked.brandSku);
     if (existing) {
+      if (existing.quantity + qty > MAX_QTY_PER_SKU) {
+        toast({
+          title: `Maximum ${MAX_QTY_PER_SKU} per voucher`,
+          description: `Your cart already has ${existing.quantity} of this voucher. Only ${MAX_QTY_PER_SKU} are allowed per order.`,
+          variant: "destructive",
+        });
+      }
       existing.quantity = Math.min(existing.quantity + qty, stockQty());
       existing.unitPrice = unit;
     } else {
@@ -215,6 +224,13 @@ export default function ResellerCatalog() {
           <h1 className="flex-1 text-sm font-bold text-gray-900">
             Browse Brands
           </h1>
+          <button
+            onClick={() => setLocation("/reseller/dashboard")}
+            className="rounded-full bg-purple-50 p-2 text-purple-700"
+            aria-label="Home"
+          >
+            <Home className="h-5 w-5" />
+          </button>
           <button
             onClick={() => setLocation("/reseller/cart")}
             className="relative rounded-full bg-purple-50 p-2 text-purple-700"

@@ -18,7 +18,6 @@ import BrandVoucherModal from "@/components/BrandVoucherModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 import superCoinImg from "@/assets/SuperCOin-removebg-preview.png";
 import { isSuperCoinExcludedById, isSuperCoinExcluded, isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
-import homebackImg from "@/assets/dussehrabackdrop.png";
 import {
   fetchBrandVoucherList,
   fetchTopBrands,
@@ -131,6 +130,10 @@ useEffect(() => {
   const tabFromUrl = urlParams.get('tab') as "about" | "how" | "terms" | null;
   const brandIdFromUrl = urlParams.get('brandId');
   const superCoinsOnly = urlParams.get("supercoins") === "1";
+  // Pre-applied discount filter: /brands?discount=Up%20to%205%25&discount=5%25%20-%2015%25
+  // (existing meta keys — e.g. the Instant Gifting "Shop Now" banner, where the
+  // two ranges together mean "upto 15%").
+  const discountFromUrl = urlParams.getAll("discount");
 
   const [sheetInitialTab, setSheetInitialTab] = useState<"about" | "how" | "terms" | null>(null);
 
@@ -139,7 +142,7 @@ useEffect(() => {
     brands: [],
     priceRange: "all",
     sortBy: "Popularity",
-    discountRanges: [],
+    discountRanges: discountFromUrl.length ? discountFromUrl : [],
     sortOrder: "none",
   });
 
@@ -796,10 +799,6 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
     <div className="relative min-h-screen flex flex-col overflow-hidden">
       {/* Home backdrop */}
       <div className="fixed inset-0 z-0" style={{ backgroundColor: "#f3f5f9" }} />
-      <div
-        className="fixed inset-0 z-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${homebackImg})` }}
-      />
       <FloatingCoins />
 
       <div className="relative z-10 flex flex-col flex-1">

@@ -3,10 +3,12 @@ import { useRef, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Sparkles, Calendar, CreditCard, Lock, Gift, Send,
-  Zap, ShieldCheck, MessageSquare, User, ChevronUp, Copy, Check,
+  Zap, ShieldCheck, MessageSquare, User, ChevronUp, Copy, Check, Mail, Loader2,
 } from "lucide-react";
 import { ScratchGate } from "@/components/ScratchGate";
 import { useGifting } from "@/hooks/useGifting";
+import { useSendEmail } from "@/hooks/useSendEmail";
+import { useToast } from "@/hooks/use-toast";
 import type { VoucherState } from "@/types/order";
 
 interface ScratchCardProps {
@@ -63,6 +65,39 @@ export function ScratchCard({
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 1500);
     });
+  };
+
+  // ── Share revealed voucher via email — existing backend endpoint ─────────
+  // POST {VITE_MAIL_URL}/mail/send (SendMailController /api/mail/send) with
+  // the "gift_vouchers" template: the backend renders the real voucher codes
+  // from the DB and emails them from gift360@gift360.io to the registered
+  // client email. Same endpoint the reveal flow already uses server-side.
+  const { mutate: sendShareEmail, isPending: isSendingEmail } = useSendEmail();
+  const { toast } = useToast();
+  const [emailShared, setEmailShared] = useState(false);
+
+  const handleShareEmail = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSendingEmail || emailShared) return;
+    sendShareEmail(
+      { clientId, orderNumber, templateName: "gift_vouchers" },
+      {
+        onSuccess: () => {
+          setEmailShared(true);
+          toast({
+            title: "Voucher emailed! 📧",
+            description: "Sent to your registered email from gift360@gift360.io.",
+          });
+        },
+        onError: () => {
+          toast({
+            title: "Could not send email",
+            description: "Something went wrong. Please try again.",
+            variant: "destructive",
+          });
+        },
+      },
+    );
   };
 
   useEffect(() => {
@@ -221,9 +256,24 @@ export function ScratchCard({
             ) : null}
           </div>
 
-          <div className="flex items-center justify-between shrink-0">
-            <p className="text-[10px] font-medium text-[#8A8A8A] truncate">Exp {expiryDate}</p>
-            <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full font-bold shadow-sm flex items-center gap-1 px-2 py-1 text-[9px]">
+          <div className="flex items-center justify-between gap-1.5 shrink-0">
+            <p className="text-[10px] font-medium text-[#8A8A8A] truncate min-w-0 flex-1">Exp {expiryDate}</p>
+            <button
+              type="button"
+              onClick={handleShareEmail}
+              disabled={isSendingEmail}
+              className="shrink-0 flex items-center gap-1 text-[9px] font-bold text-[#1A3052] bg-white/80 border border-[#E4B76C]/40 rounded-full px-2 py-0.5 hover:bg-white transition-colors disabled:opacity-60"
+            >
+              {isSendingEmail ? (
+                <Loader2 className="h-2.5 w-2.5 animate-spin" />
+              ) : emailShared ? (
+                <Check className="h-2.5 w-2.5 text-emerald-600" />
+              ) : (
+                <Mail className="h-2.5 w-2.5" />
+              )}
+              {isSendingEmail ? "Sending…" : emailShared ? "Sent" : "Email"}
+            </button>
+            <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full font-bold shadow-sm flex items-center gap-1 px-2 py-1 text-[9px] shrink-0">
               <ShieldCheck className="h-2.5 w-2.5" />
             </div>
           </div>
@@ -427,6 +477,25 @@ export function ScratchCard({
                   Valid {expiryDate}
                 </p>
               </div>
+            </div>
+
+            {/* ── Share revealed voucher via email (existing /mail/send backend) ── */}
+            <div className="relative z-10 mx-6 mt-5">
+              <button
+                type="button"
+                onClick={handleShareEmail}
+                disabled={isSendingEmail}
+                className="flex items-center justify-center gap-2 w-full min-h-[44px] rounded-full bg-[#1A3052] hover:bg-[#243B63] transition-colors text-white text-xs font-semibold disabled:opacity-60"
+              >
+                {isSendingEmail ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-amber-300" />
+                ) : emailShared ? (
+                  <Check className="h-4 w-4 text-emerald-400" />
+                ) : (
+                  <Mail className="h-4 w-4 text-amber-300" />
+                )}
+                {isSendingEmail ? "Sending…" : emailShared ? "Sent to your email" : "Email this voucher"}
+              </button>
             </div>
 
             {/* ── Bottom bar ── */}

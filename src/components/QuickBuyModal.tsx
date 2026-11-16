@@ -1,15 +1,18 @@
-﻿import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { X, Plus, Minus, ShoppingCart, ChevronDown, Loader2 } from "lucide-react";
 import type { Brand } from "@/types/brand";
 import { useCart } from "@/hooks/useCart";
 import { useToast } from "@/hooks/use-toast";
 import { useBrandDetails } from "@/hooks/useBrandDetails";
+import PayUsingSheet from "@/components/PayUsingSheet";
+import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
+import { easebuzzPaymentModes, isUpiPaymentMethod } from "@/lib/paymentModes";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
-import { PaymentMethodSelector } from "@/components/PaymentMethodSelector";
+
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
 const MAX_QUANTITY_PER_ITEM = 3;
@@ -38,6 +41,8 @@ export default function QuickBuyModal({
   const { toast } = useToast();
 const createOrderMutation = useCreateOrder();
 const backendPaymentMutation = useBackendPaymentInitiation();
+// Juspay UPI-intent gateway (new); the Easebuzz path stays as-is.
+const [payUsingOrder, setPayUsingOrder] = useState<string | null>(null);
 const { methods: paymentMethods, loaded: paymentMethodsLoaded } = usePaymentMethodFees();
 const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("UPI");
 const activePaymentMethod = paymentMethods.find((m) => m.code === selectedPaymentMethod) ?? paymentMethods[0];
@@ -142,7 +147,7 @@ if (isFixedType && brandDetails?.DenominationList?.length > 0) {
     }
   };
 
-const handlePayNow = async () => {
+const handlePayNow = async (choice: "EASEBUZZ" | "CHOOSE" = "EASEBUZZ") => {
   if (!isValidAmount()) {
     toast({
       title: "Invalid amount",
@@ -220,7 +225,7 @@ const orderRequest = {
       console.log("Order created successfully:", orderResponse);
       // Use the backend-confirmed order number for validation and payment.
       const confirmedOrderNumber = orderResponse.orderNumber || orderNumber;
-      validateOrder(confirmedOrderNumber, totalAmount);
+      validateOrder(confirmedOrderNumber, totalAmount, choice);
     },
     onError: (error: any) => {
       console.error("Order creation error:", error);
@@ -252,7 +257,7 @@ const orderRequest = {
 };
 
 
-const validateOrder = (orderNumber: string, totalAmount: number) => {
+const validateOrder = (orderNumber: string, totalAmount: number, choice: "EASEBUZZ" | "CHOOSE" = "EASEBUZZ") => {
   console.log("Validating order:", orderNumber);
   validateOrderMutation.mutate(
     {
@@ -273,6 +278,10 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
           return;
         }
         console.log("Payment required. Amount:", validationResponse.amountToPay);
+        if (choice === "CHOOSE") {
+          setPayUsingOrder(orderNumber);
+          return;
+        }
         initiateBackendPaymentNow(orderNumber);
       },
       onError: (error: any) => {
@@ -287,8 +296,16 @@ const validateOrder = (orderNumber: string, totalAmount: number) => {
   );
 };
 
-const initiateBackendPaymentNow = (orderNumber: string) => {
-  backendPaymentMutation.mutate({ orderNumber, paymentMethod: paymentMethodCode }, {
+const initiateBackendPaymentNow = (orderNumber: string, methodCode?: string) => {
+  backendPaymentMutation.mutate(
+    {
+      orderNumber,
+      paymentMethod: methodCode ?? paymentMethodCode,
+      // UPI is handled by Juspay; never offer it on the Easebuzz checkout.
+      paymentModes:
+        paymentMethods.length > 0 ? easebuzzPaymentModes(paymentMethods) : undefined,
+    },
+    {
     onSuccess: (response) => {
       console.log("Backend payment initiation response:", response);
 
@@ -482,54 +499,70 @@ const isProcessing =
               </div>
             )}
 
-            {isValidAmount() && paymentMethodCode && (
-              <PaymentMethodSelector
-                methods={paymentMethods}
-                value={paymentMethodCode}
-                onChange={setSelectedPaymentMethod}
-                cashAmount={Number(amount) * quantity}
-                disabled={isProcessing}
-                showTotal
-              />
-            )}
-              </>
+            </>
 )}
 
           </div>
 
 {/* Footer */}
 <div className="p-4 sm:p-6 border-t border-border">
-  <div className="flex gap-3">
-    <button
-      onClick={handleAddToCart}
-      className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all border-2 ${
-        isValidAmount()
-          ? "border-primary text-primary hover:bg-primary/10"
-          : "border-muted text-muted-foreground opacity-60 hover:bg-muted/40"
-      }`}
-    >
-      <ShoppingCart className="h-5 w-5" />
-      Add to Cart
-    </button>
-    <button
-      disabled={isProcessing}
-      onClick={handlePayNow}
-      className={`flex-1 h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all ${
-        isValidAmount() && !isProcessing
-          ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white hover:opacity-90 hover:scale-[1.02] active:scale-[0.98]"
-          : "bg-muted text-muted-foreground opacity-60 hover:bg-muted/70"
-      }`}
-    >
-      {createOrderMutation.isPending && "Creating..."}
-      {validateOrderMutation.isPending && "Validating..."}
-      {backendPaymentMutation.isPending && "Processing..."}
-      {!isProcessing && "Pay Now"}
-    </button>
-  </div>
+  <button
+    onClick={handleAddToCart}
+    className={`w-full h-12 rounded-lg text-base font-bold flex items-center justify-center gap-2 transition-all border-2 ${
+      isValidAmount()
+        ? "border-primary text-primary hover:bg-primary/10"
+        : "border-muted text-muted-foreground opacity-60 hover:bg-muted/40"
+    }`}
+  >
+    <ShoppingCart className="h-5 w-5" />
+    Add to Cart
+  </button>
+  <PayUsingField
+    label={activePaymentMethod?.label ?? "UPI"}
+    subtext={payMethodSubtext(activePaymentMethod?.code)}
+    amountLabel={isValidAmount() ? `Pay ₹${(Number(amount) * quantity).toFixed(2)}` : "Pay Now"}
+    onClick={() => handlePayNow("CHOOSE")}
+    disabled={isProcessing || !isValidAmount()}
+    loading={isProcessing}
+    className="mt-3"
+  />
 </div>
 
         </div>
       </div>
+
+      <PayUsingSheet
+        open={!!payUsingOrder}
+        orderNumber={payUsingOrder ?? ""}
+        cashAmount={Number(amount) * quantity}
+        methods={paymentMethods}
+        amountLabel={`₹${(Number(amount) * quantity).toFixed(2)}`}
+        onClose={() => setPayUsingOrder(null)}
+        onLeavePending={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
+        onPaid={() => {
+          setPayUsingOrder(null);
+          window.location.assign("/orders");
+        }}
+        onCardMethod={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          setSelectedPaymentMethod(code);
+          setPayUsingOrder(null);
+          initiateBackendPaymentNow(ref, code);
+        }}
+        onFallbackToOtherMethods={(code) => {
+          const ref = payUsingOrder;
+          if (!ref) return;
+          const fallback =
+            code ?? paymentMethods.find((m) => !isUpiPaymentMethod(m.code))?.code;
+          if (fallback) setSelectedPaymentMethod(fallback);
+          setPayUsingOrder(null);
+          initiateBackendPaymentNow(ref, fallback);
+        }}
+      />
     </>
   );
 }

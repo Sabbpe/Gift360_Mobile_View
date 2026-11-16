@@ -1,4 +1,4 @@
-// FAQ answers shared with Sahil, the support chatbot. Sahil's replies link to /faq/<id>.
+// FAQ answers shared with Shebby, the support chatbot. Shebby's replies link to /faq/<id>.
 // Keep in sync with gift360_rag/kb/faq.json (verified entries).
 export interface FaqTopic { id: string; title: string; answer: string; category: string }
 

@@ -6,6 +6,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
   ArrowLeft,
+  Home,
   Trash2,
   Plus,
   Minus,
@@ -20,6 +21,7 @@ import {
   saveResellerCart,
   clearResellerCart,
   getResellerBuyer,
+  MAX_QTY_PER_SKU,
   saveResellerBuyer,
   fetchResellerWallet,
   createResellerOrder,
@@ -75,10 +77,18 @@ export default function ResellerCart() {
   };
 
   const setQty = (sku: string, qty: number) => {
+    if (qty > MAX_QTY_PER_SKU) {
+      toast({
+        title: `Maximum ${MAX_QTY_PER_SKU} per voucher`,
+        description: `You can buy at most ${MAX_QTY_PER_SKU} of the same voucher in one order. Place another order for more.`,
+        variant: "destructive",
+        duration: 3000,
+      });
+    }
     persist(
       items.map((i) =>
         i.brandSku === sku
-          ? { ...i, quantity: Math.max(1, Math.min(50, qty)) }
+          ? { ...i, quantity: Math.max(1, Math.min(MAX_QTY_PER_SKU, qty)) }
           : i
       )
     );
@@ -169,6 +179,20 @@ export default function ResellerCart() {
         );
       } else if (status === 401) {
         setOrderError("Session expired. Please login again.");
+      } else if (status === 502 && String(d?.message || "").startsWith("PARTIAL")) {
+        // Some lines were bought and charged, the rest refunded. The cart must
+        // NOT be retried as-is (it would buy the delivered lines again).
+        clearResellerCart();
+        clearOrderIdempotencyKey();
+        setItems([]);
+        void refreshWallet();
+        toast({
+          title: "Order partly delivered",
+          description:
+            "Delivered vouchers were charged; failed items were refunded. See Vouchers and Failed.",
+          duration: 6000,
+        });
+        setLocation("/reseller/dashboard");
       } else {
         setOrderError(
           (typeof d === "string" ? d : d?.message) ||
@@ -196,7 +220,14 @@ export default function ResellerCart() {
             >
               <ArrowLeft className="h-5 w-5" />
             </button>
-            <h1 className="text-sm font-bold text-gray-900">Order placed</h1>
+            <h1 className="flex-1 text-sm font-bold text-gray-900">Order placed</h1>
+            <button
+              onClick={() => setLocation("/reseller/dashboard")}
+              className="rounded-full bg-purple-50 p-2 text-purple-700"
+              aria-label="Home"
+            >
+              <Home className="h-5 w-5" />
+            </button>
           </div>
         </nav>
         <main className="mx-auto max-w-lg px-4 py-6">
@@ -325,6 +356,13 @@ export default function ResellerCart() {
               </span>
             )}
           </h1>
+          <button
+            onClick={() => setLocation("/reseller/dashboard")}
+            className="rounded-full bg-purple-50 p-2 text-purple-700"
+            aria-label="Home"
+          >
+            <Home className="h-5 w-5" />
+          </button>
         </div>
       </nav>
 
@@ -396,7 +434,8 @@ export default function ResellerCart() {
                         </span>
                         <button
                           onClick={() => setQty(item.brandSku, item.quantity + 1)}
-                          className="grid h-7 w-7 place-items-center rounded-full border border-gray-200 text-gray-600 active:scale-90"
+                          disabled={item.quantity >= MAX_QTY_PER_SKU}
+                          className="grid h-7 w-7 place-items-center rounded-full border border-gray-200 text-gray-600 active:scale-90 disabled:opacity-40"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </button>
