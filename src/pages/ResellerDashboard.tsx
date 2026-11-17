@@ -1,12 +1,12 @@
 // pages/ResellerDashboard.tsx
 // Reseller home: wallet + quick actions + tabbed Orders / Vouchers / Failed.
-//   Orders  â€” GET /v1/reseller/orders; click a row for full detail
+//   Orders  — GET /v1/reseller/orders; click a row for full detail
 //             (GET /v1/reseller/orders/{orderNumber}, incl. credentials).
-//   Vouchersâ€” credentials aggregated from completed order details; date
+//   Vouchers — credentials aggregated from completed order details; date
 //             filter; click a row for PIN / card / activation details.
-//   Pending â€” unsent cart (click -> cart) + orders still PENDING/PROCESSING.
-//   Failed  â€” FAILED / PARTIALLY_FAILED orders; expand to see which line failed.
-//   Excel   â€” ONE .xlsx per order (all its line items) from any order/voucher group.
+//   Pending — unsent cart (click -> cart) + orders still PENDING/PROCESSING.
+//   Failed  — FAILED / PARTIALLY_FAILED orders; expand to see which line failed.
+//   Excel   — ONE .xlsx per order (all its line items) from any order/voucher group.
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -60,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 type Tab = "orders" | "pending" | "failed" | "vouchers" | "transactions";
 
 const money = (n: number) =>
-  `â‚¹${Number(n || 0).toLocaleString("en-IN", {
+  `\u20B9${Number(n || 0).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -76,7 +76,7 @@ const statusChip = (status?: string): string => {
 };
 
 const shortDate = (iso?: string): string =>
-  iso ? iso.slice(0, 10) : "â€”";
+  iso ? iso.slice(0, 10) : "\u2014";
 
 /** Opening balance for a ledger row (the API stores the closing balance). */
 const balanceBefore = (t: ResellerWalletTransaction): number | null => {
@@ -117,12 +117,12 @@ export default function ResellerDashboard() {
   // Tabs
   const [tab, setTab] = useState<Tab>("orders");
 
-  // Profile view â€” opened from the header avatar (replaces the logout spot).
+  // Profile view — opened from the header avatar (replaces the logout spot).
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<ResellerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
-  // clientId for display only (fetched via /auth/jwt â€” never persisted).
+  // clientId for display only (fetched via /auth/jwt — never persisted).
   const [credentials, setCredentials] = useState<ResellerJwtCredentials | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<ResellerOrderResult | null>(
     null
@@ -216,7 +216,7 @@ export default function ResellerDashboard() {
     }
   }, [loadVouchers]);
 
-  // Not logged in as a reseller â€” send back to the landing page to start.
+  // Not logged in as a reseller — send back to the landing page to start.
   useEffect(() => {
     if (!session?.token) {
       setLocation("/reseller");
@@ -283,7 +283,7 @@ export default function ResellerDashboard() {
         setProfileError("Session expired. Please login again.");
       } else if (status === 404) {
         setProfileError(
-          "Profile service isn't live yet â€” showing session details."
+          "Profile service isn't live yet — showing session details."
         );
       } else {
         setProfileError("Couldn't load profile details. Please retry.");
@@ -462,32 +462,32 @@ export default function ResellerDashboard() {
                 <div className="space-y-2.5">
                   <ProfileRow
                     label="Organization"
-                    value={profile?.organizationName ?? "â€”"}
+                    value={profile?.organizationName ?? "\u2014"}
                   />
                   <ProfileRow
                     label="Email"
-                    value={profile?.contactEmail ?? "â€”"}
+                    value={profile?.contactEmail ?? "\u2014"}
                   />
                   <ProfileRow
                     label="Mobile"
-                    value={profile?.contactMobile ?? "â€”"}
+                    value={profile?.contactMobile ?? "\u2014"}
                   />
                   <ProfileRow
                     label="Location"
                     value={
                       [profile?.city, profile?.state]
                         .filter(Boolean)
-                        .join(", ") || "â€”"
+                        .join(", ") || "\u2014"
                     }
                   />
                   <ProfileRow
                     label="Client ID"
-                    value={credentials?.clientId ?? profile?.clientId ?? "â€”"}
+                    value={credentials?.clientId ?? profile?.clientId ?? "\u2014"}
                     mono
                   />
                   <ProfileRow
                     label="Reseller ID"
-                    value={session?.resellerId ?? profile?.resellerId ?? "â€”"}
+                    value={session?.resellerId ?? profile?.resellerId ?? "\u2014"}
                     mono
                   />
                   <ProfileRow
@@ -562,8 +562,8 @@ export default function ResellerDashboard() {
                 label="Discount"
                 value={
                   Number(selectedOrder.discountAmount) > 0
-                    ? `âˆ’${money(Number(selectedOrder.discountAmount))}`
-                    : "â€”"
+                    ? `\u2212${money(Number(selectedOrder.discountAmount))}`
+                    : "\u2014"
                 }
               />
             </div>
@@ -593,7 +593,7 @@ export default function ResellerDashboard() {
                     {item.brandName}
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    {item.brandSku} Â· {item.quantity} Ã— {money(Number(item.unitPrice))}
+                    {item.brandSku} {"\u00B7"} {item.quantity} {"\u00D7"} {money(Number(item.unitPrice))}
                   </p>
                 </div>
                 <span
@@ -607,7 +607,7 @@ export default function ResellerDashboard() {
                 {Number(item.discountPercent) > 0 && (
                   <Row
                     label="Discount"
-                    value={`${item.discountPercent}% (âˆ’${money(Number(item.discountAmount))})`}
+                    value={`${item.discountPercent}% (\u2212${money(Number(item.discountAmount))})`}
                   />
                 )}
               </div>
@@ -664,7 +664,7 @@ export default function ResellerDashboard() {
                 value={selectedVoucher.activationCode}
                 onCopy={copy}
               />
-              <Row label="Expiry" value={selectedVoucher.expiry?.slice(0, 10) ?? "â€”"} />
+              <Row label="Expiry" value={selectedVoucher.expiry?.slice(0, 10) ?? "\u2014"} />
               <Row
                 label="Order"
                 value={`${selectedVoucher.clientOrderRef || selectedVoucher.orderNumber}`}
@@ -769,7 +769,7 @@ export default function ResellerDashboard() {
                   <span className="inline-block h-8 w-32 animate-pulse rounded bg-white/25" />
                 ) : (
                   <>
-                    â‚¹
+                    {"\u20B9"}
                     {(walletBalance ?? 0).toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })}
@@ -777,7 +777,7 @@ export default function ResellerDashboard() {
                 )}
               </p>
               <p className="mt-1 text-[11px] opacity-80">
-                INR â€” available for voucher purchases
+                INR &mdash; available for voucher purchases
               </p>
               <button
                 onClick={() => {
@@ -810,9 +810,9 @@ export default function ResellerDashboard() {
                         <p className="text-[10px] text-gray-500">
                           {shortDate(r.createdAt)}
                           {r.approvedAmount != null
-                            ? ` Â· ${money(Number(r.approvedAmount))}`
+                            ? ` \u00B7 ${money(Number(r.approvedAmount))}`
                             : r.requestedAmount != null
-                            ? ` Â· ${money(Number(r.requestedAmount))}`
+                            ? ` \u00B7 ${money(Number(r.requestedAmount))}`
                             : ""}
                         </p>
                         {r.decisionNote && (
@@ -836,7 +836,7 @@ export default function ResellerDashboard() {
               </section>
             )}
 
-            {/* Wallet ledger â€” the same view as the merchant dashboard passbook */}
+            {/* Wallet ledger — the same view as the merchant dashboard passbook */}
             <section className="mt-4 rounded-2xl bg-white p-4 shadow-[0px_4px_12px_rgba(0,0,0,0.06)]">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-gray-900">Wallet ledger</h3>
@@ -879,7 +879,7 @@ export default function ResellerDashboard() {
                           <p className="mt-0.5 text-[10px] text-gray-500">
                             {t.createdAt.replace("T", " ").slice(0, 16)}
                             {before != null && Number.isFinite(after)
-                              ? ` Â· ${money(before)} â†’ ${money(after)}`
+                              ? ` \u00B7 ${money(before)} \u2192 ${money(after)}`
                               : ""}
                           </p>
                           {t.reference && t.description && (
@@ -891,7 +891,7 @@ export default function ResellerDashboard() {
                             isCredit ? "text-emerald-600" : "text-red-500"
                           }`}
                         >
-                          {isCredit ? "+" : "âˆ’"}
+                          {isCredit ? "+" : "\u2212"}
                           {money(Number(t.amount))}
                         </p>
                       </div>
@@ -924,7 +924,7 @@ export default function ResellerDashboard() {
               </button>
             </section>
 
-            {/* Stats â€” Completed / Pending / Failed / Vouchers / Txns (tab switchers) */}
+            {/* Stats — Completed / Pending / Failed / Vouchers / Txns (tab switchers) */}
             <section className="mt-4 grid grid-cols-5 gap-1.5">
               {stats.map((stat) => (
                 <button
@@ -1006,11 +1006,11 @@ export default function ResellerDashboard() {
                         >
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-gray-900">
-                              Cart â€” not ordered yet
+                              Cart — not ordered yet
                             </p>
                             <p className="truncate text-[10px] text-gray-500">
                               {cartItems
-                                .map((i) => `${i.brandName} Ã— ${i.quantity}`)
+                                .map((i) => `${i.brandName} \u00D7 ${i.quantity}`)
                                 .join(", ")}
                             </p>
                           </div>
@@ -1033,7 +1033,7 @@ export default function ResellerDashboard() {
                               {o.clientOrderRef || o.orderNumber}
                             </p>
                             <p className="truncate text-[10px] text-gray-500">
-                              {o.orderNumber} Â· {shortDate(o.createdAt)} Â· being processed
+                              {o.orderNumber} {"\u00B7"} {shortDate(o.createdAt)} {"\u00B7"} being processed
                             </p>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
@@ -1078,7 +1078,7 @@ export default function ResellerDashboard() {
                                   {o.clientOrderRef || o.orderNumber}
                                 </p>
                                 <p className="truncate text-[10px] text-gray-500">
-                                  {o.orderNumber} Â· {shortDate(o.createdAt)}
+                                  {o.orderNumber} {"\u00B7"} {shortDate(o.createdAt)}
                                 </p>
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
@@ -1098,7 +1098,7 @@ export default function ResellerDashboard() {
                             {open && (
                               <div className="space-y-1.5 border-t border-gray-100 bg-gray-50/60 px-4 py-3">
                                 {d === "loading" || d === undefined ? (
-                                  <p className="text-[11px] text-gray-500">Loading itemsâ€¦</p>
+                                  <p className="text-[11px] text-gray-500">Loading items…</p>
                                 ) : d === "error" ? (
                                   <p className="text-[11px] text-red-500">
                                     Couldn't load the items. Collapse and open again to retry.
@@ -1119,7 +1119,7 @@ export default function ResellerDashboard() {
                                               {it.brandName}
                                             </p>
                                             <p className="truncate text-[10px] text-gray-500">
-                                              {it.brandSku} Â· {it.quantity} Ã— {money(Number(it.unitPrice))}
+                                              {it.brandSku} {"\u00B7"} {it.quantity} {"\u00D7"} {money(Number(it.unitPrice))}
                                             </p>
                                           </div>
                                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusChip(it.fulfillmentStatus)}`}>
@@ -1217,7 +1217,7 @@ export default function ResellerDashboard() {
                                 {rows[0].clientOrderRef || orderNumber}
                               </p>
                               <p className="truncate text-[10px] text-gray-500">
-                                {shortDate(rows[0].orderDate)} Â· {rows.length} voucher{rows.length === 1 ? "" : "s"}
+                                {shortDate(rows[0].orderDate)} {"\u00B7"} {rows.length} voucher{rows.length === 1 ? "" : "s"}
                               </p>
                             </div>
                             <button
@@ -1245,7 +1245,7 @@ export default function ResellerDashboard() {
                                     {v.brandName}
                                   </p>
                                   <p className="truncate text-[10px] text-gray-500">
-                                    {v.cardNumber ? `â€¢â€¢â€¢â€¢ ${v.cardNumber.slice(-4)}` : v.brandSku}
+                                    {v.cardNumber ? `${"\u2022".repeat(4)} ${v.cardNumber.slice(-4)}` : v.brandSku}
                                   </p>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1 text-[10px] text-gray-400">
@@ -1330,7 +1330,7 @@ export default function ResellerDashboard() {
               <input
                 value={topupRemarks}
                 onChange={(e) => setTopupRemarks(e.target.value)}
-                placeholder="Bank, value dateâ€¦"
+                placeholder="Bank, value date…"
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-500"
               />
               {topupError && (
@@ -1348,7 +1348,7 @@ export default function ResellerDashboard() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {topupBusy ? "Submittingâ€¦" : "Submit request"}
+                {topupBusy ? "Submitting…" : "Submit request"}
               </button>
             </div>
           </div>
@@ -1627,7 +1627,7 @@ function OrderRow({
             {order.clientOrderRef || order.orderNumber}
           </p>
           <p className="truncate text-[10px] text-gray-500">
-            {order.orderNumber} Â· {shortDate(order.createdAt)}
+            {order.orderNumber} {"\u00B7"} {shortDate(order.createdAt)}
           </p>
         </div>
         <div className="text-right">
