@@ -786,7 +786,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                     <div className="mt-2 flex items-start gap-2 rounded-[9px] border border-[#E8DCFF] bg-[#F8F4FF] px-2.5 py-2">
                       <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                       <p className="text-[11px] font-medium leading-[15px] text-[#6B46A5]">
-                        Buy vouchers starting at ₹100 and earn up to 5% cashback in SuperCoins!
+                        Buy vouchers starting at ₹100 and earn up to 5% coinback in SuperCoins!
                       </p>
                     </div>
                   )}
@@ -871,7 +871,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       <div className="mt-[6px] flex items-center justify-center gap-1.5 text-[11px] font-semibold leading-[15px] text-[#7C3AED]">
                         <span>Earn upto 5% SuperCoins</span>
                         <img loading="lazy" decoding="async" src={superCoinIcon} alt="" className="h-3.5 w-3.5 inline-block" />
-                        <span>upto 100 SuperCoins</span>
+                        <span>max 100 SuperCoins</span>
                       </div>
                       )}
                     </div>
