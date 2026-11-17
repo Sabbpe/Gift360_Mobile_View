@@ -139,6 +139,8 @@ export interface ResellerWalletTransaction {
   amount: number;
   balanceAfter: number;
   reference: string | null;
+  /** Merchant-visible description (admin top-up). */
+  description?: string | null;
   createdAt: string;
 }
 

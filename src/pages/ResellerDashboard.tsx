@@ -1,12 +1,12 @@
 // pages/ResellerDashboard.tsx
 // Reseller home: wallet + quick actions + tabbed Orders / Vouchers / Failed.
-//   Orders  — GET /v1/reseller/orders; click a row for full detail
+//   Orders  â€” GET /v1/reseller/orders; click a row for full detail
 //             (GET /v1/reseller/orders/{orderNumber}, incl. credentials).
-//   Vouchers— credentials aggregated from completed order details; date
+//   Vouchersâ€” credentials aggregated from completed order details; date
 //             filter; click a row for PIN / card / activation details.
-//   Pending — unsent cart (click -> cart) + orders still PENDING/PROCESSING.
-//   Failed  — FAILED / PARTIALLY_FAILED orders; expand to see which line failed.
-//   Excel   — ONE .xlsx per order (all its line items) from any order/voucher group.
+//   Pending â€” unsent cart (click -> cart) + orders still PENDING/PROCESSING.
+//   Failed  â€” FAILED / PARTIALLY_FAILED orders; expand to see which line failed.
+//   Excel   â€” ONE .xlsx per order (all its line items) from any order/voucher group.
 import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import {
@@ -60,7 +60,7 @@ import { useToast } from "@/hooks/use-toast";
 type Tab = "orders" | "pending" | "failed" | "vouchers" | "transactions";
 
 const money = (n: number) =>
-  `₹${Number(n || 0).toLocaleString("en-IN", {
+  `â‚¹${Number(n || 0).toLocaleString("en-IN", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
@@ -76,7 +76,18 @@ const statusChip = (status?: string): string => {
 };
 
 const shortDate = (iso?: string): string =>
-  iso ? iso.slice(0, 10) : "—";
+  iso ? iso.slice(0, 10) : "â€”";
+
+/** Opening balance for a ledger row (the API stores the closing balance). */
+const balanceBefore = (t: ResellerWalletTransaction): number | null => {
+  const after = Number(t.balanceAfter);
+  if (!Number.isFinite(after)) return null;
+  const amount = Number(t.amount) || 0;
+  const type = String(t.type || "").toUpperCase();
+  if (type === "DEBIT") return after + amount;
+  if (type === "DISCOUNT") return after;
+  return after - amount;
+};
 
 export default function ResellerDashboard() {
   const [, setLocation] = useLocation();
@@ -106,12 +117,12 @@ export default function ResellerDashboard() {
   // Tabs
   const [tab, setTab] = useState<Tab>("orders");
 
-  // Profile view — opened from the header avatar (replaces the logout spot).
+  // Profile view â€” opened from the header avatar (replaces the logout spot).
   const [showProfile, setShowProfile] = useState(false);
   const [profile, setProfile] = useState<ResellerProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
-  // clientId for display only (fetched via /auth/jwt — never persisted).
+  // clientId for display only (fetched via /auth/jwt â€” never persisted).
   const [credentials, setCredentials] = useState<ResellerJwtCredentials | null>(null);
   const [selectedOrder, setSelectedOrder] = useState<ResellerOrderResult | null>(
     null
@@ -205,7 +216,7 @@ export default function ResellerDashboard() {
     }
   }, [loadVouchers]);
 
-  // Not logged in as a reseller — send back to the landing page to start.
+  // Not logged in as a reseller â€” send back to the landing page to start.
   useEffect(() => {
     if (!session?.token) {
       setLocation("/reseller");
@@ -272,7 +283,7 @@ export default function ResellerDashboard() {
         setProfileError("Session expired. Please login again.");
       } else if (status === 404) {
         setProfileError(
-          "Profile service isn't live yet — showing session details."
+          "Profile service isn't live yet â€” showing session details."
         );
       } else {
         setProfileError("Couldn't load profile details. Please retry.");
@@ -451,32 +462,32 @@ export default function ResellerDashboard() {
                 <div className="space-y-2.5">
                   <ProfileRow
                     label="Organization"
-                    value={profile?.organizationName ?? "—"}
+                    value={profile?.organizationName ?? "â€”"}
                   />
                   <ProfileRow
                     label="Email"
-                    value={profile?.contactEmail ?? "—"}
+                    value={profile?.contactEmail ?? "â€”"}
                   />
                   <ProfileRow
                     label="Mobile"
-                    value={profile?.contactMobile ?? "—"}
+                    value={profile?.contactMobile ?? "â€”"}
                   />
                   <ProfileRow
                     label="Location"
                     value={
                       [profile?.city, profile?.state]
                         .filter(Boolean)
-                        .join(", ") || "—"
+                        .join(", ") || "â€”"
                     }
                   />
                   <ProfileRow
                     label="Client ID"
-                    value={credentials?.clientId ?? profile?.clientId ?? "—"}
+                    value={credentials?.clientId ?? profile?.clientId ?? "â€”"}
                     mono
                   />
                   <ProfileRow
                     label="Reseller ID"
-                    value={session?.resellerId ?? profile?.resellerId ?? "—"}
+                    value={session?.resellerId ?? profile?.resellerId ?? "â€”"}
                     mono
                   />
                   <ProfileRow
@@ -551,8 +562,8 @@ export default function ResellerDashboard() {
                 label="Discount"
                 value={
                   Number(selectedOrder.discountAmount) > 0
-                    ? `−${money(Number(selectedOrder.discountAmount))}`
-                    : "—"
+                    ? `âˆ’${money(Number(selectedOrder.discountAmount))}`
+                    : "â€”"
                 }
               />
             </div>
@@ -582,7 +593,7 @@ export default function ResellerDashboard() {
                     {item.brandName}
                   </p>
                   <p className="text-[11px] text-gray-500">
-                    {item.brandSku} · {item.quantity} × {money(Number(item.unitPrice))}
+                    {item.brandSku} Â· {item.quantity} Ã— {money(Number(item.unitPrice))}
                   </p>
                 </div>
                 <span
@@ -596,7 +607,7 @@ export default function ResellerDashboard() {
                 {Number(item.discountPercent) > 0 && (
                   <Row
                     label="Discount"
-                    value={`${item.discountPercent}% (−${money(Number(item.discountAmount))})`}
+                    value={`${item.discountPercent}% (âˆ’${money(Number(item.discountAmount))})`}
                   />
                 )}
               </div>
@@ -653,7 +664,7 @@ export default function ResellerDashboard() {
                 value={selectedVoucher.activationCode}
                 onCopy={copy}
               />
-              <Row label="Expiry" value={selectedVoucher.expiry?.slice(0, 10) ?? "—"} />
+              <Row label="Expiry" value={selectedVoucher.expiry?.slice(0, 10) ?? "â€”"} />
               <Row
                 label="Order"
                 value={`${selectedVoucher.clientOrderRef || selectedVoucher.orderNumber}`}
@@ -758,7 +769,7 @@ export default function ResellerDashboard() {
                   <span className="inline-block h-8 w-32 animate-pulse rounded bg-white/25" />
                 ) : (
                   <>
-                    ₹
+                    â‚¹
                     {(walletBalance ?? 0).toLocaleString("en-IN", {
                       minimumFractionDigits: 2,
                     })}
@@ -766,7 +777,7 @@ export default function ResellerDashboard() {
                 )}
               </p>
               <p className="mt-1 text-[11px] opacity-80">
-                INR — available for voucher purchases
+                INR â€” available for voucher purchases
               </p>
               <button
                 onClick={() => {
@@ -799,9 +810,9 @@ export default function ResellerDashboard() {
                         <p className="text-[10px] text-gray-500">
                           {shortDate(r.createdAt)}
                           {r.approvedAmount != null
-                            ? ` · ${money(Number(r.approvedAmount))}`
+                            ? ` Â· ${money(Number(r.approvedAmount))}`
                             : r.requestedAmount != null
-                            ? ` · ${money(Number(r.requestedAmount))}`
+                            ? ` Â· ${money(Number(r.requestedAmount))}`
                             : ""}
                         </p>
                         {r.decisionNote && (
@@ -824,6 +835,71 @@ export default function ResellerDashboard() {
                 </div>
               </section>
             )}
+
+            {/* Wallet ledger â€” the same view as the merchant dashboard passbook */}
+            <section className="mt-4 rounded-2xl bg-white p-4 shadow-[0px_4px_12px_rgba(0,0,0,0.06)]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-gray-900">Wallet ledger</h3>
+                <button
+                  onClick={() => setTab("transactions")}
+                  className="text-[11px] font-semibold text-purple-700"
+                >
+                  View all
+                </button>
+              </div>
+              {loading ? (
+                <div className="mt-3 space-y-2">
+                  {[0, 1, 2].map((i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-gray-100" />
+                  ))}
+                </div>
+              ) : transactions.length === 0 ? (
+                <p className="mt-2 text-xs text-gray-500">No wallet entries yet.</p>
+              ) : (
+                <div className="mt-2 divide-y divide-gray-100">
+                  {transactions.slice(0, 8).map((t) => {
+                    const after = Number(t.balanceAfter);
+                    const before = balanceBefore(t);
+                    const isCredit = t.type === "CREDIT" || t.type === "REFUND";
+                    return (
+                      <div key={t.id} className="flex items-start justify-between gap-3 py-2">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span
+                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold ${txnChip(
+                                t.type
+                              )}`}
+                            >
+                              {t.type}
+                            </span>
+                            <p className="truncate text-[11px] font-semibold text-gray-900">
+                              {t.description || t.reference || "Wallet entry"}
+                            </p>
+                          </div>
+                          <p className="mt-0.5 text-[10px] text-gray-500">
+                            {t.createdAt.replace("T", " ").slice(0, 16)}
+                            {before != null && Number.isFinite(after)
+                              ? ` Â· ${money(before)} â†’ ${money(after)}`
+                              : ""}
+                          </p>
+                          {t.reference && t.description && (
+                            <p className="truncate text-[10px] text-gray-400">Ref: {t.reference}</p>
+                          )}
+                        </div>
+                        <p
+                          className={`shrink-0 text-xs font-extrabold tabular-nums ${
+                            isCredit ? "text-emerald-600" : "text-red-500"
+                          }`}
+                        >
+                          {isCredit ? "+" : "âˆ’"}
+                          {money(Number(t.amount))}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
 
             {/* Quick actions */}
             <section className="mt-4 grid grid-cols-2 gap-3">
@@ -848,7 +924,7 @@ export default function ResellerDashboard() {
               </button>
             </section>
 
-            {/* Stats — Completed / Pending / Failed / Vouchers / Txns (tab switchers) */}
+            {/* Stats â€” Completed / Pending / Failed / Vouchers / Txns (tab switchers) */}
             <section className="mt-4 grid grid-cols-5 gap-1.5">
               {stats.map((stat) => (
                 <button
@@ -930,11 +1006,11 @@ export default function ResellerDashboard() {
                         >
                           <div className="min-w-0">
                             <p className="text-xs font-bold text-gray-900">
-                              Cart — not ordered yet
+                              Cart â€” not ordered yet
                             </p>
                             <p className="truncate text-[10px] text-gray-500">
                               {cartItems
-                                .map((i) => `${i.brandName} × ${i.quantity}`)
+                                .map((i) => `${i.brandName} Ã— ${i.quantity}`)
                                 .join(", ")}
                             </p>
                           </div>
@@ -957,7 +1033,7 @@ export default function ResellerDashboard() {
                               {o.clientOrderRef || o.orderNumber}
                             </p>
                             <p className="truncate text-[10px] text-gray-500">
-                              {o.orderNumber} · {shortDate(o.createdAt)} · being processed
+                              {o.orderNumber} Â· {shortDate(o.createdAt)} Â· being processed
                             </p>
                           </div>
                           <div className="flex shrink-0 items-center gap-2">
@@ -1002,7 +1078,7 @@ export default function ResellerDashboard() {
                                   {o.clientOrderRef || o.orderNumber}
                                 </p>
                                 <p className="truncate text-[10px] text-gray-500">
-                                  {o.orderNumber} · {shortDate(o.createdAt)}
+                                  {o.orderNumber} Â· {shortDate(o.createdAt)}
                                 </p>
                               </div>
                               <div className="flex shrink-0 items-center gap-2">
@@ -1022,7 +1098,7 @@ export default function ResellerDashboard() {
                             {open && (
                               <div className="space-y-1.5 border-t border-gray-100 bg-gray-50/60 px-4 py-3">
                                 {d === "loading" || d === undefined ? (
-                                  <p className="text-[11px] text-gray-500">Loading items…</p>
+                                  <p className="text-[11px] text-gray-500">Loading itemsâ€¦</p>
                                 ) : d === "error" ? (
                                   <p className="text-[11px] text-red-500">
                                     Couldn't load the items. Collapse and open again to retry.
@@ -1043,7 +1119,7 @@ export default function ResellerDashboard() {
                                               {it.brandName}
                                             </p>
                                             <p className="truncate text-[10px] text-gray-500">
-                                              {it.brandSku} · {it.quantity} × {money(Number(it.unitPrice))}
+                                              {it.brandSku} Â· {it.quantity} Ã— {money(Number(it.unitPrice))}
                                             </p>
                                           </div>
                                           <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${statusChip(it.fulfillmentStatus)}`}>
@@ -1141,7 +1217,7 @@ export default function ResellerDashboard() {
                                 {rows[0].clientOrderRef || orderNumber}
                               </p>
                               <p className="truncate text-[10px] text-gray-500">
-                                {shortDate(rows[0].orderDate)} · {rows.length} voucher{rows.length === 1 ? "" : "s"}
+                                {shortDate(rows[0].orderDate)} Â· {rows.length} voucher{rows.length === 1 ? "" : "s"}
                               </p>
                             </div>
                             <button
@@ -1169,7 +1245,7 @@ export default function ResellerDashboard() {
                                     {v.brandName}
                                   </p>
                                   <p className="truncate text-[10px] text-gray-500">
-                                    {v.cardNumber ? `•••• ${v.cardNumber.slice(-4)}` : v.brandSku}
+                                    {v.cardNumber ? `â€¢â€¢â€¢â€¢ ${v.cardNumber.slice(-4)}` : v.brandSku}
                                   </p>
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1 text-[10px] text-gray-400">
@@ -1254,7 +1330,7 @@ export default function ResellerDashboard() {
               <input
                 value={topupRemarks}
                 onChange={(e) => setTopupRemarks(e.target.value)}
-                placeholder="Bank, value date…"
+                placeholder="Bank, value dateâ€¦"
                 className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-500"
               />
               {topupError && (
@@ -1272,7 +1348,7 @@ export default function ResellerDashboard() {
                 ) : (
                   <Plus className="h-4 w-4" />
                 )}
-                {topupBusy ? "Submitting…" : "Submit request"}
+                {topupBusy ? "Submittingâ€¦" : "Submit request"}
               </button>
             </div>
           </div>
@@ -1493,6 +1569,8 @@ function TransactionRow({
 }) {
   const isCredit =
     transaction.type === "CREDIT" || transaction.type === "REFUND";
+  const after = Number(transaction.balanceAfter);
+  const before = balanceBefore(transaction);
   return (
     <div className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-[0px_4px_12px_rgba(0,0,0,0.06)]">
       <div className="min-w-0">
@@ -1503,13 +1581,18 @@ function TransactionRow({
             {transaction.type}
           </span>
           <p className="truncate text-xs font-semibold text-gray-900">
-            {transaction.reference || "Wallet transaction"}
+            {transaction.description || transaction.reference || "Wallet transaction"}
           </p>
         </div>
         <p className="mt-0.5 text-[10px] text-gray-500">
-          {transaction.createdAt.replace("T", " ").slice(0, 16)} · balance{" "}
-          {money(Number(transaction.balanceAfter))}
+          {transaction.createdAt.replace("T", " ").slice(0, 16)}
+          {before != null && Number.isFinite(after)
+            ? ` · ${money(before)} → ${money(after)}`
+            : ` · balance ${money(after)}`}
         </p>
+        {transaction.reference && transaction.description && (
+          <p className="truncate text-[10px] text-gray-400">Ref: {transaction.reference}</p>
+        )}
       </div>
       <p
         className={`shrink-0 text-sm font-extrabold tabular-nums ${
@@ -1522,7 +1605,6 @@ function TransactionRow({
     </div>
   );
 }
-
 function OrderRow({
   order,
   onOpen,
@@ -1545,7 +1627,7 @@ function OrderRow({
             {order.clientOrderRef || order.orderNumber}
           </p>
           <p className="truncate text-[10px] text-gray-500">
-            {order.orderNumber} · {shortDate(order.createdAt)}
+            {order.orderNumber} Â· {shortDate(order.createdAt)}
           </p>
         </div>
         <div className="text-right">
