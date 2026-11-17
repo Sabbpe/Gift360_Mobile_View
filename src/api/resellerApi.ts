@@ -157,6 +157,44 @@ export const fetchResellerWalletTransactions =
     return data;
   };
 
+/** A partner-raised wallet top-up request (UTR supplied; an admin approves the amount). */
+export interface ResellerTopupRequest {
+  id: number;
+  resellerId: string;
+  utr: string;
+  remarks: string | null;
+  requestedAmount: number | null;
+  status: "PENDING" | "APPROVED" | "REJECTED" | string;
+  approvedAmount: number | null;
+  decisionNote: string | null;
+  createdAt: string;
+  decidedAt: string | null;
+}
+
+/** POST /v1/reseller/wallet/topup-request — raise a request with the bank UTR. */
+export const raiseResellerTopupRequest = async (payload: {
+  utr: string;
+  remarks?: string;
+  amount?: number;
+}): Promise<{ success: boolean; request: ResellerTopupRequest }> => {
+  const { data } = await axios.post<{ success: boolean; request: ResellerTopupRequest }>(
+    `${API_BASE_URL}/v1/reseller/wallet/topup-request`,
+    await withResellerCredentials(payload)
+  );
+  return data;
+};
+
+/** POST /v1/reseller/wallet/topup-requests — the partner's own requests. */
+export const fetchResellerTopupRequests = async (
+  status?: string
+): Promise<{ success: boolean; requests: ResellerTopupRequest[] }> => {
+  const { data } = await axios.post<{ success: boolean; requests: ResellerTopupRequest[] }>(
+    `${API_BASE_URL}/v1/reseller/wallet/topup-requests`,
+    await withResellerCredentials(status ? { status } : {})
+  );
+  return data;
+};
+
 /** POST /v1/reseller/orders/list — plain JSON array of order summary rows. */
 export const fetchResellerOrders = async (): Promise<ResellerOrderRow[]> => {
   const { data } = await axios.post<ResellerOrderRow[] | { value?: ResellerOrderRow[] }>(

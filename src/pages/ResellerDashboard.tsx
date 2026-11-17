@@ -29,6 +29,7 @@ import {
   ChevronDown,
   FileSpreadsheet,
   Loader2,
+  Plus,
 } from "lucide-react";
 import {
   getResellerSession,
@@ -42,6 +43,9 @@ import {
   getResellerCart,
   downloadBlob,
   orderToXlsx,
+  raiseResellerTopupRequest,
+  fetchResellerTopupRequests,
+  type ResellerTopupRequest,
   type ResellerCartItem,
   fetchResellerProfile,
   type ResellerOrderRow,
@@ -82,6 +86,13 @@ export default function ResellerDashboard() {
   const [walletBalance, setWalletBalance] = useState<number | null>(null);
   const [orders, setOrders] = useState<ResellerOrderRow[]>([]);
   const [transactions, setTransactions] = useState<ResellerWalletTransaction[]>([]);
+  const [topupRequests, setTopupRequests] = useState<ResellerTopupRequest[]>([]);
+  const [topupOpen, setTopupOpen] = useState(false);
+  const [topupUtr, setTopupUtr] = useState("");
+  const [topupRemarks, setTopupRemarks] = useState("");
+  const [topupAmount, setTopupAmount] = useState("");
+  const [topupBusy, setTopupBusy] = useState(false);
+  const [topupError, setTopupError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [cartCount, setCartCount] = useState(0);
@@ -174,6 +185,9 @@ export default function ResellerDashboard() {
       setOrders(orderRows);
       setTransactions(txns.transactions ?? []);
       setCredentials(creds);
+      fetchResellerTopupRequests()
+        .then((r) => setTopupRequests(r.requests ?? []))
+        .catch(() => setTopupRequests([]));
       void loadVouchers(orderRows);
     } catch (err) {
       const status = (err as any)?.response?.status;
@@ -206,6 +220,45 @@ export default function ResellerDashboard() {
     void resellerLogout(); // best-effort: clears the single-session JWT server-side
     clearResellerSession();
     setLocation("/reseller");
+  };
+
+  const submitTopupRequest = async () => {
+    if (topupBusy) return;
+    if (!topupUtr.trim()) {
+      setTopupError("UTR is required.");
+      return;
+    }
+    setTopupBusy(true);
+    setTopupError(null);
+    try {
+      await raiseResellerTopupRequest({
+        utr: topupUtr.trim(),
+        remarks: topupRemarks.trim() || undefined,
+        amount: topupAmount.trim() ? Number(topupAmount) : undefined,
+      });
+      toast({
+        title: "Top-up request submitted",
+        description: "An admin will verify the bank payment and credit your wallet.",
+      });
+      setTopupOpen(false);
+      setTopupUtr("");
+      setTopupRemarks("");
+      setTopupAmount("");
+      const fresh = await fetchResellerTopupRequests().catch(() => null);
+      if (fresh) setTopupRequests(fresh.requests ?? []);
+    } catch (err: any) {
+      const code = err?.response?.data?.errorCode;
+      const msg =
+        code === "DUPLICATE_UTR"
+          ? "This UTR has already been used; a bank payment can only be credited once."
+          : code === "INVALID_AMOUNT"
+          ? "Enter an amount greater than 0, with at most 2 decimals."
+          : err?.response?.data?.message ||
+            "Could not submit the request. Please try again.";
+      setTopupError(msg);
+    } finally {
+      setTopupBusy(false);
+    }
   };
 
   const loadProfile = useCallback(async () => {
@@ -713,9 +766,64 @@ export default function ResellerDashboard() {
                 )}
               </p>
               <p className="mt-1 text-[11px] opacity-80">
-                INR · available for voucher purchases
+                INR — available for voucher purchases
               </p>
+              <button
+                onClick={() => {
+                  setTopupError(null);
+                  setTopupOpen(true);
+                }}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1.5 text-xs font-semibold backdrop-blur transition-all hover:bg-white/30 active:scale-95"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Request top-up
+              </button>
             </section>
+
+            {topupRequests.length > 0 && (
+              <section className="mt-4 rounded-2xl bg-white p-4 shadow-[0px_4px_12px_rgba(0,0,0,0.06)]">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-bold text-gray-900">Top-up requests</h3>
+                  <span className="text-[11px] text-gray-500">{topupRequests.length}</span>
+                </div>
+                <div className="mt-2 space-y-2">
+                  {topupRequests.slice(0, 5).map((r) => (
+                    <div
+                      key={r.id}
+                      className="flex items-start justify-between gap-3 border-t border-gray-100 pt-2 first:border-0 first:pt-0"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate font-mono text-[11px] text-gray-900">
+                          UTR {r.utr}
+                        </p>
+                        <p className="text-[10px] text-gray-500">
+                          {shortDate(r.createdAt)}
+                          {r.approvedAmount != null
+                            ? ` · ${money(Number(r.approvedAmount))}`
+                            : r.requestedAmount != null
+                            ? ` · ${money(Number(r.requestedAmount))}`
+                            : ""}
+                        </p>
+                        {r.decisionNote && (
+                          <p className="mt-0.5 text-[10px] text-gray-500">{r.decisionNote}</p>
+                        )}
+                      </div>
+                      <span
+                        className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          r.status === "APPROVED"
+                            ? "bg-emerald-50 text-emerald-600"
+                            : r.status === "REJECTED"
+                            ? "bg-red-50 text-red-600"
+                            : "bg-amber-50 text-amber-600"
+                        }`}
+                      >
+                        {r.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             {/* Quick actions */}
             <section className="mt-4 grid grid-cols-2 gap-3">
@@ -1102,6 +1210,72 @@ export default function ResellerDashboard() {
               )}
             </section>
           </>
+        )}
+
+        {topupOpen && (
+          <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-4 sm:items-center">
+            <div className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-xl">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-bold text-gray-900">Request wallet top-up</h3>
+                <button
+                  onClick={() => setTopupOpen(false)}
+                  className="rounded-full p-1 text-gray-500 hover:bg-gray-100"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-gray-500">
+                Pay by NEFT/IMPS/RTGS to the SabbPe account, then submit the bank UTR.
+                An admin will verify it and credit your wallet.
+              </p>
+              <label className="mt-3 block text-[11px] font-semibold text-gray-600">
+                Bank UTR *
+              </label>
+              <input
+                value={topupUtr}
+                onChange={(e) => setTopupUtr(e.target.value)}
+                placeholder="e.g. 123456789012"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-500"
+              />
+              <label className="mt-3 block text-[11px] font-semibold text-gray-600">
+                Amount paid (optional)
+              </label>
+              <input
+                value={topupAmount}
+                onChange={(e) => setTopupAmount(e.target.value)}
+                inputMode="decimal"
+                placeholder="e.g. 5000.00"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-500"
+              />
+              <label className="mt-3 block text-[11px] font-semibold text-gray-600">
+                Remarks (optional)
+              </label>
+              <input
+                value={topupRemarks}
+                onChange={(e) => setTopupRemarks(e.target.value)}
+                placeholder="Bank, value date…"
+                className="mt-1 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-purple-500"
+              />
+              {topupError && (
+                <p className="mt-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-600">
+                  {topupError}
+                </p>
+              )}
+              <button
+                onClick={() => void submitTopupRequest()}
+                disabled={topupBusy}
+                className="mt-4 flex h-11 w-full items-center justify-center gap-2 rounded-full bg-[linear-gradient(90deg,#f06da6_0%,#755ff0_100%)] text-sm font-bold text-white shadow transition-all active:scale-95 disabled:opacity-60"
+              >
+                {topupBusy ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
+                {topupBusy ? "Submitting…" : "Submit request"}
+              </button>
+            </div>
+          </div>
         )}
       </main>
     </div>
