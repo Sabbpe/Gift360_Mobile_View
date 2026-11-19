@@ -12,6 +12,8 @@ import {
   savePrefillMobile, consumePrefillMobile,
 } from "@/lib/postLoginRedirect";
 import { decodeJwtPayload } from "@/api/authApi";
+import { checkEmail } from "@/api/checkoutApi";
+import { invalidEmailMessage } from "@/components/CheckoutGateDialog";
 
 export default function Register() {
   const [, setLocation] = useLocation();
@@ -22,6 +24,9 @@ export default function Register() {
   const [error, setError] = useState("");
   const [nameError, setNameError] = useState("");
   const [emailError, setEmailError] = useState("");
+  // Typo hint from the server email check ("Did you mean ...?"), shown once.
+  const [emailHint, setEmailHint] = useState<string | null>(null);
+  const [hintSeenFor, setHintSeenFor] = useState<string>("");
   const [mobileError, setMobileError] = useState("");
   const [otpSent, setOtpSent] = useState(false);
   const [otp, setOtp] = useState(["", "", "", ""]);
@@ -74,10 +79,28 @@ export default function Register() {
     }
   };
 
-  const handleSendOtp = (e: React.MouseEvent) => {
+  const handleSendOtp = async (e: React.MouseEvent) => {
     e.preventDefault();
     setError(""); setOtpMsg(""); setOtpSent(false); setOtp(["", "", "", ""]);
     if (!validateForm()) return;
+
+    // Task 4: instant server-side email check. Fails open if the call fails.
+    try {
+      const r = await checkEmail(email.trim());
+      if (!r.valid && r.block) {
+        setEmailError(invalidEmailMessage(r.reason) + (r.suggestion ? ` Did you mean ${r.suggestion}?` : ""));
+        setEmailHint(r.suggestion ?? null);
+        return;
+      }
+      if (r.suggestion && hintSeenFor !== email.trim()) {
+        setEmailHint(r.suggestion);
+        setHintSeenFor(email.trim());
+        return; // show the hint once; pressing the button again continues
+      }
+    } catch {
+      // carry on: the check is advisory here, payment start is the hard gate
+    }
+    setEmailHint(null);
     registerSendOtpMutation.mutate({ mobileNumber: mobile, email }, {
       onSuccess: (data) => {
         if (data.alreadyRegistered) {
@@ -166,11 +189,24 @@ export default function Register() {
           type="email"
           placeholder="Enter your email ID"
           value={email}
-          onChange={(e) => { setEmail(e.target.value); setEmailError(""); setError(""); }}
+          onChange={(e) => { setEmail(e.target.value); setEmailError(""); setError(""); setEmailHint(null); }}
           disabled={otpSent}
           className="h-9 rounded-[10px] border border-[#D9D9D9] bg-white text-black text-[12px] placeholder:text-[#A6A4A4] focus-visible:ring-[#B5246F]/50 focus-visible:border-[#B5246F]"
         />
         {emailError && <p className="text-red-500 text-[11px] mt-0.5 font-medium">{emailError}</p>}
+        {emailHint && !otpSent && (
+          <p className="text-[11px] mt-0.5 text-[#5A5A5A]">
+            Did you mean{" "}
+            <button
+              type="button"
+              className="font-semibold text-[#B5246F] underline"
+              onClick={() => { setEmail(emailHint); setEmailHint(null); setEmailError(""); setHintSeenFor(emailHint); }}
+            >
+              {emailHint}
+            </button>
+            ?
+          </p>
+        )}
       </div>
 
       {/* Mobile input */}

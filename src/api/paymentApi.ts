@@ -2,6 +2,8 @@
 import axios from "axios";
 import type { PaymentProcessRequest, PaymentResponse } from "@/types/payment";
 import { giftcardApiClient } from "@/lib/valuedesignApi";
+import { runCheckoutGate } from "@/lib/checkoutGate";
+import { getDeviceId } from "@/lib/deviceId";
 
 const PAYMENT_URL = import.meta.env.VITE_PAYMENT_API_URL;
 
@@ -28,17 +30,21 @@ export const initiateBackendPayment = async (
   paymentMethod?: string,
   paymentModes?: string[]
 ): Promise<BackendPaymentInitiationResponse> => {
+  // Email code / location step when the server asks for it (tasks 4 and 5).
+  const location = await runCheckoutGate({ orderNumber, paymentMethod });
   const hasList = !!paymentModes && paymentModes.length > 0;
   const payload =
-    paymentMethod || hasList
+    paymentMethod || hasList || location
       ? {
           ...(paymentMethod ? { paymentMethod } : {}),
           ...(hasList ? { paymentModes } : {}),
+          ...(location ? { location } : {}),
         }
       : undefined;
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`,
-    payload
+    payload,
+    { headers: { "X-Device-Id": getDeviceId() } }
   );
   return response.data;
 };
@@ -51,6 +57,7 @@ export const initiateRetryPayment = async (
   paymentMethod?: string,
   paymentModes?: string[]
 ): Promise<BackendPaymentInitiationResponse> => {
+  const location = await runCheckoutGate({ orderNumber, paymentMethod });
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/retry-payment`,
     {
@@ -59,7 +66,9 @@ export const initiateRetryPayment = async (
       earnCashback,
       ...(paymentMethod ? { paymentMethod } : {}),
       ...(paymentModes && paymentModes.length > 0 ? { paymentModes } : {}),
-    }
+      ...(location ? { location } : {}),
+    },
+    { headers: { "X-Device-Id": getDeviceId() } }
   );
   return response.data;
 };

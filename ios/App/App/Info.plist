@@ -45,6 +45,8 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Gift360 asks for your location when you pay, to protect your payment from fraud. Only your city and PIN code are shown, and your location is never shared with the payment gateway.</string>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
 		<string>tez</string>

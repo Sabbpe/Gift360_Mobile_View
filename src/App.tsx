@@ -17,6 +17,7 @@ import Cart from "./pages/Cart";
 import NotFound from "./pages/not-found";
 import BrandDetailsPage from "./pages/BrandDetailsPage";
 import { Toaster } from "./components/ui/toaster";
+import CheckoutGateDialog from "./components/CheckoutGateDialog";
 import { TooltipProvider } from "./components/ui/tooltip";
 import { ThemeProvider } from "./contexts/SimpleTheme";
 import { GuideProvider } from "./contexts/GuideContext";
@@ -175,6 +176,7 @@ export default function App() {
                 <ConfigProvider>
                   <AppRoutes />
                   <Toaster />
+                  <CheckoutGateDialog />
                   <GlobalSupportChat />
                   <FeedbackOrchestrator />
                   <MicroQuestionWidget />

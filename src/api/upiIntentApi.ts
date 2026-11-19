@@ -3,6 +3,8 @@
 // ecosystem service (Juspay) and owns verification; the client never decides
 // "paid" and never builds the deeplink itself.
 import { giftcardApiClient } from "@/lib/valuedesignApi";
+import { runCheckoutGate } from "@/lib/checkoutGate";
+import { getDeviceId } from "@/lib/deviceId";
 
 export interface UpiIntentCreateResponse {
   status: string;
@@ -29,9 +31,12 @@ export interface UpiIntentStatusResponse {
 }
 
 export const createUpiIntent = async (orderNumber: string): Promise<UpiIntentCreateResponse> => {
+  // Email code / location step when the server asks for it (tasks 4 and 5).
+  const location = await runCheckoutGate({ orderNumber, paymentMethod: "UPI" });
   const response = await giftcardApiClient.post<UpiIntentCreateResponse>(
     `/orders/${orderNumber}/intent/create`,
-    {}
+    location ? { location } : {},
+    { headers: { "X-Device-Id": getDeviceId() } }
   );
   return response.data;
 };
