@@ -3,7 +3,6 @@ import axios from "axios";
 import type { PaymentProcessRequest, PaymentResponse } from "@/types/payment";
 import { giftcardApiClient } from "@/lib/valuedesignApi";
 import { runCheckoutGate } from "@/lib/checkoutGate";
-import { getDeviceId } from "@/lib/deviceId";
 
 const PAYMENT_URL = import.meta.env.VITE_PAYMENT_API_URL;
 
@@ -43,8 +42,7 @@ export const initiateBackendPayment = async (
       : undefined;
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`,
-    payload,
-    { headers: { "X-Device-Id": getDeviceId() } }
+    payload
   );
   return response.data;
 };
@@ -67,8 +65,7 @@ export const initiateRetryPayment = async (
       ...(paymentMethod ? { paymentMethod } : {}),
       ...(paymentModes && paymentModes.length > 0 ? { paymentModes } : {}),
       ...(location ? { location } : {}),
-    },
-    { headers: { "X-Device-Id": getDeviceId() } }
+    }
   );
   return response.data;
 };
