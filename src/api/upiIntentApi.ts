@@ -4,6 +4,7 @@
 // "paid" and never builds the deeplink itself.
 import { giftcardApiClient } from "@/lib/valuedesignApi";
 import { runCheckoutGate } from "@/lib/checkoutGate";
+import { getDeviceId } from "@/lib/deviceId";
 
 export interface UpiIntentCreateResponse {
   status: string;
@@ -34,7 +35,7 @@ export const createUpiIntent = async (orderNumber: string): Promise<UpiIntentCre
   const location = await runCheckoutGate({ orderNumber, paymentMethod: "UPI" });
   const response = await giftcardApiClient.post<UpiIntentCreateResponse>(
     `/orders/${orderNumber}/intent/create`,
-    location ? { location } : {}
+    { ...(location ? { location } : {}), deviceId: getDeviceId() }
   );
   return response.data;
 };

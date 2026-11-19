@@ -4,6 +4,7 @@
 // the app ask the customer up front.
 // ordersApiClient: base is .../api, so paths below start at /v1.
 import { ordersApiClient as apiClient } from "@/lib/valuedesignApi";
+import { getDeviceId } from "@/lib/deviceId";
 
 export type EmailMode = "OFF" | "LOG" | "SOFT" | "HARD";
 export type LocationMode = "OFF" | "COLLECT" | "ENFORCE";
@@ -98,7 +99,9 @@ export const checkEmail = async (email: string): Promise<EmailCheckResponse> => 
 
 export const sendEmailCode = async (): Promise<SendResult> => {
   try {
-    const { data } = await apiClient.post<SendResult>("/v1/email/verification/send", {});
+    const { data } = await apiClient.post<SendResult>("/v1/email/verification/send", {
+      deviceId: getDeviceId(),
+    });
     return data;
   } catch (err) {
     const body = bodyOf<SendResult>(err);

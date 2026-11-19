@@ -3,6 +3,7 @@ import axios from "axios";
 import type { PaymentProcessRequest, PaymentResponse } from "@/types/payment";
 import { giftcardApiClient } from "@/lib/valuedesignApi";
 import { runCheckoutGate } from "@/lib/checkoutGate";
+import { getDeviceId } from "@/lib/deviceId";
 
 const PAYMENT_URL = import.meta.env.VITE_PAYMENT_API_URL;
 
@@ -32,14 +33,12 @@ export const initiateBackendPayment = async (
   // Email code / location step when the server asks for it (tasks 4 and 5).
   const location = await runCheckoutGate({ orderNumber, paymentMethod });
   const hasList = !!paymentModes && paymentModes.length > 0;
-  const payload =
-    paymentMethod || hasList || location
-      ? {
-          ...(paymentMethod ? { paymentMethod } : {}),
-          ...(hasList ? { paymentModes } : {}),
-          ...(location ? { location } : {}),
-        }
-      : undefined;
+  const payload = {
+    ...(paymentMethod ? { paymentMethod } : {}),
+    ...(hasList ? { paymentModes } : {}),
+    ...(location ? { location } : {}),
+    deviceId: getDeviceId(),
+  };
   const response = await giftcardApiClient.post(
     `/orders/${orderNumber}/initiate-payment${freshSession ? "?fresh=true" : ""}`,
     payload
@@ -65,6 +64,7 @@ export const initiateRetryPayment = async (
       ...(paymentMethod ? { paymentMethod } : {}),
       ...(paymentModes && paymentModes.length > 0 ? { paymentModes } : {}),
       ...(location ? { location } : {}),
+      deviceId: getDeviceId(),
     }
   );
   return response.data;
