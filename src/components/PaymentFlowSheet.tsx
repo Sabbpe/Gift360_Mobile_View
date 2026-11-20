@@ -209,7 +209,7 @@ export default function PaymentFlowSheet({
                 className="payment-sheet-link"
                 onClick={onViewVoucherClick}
               >
-                View Voucher
+                Tap to view voucher to your mail and contact number
                 <ArrowRight className="h-4 w-4" />
               </button>
             </div>

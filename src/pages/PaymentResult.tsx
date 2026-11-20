@@ -282,7 +282,7 @@ function SuccessView({
             onClick={onGoVouchers}
             className="mx-auto mt-3 flex h-12 min-w-[220px] items-center justify-center rounded-full bg-gradient-to-r from-[#7B61FF] to-[#5B3FFF] px-8 text-base font-bold text-white shadow-lg shadow-[rgba(108,92,231,0.3)] transition-all active:scale-[0.97]"
           >
-            View my vouchers
+            Tap to view voucher to your mail and contact number
           </button>
 
           <div className="mt-3 flex items-center justify-center gap-5 text-sm font-semibold text-[#5B3FFF]">

@@ -359,17 +359,11 @@ export default function CheckoutGateDialog() {
                   Continue with this PIN code
                 </Button>
               )}
-              {location.pinFallback && locMode !== "pin" && (
+              {location.pinFallback && locMode === "choose" && (
                 <Button variant="ghost" onClick={() => { setLocMode("pin"); setLocMsg(null); }} disabled={busy}>
                   Enter PIN code instead
                 </Button>
               )}
-              {locMode !== "choose" && (
-                <Button variant="ghost" onClick={() => { setLocMode("choose"); setLocMsg(null); }} disabled={busy}>
-                  Use my location instead
-                </Button>
-              )}
-
             </DialogFooter>
           </>
         )}
