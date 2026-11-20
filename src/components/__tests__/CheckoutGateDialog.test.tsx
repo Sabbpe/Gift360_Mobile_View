@@ -97,10 +97,10 @@ describe("CheckoutGateDialog", () => {
     expect(screen.getByLabelText("PIN code")).toBeInTheDocument();
   });
 
-  it("optional location can be skipped", async () => {
+  it("location has no skip action even when not required", async () => {
     render(<CheckoutGateDialog />);
-    const { resolve } = open({ needLocation: true, requirements: { email: { mode: "OFF", verified: false, required: false, prompt: false }, location: { ...location, mode: "COLLECT", required: false } } });
-    fireEvent.click(await screen.findByRole("button", { name: "Skip" }));
-    expect(resolve).toHaveBeenCalledWith(undefined);
+    open({ needLocation: true, requirements: { email: { mode: "OFF", verified: false, required: false, prompt: false }, location: { ...location, mode: "COLLECT", required: false } } });
+    await screen.findByText(/Confirm your location/);
+    expect(screen.queryByRole("button", { name: "Skip" })).toBeNull();
   });
 });

@@ -11,6 +11,7 @@ import { useEffect, useState } from "react";
 import RewardsTab from "@/components/RewardsTab";
 import Header from "@/components/Header";
 import { fetchNewOrders } from "@/api/orderApi";
+import { getProfileVerification, type ProfileVerification } from "@/api/profileApi";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const DISPLAY_NAME_KEY = "displayName";
@@ -142,6 +143,18 @@ function EditableField({ label, value, onSave }: { label: string; value: string;
         )}
       </div>
     </label>
+  );
+}
+
+function VerificationRow({ label, ok }: { label: string; ok: boolean }) {
+  return (
+    <div className="flex items-center justify-between rounded-xl bg-[#F8F7FB] px-3 py-2">
+      <span className="text-[12px] text-[#81789A]">{label}</span>
+      <span className={`inline-flex items-center gap-1 text-[12px] font-semibold ${ok ? "text-emerald-700" : "text-[#A59BBE]"}`}>
+        {ok ? <Check className="h-4 w-4" /> : <X className="h-4 w-4" />}
+        {ok ? "Verified" : "Not verified"}
+      </span>
+    </div>
   );
 }
 
@@ -282,6 +295,7 @@ export default function ProfilePage() {
   const [recentOrders, setRecentOrders] = useState<any[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState(false);
+  const [verification, setVerification] = useState<ProfileVerification | null>(null);
 
   // Auto-fetch SuperCoin search + balance
   useEffect(() => {
@@ -299,6 +313,15 @@ export default function ProfilePage() {
       balanceMutation.mutate();
     }
   }, [identity, searchUserMutation.data]);
+
+  useEffect(() => {
+    if (!user?.clientId) return;
+    let active = true;
+    getProfileVerification()
+      .then((v) => { if (active) setVerification(v); })
+      .catch(() => { if (active) setVerification(null); });
+    return () => { active = false; };
+  }, [user?.clientId]);
 
   useEffect(() => {
     if (!user?.clientId) return;
@@ -414,6 +437,11 @@ export default function ProfilePage() {
               <h2 className="truncate text-[18px] font-bold">{profile.username}</h2>
               <p className="mt-1 truncate text-[12px] text-[#81789A]">{profile.email || "Email unavailable"}</p>
               <p className="mt-0.5 text-[12px] text-[#81789A]">{profile.phone || "Phone unavailable"}</p>
+              {verification?.verified && (
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  <Check className="h-3 w-3" /> Verified
+                </span>
+              )}
             </div>
             <button type="button" onClick={() => handleUsernameSave(window.prompt("Update your name", profile.username) || profile.username)} className="rounded-lg px-2 py-2 text-[11px] font-semibold text-primary">
               Edit
@@ -458,6 +486,10 @@ export default function ProfilePage() {
           <div className="mt-3 space-y-3">
             <InputField label="Email" value={profile.email} />
             <InputField label="Phone Number" value={profile.phone} />
+            <div className="grid grid-cols-2 gap-2 pt-1">
+              <VerificationRow label="Email" ok={!!verification?.emailVerified} />
+              <VerificationRow label="Location" ok={!!verification?.locationVerified} />
+            </div>
           </div>
         </section>
 

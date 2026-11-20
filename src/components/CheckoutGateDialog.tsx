@@ -138,8 +138,6 @@ export default function CheckoutGateDialog() {
 
   const email = req?.requirements.email;
   const location = req?.requirements.location;
-  const emailRequired = !!email?.required;
-  const locationRequired = !!location?.required;
 
   const finish = useCallback(
     (loc: CheckoutLocation | undefined) => {
@@ -164,13 +162,9 @@ export default function CheckoutGateDialog() {
     else finish(undefined);
   }, [req, finish]);
 
-  // Closing the dialog: skip what is optional, cancel if something required is missing.
+  // Verification is mandatory while it is shown: closing cancels the payment.
   const onOpenChange = (open: boolean) => {
-    if (open) return;
-    if (step === "email" && emailRequired) return cancel();
-    if (step === "location" && locationRequired) return cancel();
-    if (step === "email") return afterEmail();
-    finish(undefined);
+    if (!open) cancel();
   };
 
   const doSend = async () => {
@@ -264,7 +258,7 @@ export default function CheckoutGateDialog() {
             <DialogHeader>
               <DialogTitle>Confirm your email</DialogTitle>
               <DialogDescription>
-                Your invoice and vouchers are sent here. Confirm it once before you pay.
+                This is being asked to send vouchers for your registered email ID for security purposes.
               </DialogDescription>
             </DialogHeader>
 
@@ -311,9 +305,7 @@ export default function CheckoutGateDialog() {
                   </Button>
                 </>
               )}
-              {!emailRequired && (
-                <Button variant="ghost" onClick={afterEmail} disabled={busy}>Skip for now</Button>
-              )}
+
             </DialogFooter>
           </>
         )}
@@ -377,9 +369,7 @@ export default function CheckoutGateDialog() {
                   Use my location instead
                 </Button>
               )}
-              {!locationRequired && (
-                <Button variant="ghost" onClick={() => finish(undefined)} disabled={busy}>Skip</Button>
-              )}
+
             </DialogFooter>
           </>
         )}
