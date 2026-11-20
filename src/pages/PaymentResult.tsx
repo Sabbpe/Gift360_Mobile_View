@@ -277,12 +277,17 @@ function SuccessView({
             <p className="text-sm text-[#4B5563]">Your vouchers will appear on the Orders page once issued.</p>
           )}
 
+          <p className="pr-rise mt-3 text-sm font-medium text-[#4B5563]" style={{ animationDelay: "1s" }}>
+            Go to My Vouchers &amp; tap to reveal your voucher to receive it via
+            your registered email and WhatsApp.
+          </p>
+
           <button
             type="button"
             onClick={onGoVouchers}
             className="mx-auto mt-3 flex h-12 min-w-[220px] items-center justify-center rounded-full bg-gradient-to-r from-[#7B61FF] to-[#5B3FFF] px-8 text-base font-bold text-white shadow-lg shadow-[rgba(108,92,231,0.3)] transition-all active:scale-[0.97]"
           >
-            Tap to view voucher to your mail and contact number
+            Go to My Vouchers
           </button>
 
           <div className="mt-3 flex items-center justify-center gap-5 text-sm font-semibold text-[#5B3FFF]">

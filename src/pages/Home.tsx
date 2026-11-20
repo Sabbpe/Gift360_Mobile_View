@@ -178,8 +178,8 @@ function ActionGrid({ onBuyVoucher, onSuperCoinClick }: { onBuyVoucher: () => vo
   const [, setLocation] = useLocation();
   const actions = [
     { label: "Buy Voucher", Icon: Gift, href: "/brands", onClick: onBuyVoucher },
-    { label: "Offers Near You", Icon: Send, href: "/nearby", isNew: true },
-    { label: "Vouchers", Icon: Package, href: "/orders" },
+    { label: "Offers Near Me", Icon: Send, href: "/nearby", isNew: true },
+    { label: "My Vouchers", Icon: Package, href: "/orders" },
     { label: "Partner with Us", Icon: UserRoundPlus, href: "/distributor" },
     // { label: "Rewards", Icon: Coins, href: "/rewards" },
   ];
