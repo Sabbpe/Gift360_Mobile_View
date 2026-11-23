@@ -14,7 +14,7 @@ import {
   Tag, ShoppingBag, Clock, CheckCircle, XCircle, RefreshCw,
   ChevronDown, ChevronUp, BookOpen, CheckCircle2, Calendar,
   CreditCard, Lock, AlertTriangle, Loader2, RotateCcw, ArrowLeft,
-  Coins,
+  Coins, ExternalLink,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { format } from "date-fns";
@@ -417,6 +417,28 @@ function useCardItemsForOrder(order: any, clientId: string): Record<string, any[
   return cardItemsByOrderItem;
 }
 
+// Resolves the brand's redemption site for the quick "Redeem on website" link
+// shown once a card is revealed. Newer orders carry it in the item meta;
+// older orders fall back to the brand-details endpoint, but only while the
+// card is expanded and something has actually been revealed — so the collapsed
+// grid never fires one request per order.
+function useResolvedRedemptionWebsite(
+  metaWebsite: string | null,
+  brandId: string | null,
+  enabled: boolean
+): string | null {
+  const [fetched, setFetched] = useState<string | null>(null);
+  useEffect(() => {
+    if (!enabled || metaWebsite || !brandId) return;
+    let cancelled = false;
+    getBrandDetails(brandId)
+      .then((b) => { if (!cancelled) setFetched(b.RedemptionWebsite || null); })
+      .catch(() => { /* link simply stays hidden */ });
+    return () => { cancelled = true; };
+  }, [enabled, metaWebsite, brandId]);
+  return metaWebsite || fetched;
+}
+
 // ── Voucher Card (PAID, not redeemed) ─────────────────────────────────────────
 function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
@@ -432,6 +454,9 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const metaBrandId = meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
+  const revealedAny = vouchers.some(v => v.isScratched);
+  const quickRedeemUrl = useResolvedRedemptionWebsite(
+    redemptionWebsite, metaBrandId, expanded && revealedAny);
   // Show the vouchers' own real, redeemable face value (summed across all
   // physical cards on this order) rather than what was actually paid.
   // These can genuinely differ -- e.g. a SuperCoin-subsidized purchase pays
@@ -465,7 +490,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
               revealed - opening "Mark as Redeemed" / redeem instructions
               before the customer has even seen a real code is premature and
               confusing (nothing to redeem yet). */}
-          {vouchers.some(v => v.isScratched) && (
+          {revealedAny && (
             <button
               onClick={() => setShowSheet(true)}
               className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[11px] text-white flex items-center justify-center"
@@ -505,6 +530,18 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
                     compact />
+                  {/* Quick "Redeem on website" shortcut, revealed card only. */}
+                  {v.isScratched && quickRedeemUrl && (
+                    <a
+                      href={quickRedeemUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#DCD3FF] bg-[#EDEAFF] text-[10px] font-semibold text-[#7B5CFF] active:scale-[0.98]"
+                    >
+                      <ExternalLink size={10} aria-hidden="true" />
+                      Redeem on website
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
@@ -545,6 +582,9 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
   const metaBrandId = meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
+  const revealedAny = vouchers.some(v => v.isScratched);
+  const quickRedeemUrl = useResolvedRedemptionWebsite(
+    redemptionWebsite, metaBrandId, expanded && revealedAny);
   const coinsRedeemed = Number(order?.pricing?.coins_redeemed ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
 
@@ -570,7 +610,7 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
           )}
           {/* Only show Redeem once at least one card has actually been
               revealed - see VoucherCard's identical fix above. */}
-          {vouchers.some(v => v.isScratched) && (
+          {revealedAny && (
             <button
               onClick={() => setShowSheet(true)}
               className="w-full h-[24px] mt-2 rounded-[14px] font-semibold text-[11px] text-white flex items-center justify-center"
@@ -612,6 +652,18 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
                     clientId={clientId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
                     compact />
+                  {/* Quick "Redeem on website" shortcut, revealed card only. */}
+                  {v.isScratched && quickRedeemUrl && (
+                    <a
+                      href={quickRedeemUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#DCD3FF] bg-[#EDEAFF] text-[10px] font-semibold text-[#7B5CFF] active:scale-[0.98]"
+                    >
+                      <ExternalLink size={10} aria-hidden="true" />
+                      Redeem on website
+                    </a>
+                  )}
                 </div>
               ))}
             </div>
