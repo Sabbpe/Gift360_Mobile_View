@@ -14,7 +14,7 @@ import {
   Tag, ShoppingBag, Clock, CheckCircle, XCircle, RefreshCw,
   ChevronDown, ChevronUp, BookOpen, CheckCircle2, Calendar,
   CreditCard, Lock, AlertTriangle, Loader2, RotateCcw, ArrowLeft,
-  Coins, ExternalLink,
+  Coins,
 } from "lucide-react";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import { format } from "date-fns";
@@ -27,7 +27,7 @@ import {
 } from "@/lib/voucherStateStore";
 import { promptFeedback } from "@/components/FeedbackOrchestrator";
 import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
-import { getBrandDetails } from "@/api/brandDetailsApi";
+import { useResolvedRedemptionWebsite } from "@/hooks/useResolvedRedemptionWebsite";
 
 const FALLBACK = FALLBACK_IMAGE;
 const REDEEMED_KEY = "g360_redeemed_vouchers";
@@ -189,22 +189,9 @@ function RedeemSheet({
   const [step, setStep] = useState<"details" | "steps">("details");
   const [checkState, setCheckState] = useState<"idle" | "checking" | "used" | "active" | "error">("idle");
   const [balances, setBalances] = useState<Record<string, string>>({});
-  // Newer orders carry the catalog redemption site in the item meta. Older
-  // orders predate that stamp, so fall back to the brand-details endpoint
-  // (same source the purchase screens use) when the sheet opens.
-  const [fetchedWebsite, setFetchedWebsite] = useState<string | null>(null);
-  const website = redemptionWebsite || fetchedWebsite;
-
-  useEffect(() => {
-    if (redemptionWebsite || !brandId) return;
-    let cancelled = false;
-    getBrandDetails(brandId)
-      .then((b) => {
-        if (!cancelled) setFetchedWebsite(b.RedemptionWebsite || null);
-      })
-      .catch(() => { /* CTA simply stays hidden */ });
-    return () => { cancelled = true; };
-  }, [redemptionWebsite, brandId]);
+  // Same resolver the revealed cards use: meta value for new orders, brand
+  // endpoint fallback for older ones.
+  const website = useResolvedRedemptionWebsite(redemptionWebsite, brandId, true);
 
   const handleCheck = async () => {
     if (!vouchers.length) { onConfirmed(); onClose(); return; }
@@ -417,28 +404,6 @@ function useCardItemsForOrder(order: any, clientId: string): Record<string, any[
   return cardItemsByOrderItem;
 }
 
-// Resolves the brand's redemption site for the quick "Redeem on website" link
-// shown once a card is revealed. Newer orders carry it in the item meta;
-// older orders fall back to the brand-details endpoint, but only while the
-// card is expanded and something has actually been revealed — so the collapsed
-// grid never fires one request per order.
-function useResolvedRedemptionWebsite(
-  metaWebsite: string | null,
-  brandId: string | null,
-  enabled: boolean
-): string | null {
-  const [fetched, setFetched] = useState<string | null>(null);
-  useEffect(() => {
-    if (!enabled || metaWebsite || !brandId) return;
-    let cancelled = false;
-    getBrandDetails(brandId)
-      .then((b) => { if (!cancelled) setFetched(b.RedemptionWebsite || null); })
-      .catch(() => { /* link simply stays hidden */ });
-    return () => { cancelled = true; };
-  }, [enabled, metaWebsite, brandId]);
-  return metaWebsite || fetched;
-}
-
 // ── Voucher Card (PAID, not redeemed) ─────────────────────────────────────────
 function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   order: any; expanded: boolean; onToggle: () => void; onRedeemed: (order: any, vouchers: VoucherView[]) => void; clientId: string;
@@ -451,12 +416,11 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
   const redemptionWebsite = meta.redemption_website || meta.redemptionWebsite || null;
-  const metaBrandId = meta.brand_id || meta.brandId || null;
+  // Orders API carries brand_id at the item level; its meta snapshot may omit it.
+  const metaBrandId = item?.brand_id || meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
   const revealedAny = vouchers.some(v => v.isScratched);
-  const quickRedeemUrl = useResolvedRedemptionWebsite(
-    redemptionWebsite, metaBrandId, expanded && revealedAny);
   // Show the vouchers' own real, redeemable face value (summed across all
   // physical cards on this order) rather than what was actually paid.
   // These can genuinely differ -- e.g. a SuperCoin-subsidized purchase pays
@@ -528,20 +492,10 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
                     activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
+                    redemptionWebsite={redemptionWebsite}
+                    brandId={metaBrandId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
                     compact />
-                  {/* Quick "Redeem on website" shortcut, revealed card only. */}
-                  {v.isScratched && quickRedeemUrl && (
-                    <a
-                      href={quickRedeemUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#DCD3FF] bg-[#EDEAFF] text-[10px] font-semibold text-[#7B5CFF] active:scale-[0.98]"
-                    >
-                      <ExternalLink size={10} aria-hidden="true" />
-                      Redeem on website
-                    </a>
-                  )}
                 </div>
               ))}
             </div>
@@ -579,12 +533,10 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
   const redemptionWebsite = meta.redemption_website || meta.redemptionWebsite || null;
-  const metaBrandId = meta.brand_id || meta.brandId || null;
+  const metaBrandId = item?.brand_id || meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
   const revealedAny = vouchers.some(v => v.isScratched);
-  const quickRedeemUrl = useResolvedRedemptionWebsite(
-    redemptionWebsite, metaBrandId, expanded && revealedAny);
   const coinsRedeemed = Number(order?.pricing?.coins_redeemed ?? 0);
   const dateStr = order.created_at ? format(new Date(order.created_at), "MM/yyyy - hh:mma") : "";
 
@@ -650,20 +602,10 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
                     activationUrl={v.activationUrl}
                     orderNumber={order.order_number}
                     clientId={clientId}
+                    redemptionWebsite={redemptionWebsite}
+                    brandId={metaBrandId}
                     initialState={v.isScratched ? "SCRATCHED" : v.isGift ? "GIFTED" : "PENDING"}
                     compact />
-                  {/* Quick "Redeem on website" shortcut, revealed card only. */}
-                  {v.isScratched && quickRedeemUrl && (
-                    <a
-                      href={quickRedeemUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-1.5 flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#DCD3FF] bg-[#EDEAFF] text-[10px] font-semibold text-[#7B5CFF] active:scale-[0.98]"
-                    >
-                      <ExternalLink size={10} aria-hidden="true" />
-                      Redeem on website
-                    </a>
-                  )}
                 </div>
               ))}
             </div>

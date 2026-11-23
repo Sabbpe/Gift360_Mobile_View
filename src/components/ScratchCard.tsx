@@ -4,11 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Sparkles, Calendar, CreditCard, Lock, Gift, Send,
   Zap, ShieldCheck, MessageSquare, User, ChevronUp, Copy, Check, Mail, Loader2,
+  ExternalLink,
 } from "lucide-react";
 import { ScratchGate } from "@/components/ScratchGate";
 import { useGifting } from "@/hooks/useGifting";
 import { useSendEmail } from "@/hooks/useSendEmail";
 import { useToast } from "@/hooks/use-toast";
+import { useResolvedRedemptionWebsite } from "@/hooks/useResolvedRedemptionWebsite";
 import type { VoucherState } from "@/types/order";
 
 interface ScratchCardProps {
@@ -33,6 +35,12 @@ interface ScratchCardProps {
   // activation-URL credentials (UBEFLOW) — supplied by the orders stored proc
   activationCode?: string;
   activationUrl?: string;
+
+  // Brand redemption site (catalog `redemption_website`). Known on newer orders
+  // via the item meta; otherwise resolved from brandId once the card is
+  // revealed. Drives the "Redeem on website" CTA on the revealed card.
+  redemptionWebsite?: string | null;
+  brandId?: string | null;
 }
 
 export function ScratchCard({
@@ -53,12 +61,22 @@ export function ScratchCard({
   profileUrl,
   activationCode,
   activationUrl,
+  redemptionWebsite,
+  brandId,
 }: ScratchCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [showGate, setShowGate] = useState(false);
   const [voucherState, setVoucherState] = useState<VoucherState>(initialState);
   const [copiedField, setCopiedField] = useState<"number" | "pin" | null>(null);
+
+  // Only resolve/fetch the redemption link once the voucher is actually
+  // revealed, so unrevealed cards cost nothing.
+  const redeemUrl = useResolvedRedemptionWebsite(
+    redemptionWebsite,
+    brandId,
+    voucherState === "SCRATCHED"
+  );
 
   const handleCopy = (text: string, field: "number" | "pin") => {
     navigator.clipboard.writeText(text).then(() => {
@@ -273,9 +291,24 @@ export function ScratchCard({
               )}
               {isSendingEmail ? "Sending…" : emailShared ? "Sent" : "Email"}
             </button>
-            <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full font-bold shadow-sm flex items-center gap-1 px-2 py-1 text-[9px] shrink-0">
-              <ShieldCheck className="h-2.5 w-2.5" />
-            </div>
+            {redeemUrl ? (
+              <a
+                href={redeemUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                aria-label={`Redeem ${brandName || "this voucher"} on the brand website`}
+                title={`Redeem ${brandName || "this voucher"} on the brand website`}
+                className="shrink-0 flex items-center gap-0.5 rounded-full bg-[#EDEAFF] border border-[#DCD3FF] px-2 py-1 text-[9px] font-bold text-[#7B5CFF]"
+              >
+                <ExternalLink className="h-2.5 w-2.5" />
+                Redeem
+              </a>
+            ) : (
+              <div className="bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-full font-bold shadow-sm flex items-center gap-1 px-2 py-1 text-[9px] shrink-0">
+                <ShieldCheck className="h-2.5 w-2.5" />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -497,6 +530,23 @@ export function ScratchCard({
                 {isSendingEmail ? "Sending…" : emailShared ? "Sent to your email" : "Email this voucher"}
               </button>
             </div>
+
+            {/* ── How to use: straight to the brand's redemption site (V69) ── */}
+            {redeemUrl && (
+              <div className="relative z-10 mx-6 mt-3">
+                <a
+                  href={redeemUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  aria-label={`Redeem ${brandName || "this voucher"} on the brand website`}
+                  className="flex items-center justify-center gap-2 w-full min-h-[44px] rounded-full border border-[#DCD3FF] bg-[#EDEAFF] text-[#7B5CFF] text-xs font-semibold transition-colors hover:bg-[#E4DEFF]"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Redeem on website
+                </a>
+              </div>
+            )}
 
             {/* ── Bottom bar ── */}
             <div

@@ -444,6 +444,12 @@ export default function OrderDetails() {
                                   itemId={cardItem?.itemId}
                                   clientId={user?.clientId ?? ""}
                                   orderNumber={order.order_number}
+                                  redemptionWebsite={
+                                    (item.meta as any)?.redemption_website ||
+                                    (item.meta as any)?.redemptionWebsite ||
+                                    null
+                                  }
+                                  brandId={(item.meta as any)?.brand_id || item.brand_id || null}
                                   initialState={cardState}
                                 />
                               );
