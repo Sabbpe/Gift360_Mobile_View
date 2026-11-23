@@ -114,6 +114,8 @@ type FetchBrandDetailsApiResponse = {
   redeemSteps?: string | Array<{ title: string; image?: string; description?: string }>;
   redeem_steps?: string | Array<{ title: string; image?: string; description?: string }>;
   tnc?: string | Record<string, string> | null;
+  redemptionWebsite?: string | null;
+  redemption_website?: string | null;
   minPrice?: string | number;
   min_price?: string | number;
   maxPrice?: string | number;
@@ -390,6 +392,7 @@ export const fetchBrandPaymentDetails = async (
     ),
     RedeemSteps: parseRedeemSteps(data.redeemSteps || data.redeem_steps),
     Tnc: parseTerms(data.tnc),
+    RedemptionWebsite: data.redemptionWebsite || data.redemption_website || null,
     CreatedAt: data.createdAt || data.created_at || null,
     UpdatedAt: data.updatedAt || data.updated_at || null,
   };

@@ -27,6 +27,7 @@ import { useBrandDetails } from "@/hooks/useBrandDetails";
 import { trackEvent } from "@/lib/analytics";
 import MobileBottomNav from "@/components/MobileBottomNav";
 import { BrandGuardRailStatus } from "@/components/BrandGuardRailStatus";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useBrandGuardRail } from "@/hooks/useBrandGuardRail";
 import type { NearbyStoreRequest } from "@/types/store";
@@ -518,7 +519,10 @@ const handleAmountButtonClick = (denomination: number) => {
     setShowModal(true);
   };
 
-  const hasRedeemSteps = brand.RedeemSteps && brand.RedeemSteps.length > 0;
+  // V69: keep the "Redeem Steps" tab reachable when the brand has only a
+  // redemption link (the CTA is the whole point of that tab then).
+  const hasRedeemSteps =
+    (brand.RedeemSteps && brand.RedeemSteps.length > 0) || Boolean(brand.RedemptionWebsite);
   const hasInstructions = brand.ImportantInstruction && Object.keys(brand.ImportantInstruction).length > 0;
   const hasTerms = brand.Tnc;
   const hasAbout = brand.Description;
@@ -656,6 +660,13 @@ return (
                       </div>
                     ))}
                   </div>
+
+                  {/* Straight to the brand's own redemption page (V69). */}
+                  <RedeemWebsiteCta
+                    url={brand.RedemptionWebsite}
+                    brandName={brand.BrandName}
+                    className="mt-2"
+                  />
                 </div>
               )}
 

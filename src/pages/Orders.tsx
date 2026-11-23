@@ -26,6 +26,8 @@ import {
   readOrderItemTerminalState,
 } from "@/lib/voucherStateStore";
 import { promptFeedback } from "@/components/FeedbackOrchestrator";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
+import { getBrandDetails } from "@/api/brandDetailsApi";
 
 const FALLBACK = FALLBACK_IMAGE;
 const REDEEMED_KEY = "g360_redeemed_vouchers";
@@ -178,14 +180,31 @@ const checkVoucherBalance = async (cardNo: string) => {
 
 // ── Redeem Sheet ──────────────────────────────────────────────────────────────
 function RedeemSheet({
-  vouchers, brandName, redeemSteps, onClose, onConfirmed,
+  vouchers, brandName, redeemSteps, redemptionWebsite, brandId, onClose, onConfirmed,
 }: {
   vouchers: VoucherView[]; brandName: string; redeemSteps?: string | null;
+  redemptionWebsite?: string | null; brandId?: string | null;
   onClose: () => void; onConfirmed: () => void;
 }) {
   const [step, setStep] = useState<"details" | "steps">("details");
   const [checkState, setCheckState] = useState<"idle" | "checking" | "used" | "active" | "error">("idle");
   const [balances, setBalances] = useState<Record<string, string>>({});
+  // Newer orders carry the catalog redemption site in the item meta. Older
+  // orders predate that stamp, so fall back to the brand-details endpoint
+  // (same source the purchase screens use) when the sheet opens.
+  const [fetchedWebsite, setFetchedWebsite] = useState<string | null>(null);
+  const website = redemptionWebsite || fetchedWebsite;
+
+  useEffect(() => {
+    if (redemptionWebsite || !brandId) return;
+    let cancelled = false;
+    getBrandDetails(brandId)
+      .then((b) => {
+        if (!cancelled) setFetchedWebsite(b.RedemptionWebsite || null);
+      })
+      .catch(() => { /* CTA simply stays hidden */ });
+    return () => { cancelled = true; };
+  }, [redemptionWebsite, brandId]);
 
   const handleCheck = async () => {
     if (!vouchers.length) { onConfirmed(); onClose(); return; }
@@ -215,7 +234,7 @@ function RedeemSheet({
 
           {/* Tabs */}
           <div className="flex bg-muted rounded-2xl p-1 mb-5">
-            {[{ id: "details", label: "Voucher Details" }, ...(redeemSteps ? [{ id: "steps", label: "How to Redeem" }] : [])].map(t => (
+            {[{ id: "details", label: "Voucher Details" }, ...(redeemSteps || website ? [{ id: "steps", label: "How to Redeem" }] : [])].map(t => (
               <button key={t.id} onClick={() => setStep(t.id as any)}
                 className={`flex-1 py-2 rounded-xl font-bold text-xs transition-all ${step === t.id ? "shadow-g-tile" : ""}`}
                 style={step === t.id ? { background: "linear-gradient(90deg, #7b5cff, #5a4bff)", color: "white" } : { color: "#888888" }}>
@@ -332,7 +351,14 @@ function RedeemSheet({
               <h3 className="text-base font-extrabold mb-4 flex items-center gap-2">
                 <BookOpen size={16} className="text-primary" />How to Redeem at {brandName}
               </h3>
-              <div className="text-sm leading-relaxed font-medium whitespace-pre-line mb-6" style={{ color: "#888888" }}>{redeemSteps}</div>
+              <div className="text-sm leading-relaxed font-medium whitespace-pre-line mb-3" style={{ color: "#888888" }}>
+                {redeemSteps || "Open the brand's redemption website and enter your voucher code."}
+              </div>
+              <RedeemWebsiteCta
+                url={website}
+                brandName={brandName}
+                className="mb-3"
+              />
               <Button className="w-full h-12 rounded-2xl font-bold" onClick={() => setStep("details")}>Back to Voucher Details</Button>
             </>
           )}
@@ -402,6 +428,8 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
   const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
+  const redemptionWebsite = meta.redemption_website || meta.redemptionWebsite || null;
+  const metaBrandId = meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
   // Show the vouchers' own real, redeemable face value (summed across all
@@ -495,6 +523,7 @@ function VoucherCard({ order, expanded, onToggle, onRedeemed, clientId }: {
 
       {showSheet && (
         <RedeemSheet vouchers={vouchers} brandName={brandName} redeemSteps={redeemSteps}
+          redemptionWebsite={redemptionWebsite} brandId={metaBrandId}
           onClose={() => setShowSheet(false)}
           onConfirmed={() => { onRedeemed(order, vouchers); setShowSheet(false); }} />
       )}
@@ -512,6 +541,8 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
   const brandName = meta.brand_name || `Order #${(order.order_number || "").slice(-8)}`;
   const imageUrl = getImageUrl(meta);
   const redeemSteps = meta.redeem_steps || meta.RedeemSteps || meta.how_to_redeem || null;
+  const redemptionWebsite = meta.redemption_website || meta.redemptionWebsite || null;
+  const metaBrandId = meta.brand_id || meta.brandId || null;
   const cardItemsByOrderItem = useCardItemsForOrder(order, clientId);
   const vouchers = extractVouchers(order, cardItemsByOrderItem);
   const coinsRedeemed = Number(order?.pricing?.coins_redeemed ?? 0);
@@ -593,6 +624,8 @@ function SuperCoinVoucherCard({ order, expanded, onToggle, onRedeemed, clientId 
           vouchers={vouchers}
           brandName={brandName}
           redeemSteps={redeemSteps}
+          redemptionWebsite={redemptionWebsite}
+          brandId={metaBrandId}
           onClose={() => setShowSheet(false)}
           onConfirmed={() => { onRedeemed(order, vouchers); setShowSheet(false); }} />
       )}

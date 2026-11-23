@@ -16,6 +16,7 @@ export interface BrandDetailsApiResponse {
   stockAvailable: string;
   createdAt: string | null;
   updatedAt: string | null;
+  redemptionWebsite?: string | null;
   supercoinBurnRatio?: number | string | null;
   redemptionSurchargePercent?: number | string | null;
   earnPercentSpecialSku?: number | string | null;
@@ -52,6 +53,10 @@ export interface BrandDetailsParsed {
   ImportantInstruction: Record<string, string>;
   RedeemSteps: Array<{ title: string; image?: string; description?: string }>;
   Tnc: Record<string, string> | string;
+
+  // Brand's own redemption site (V69). Null when the catalog row has no link;
+  // every "How to Use"/"Redeem Steps" surface hides its CTA in that case.
+  RedemptionWebsite: string | null;
 
   CreatedAt: string | null;
   UpdatedAt: string | null;

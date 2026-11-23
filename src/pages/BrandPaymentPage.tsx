@@ -6,6 +6,7 @@ import { useCart } from "@/hooks/useCart";
 import { useAuthContext } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
 import type { BrandDetailsParsed } from "@/types/brandDetails";
 
 const FALLBACK = FALLBACK_IMAGE;
@@ -280,6 +281,11 @@ export default function BrandPaymentPage() {
               ) : (
                 <p className="text-sm text-[#6B7280]">No instructions available.</p>
               )}
+              <RedeemWebsiteCta
+                url={brandDetails.RedemptionWebsite}
+                brandName={brandDetails.BrandName}
+                className="mt-3"
+              />
             </div>
           )}
 

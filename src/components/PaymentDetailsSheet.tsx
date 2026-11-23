@@ -20,6 +20,7 @@ import SuperCoinOTPModal, {
 } from "@/components/SuperCoinOTPModal";
 import SuperCoinStatusCard from "@/components/SuperCoinStatusCard";
 import SuperCoinRedeemedModal from "@/components/SuperCoinRedeemedModal";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
 import PaymentFlowSheet from "@/components/PaymentFlowSheet";
 import {
   AlertDialog,
@@ -1374,6 +1375,11 @@ const scBalance = useStoredSuperCoinBalance(user?.clientId, user?.mobile);
                 ) : (
                   <span>No instructions available.</span>
                 )}
+                <RedeemWebsiteCta
+                  url={brand?.RedemptionWebsite}
+                  brandName={brand?.BrandName}
+                  className="mt-3"
+                />
               </div>
             )}
 

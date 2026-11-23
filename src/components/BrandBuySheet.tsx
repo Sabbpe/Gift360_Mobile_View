@@ -8,6 +8,7 @@ import { useLocation } from "wouter";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
 function getImage(b: BrandDetailsParsed | null) {
   if (!b) return FALLBACK_IMAGE;
   return getImageUrl(b) || FALLBACK_IMAGE;
@@ -230,6 +231,11 @@ export default function BrandBuySheet({
                   {brand?.RedeemSteps?.map((s, i) => (
                     <div key={i}>{s.title}{s.description ? ` - ${s.description}` : ''}</div>
                   ))}
+                  <RedeemWebsiteCta
+                    url={brand?.RedemptionWebsite}
+                    brandName={brand?.BrandName}
+                    className="mt-3"
+                  />
                 </div>
               )}
               {activeTab === 'terms' && (

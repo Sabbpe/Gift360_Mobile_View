@@ -116,6 +116,11 @@ export const getBrandDetails = async (brandId: string): Promise<BrandDetailsPars
     RedeemSteps: parsedRedeemSteps,
     Tnc: parsedTnc,
 
+    // V69: catalog column direct_voucher_redemption_website, exposed by
+    // POST /brands/{id}. Tolerate the snake_case form from older payloads.
+    RedemptionWebsite:
+      (b as any).redemptionWebsite || (b as any).redemption_website || null,
+
     CreatedAt: b.createdAt || null,
     UpdatedAt: b.updatedAt || null,
 

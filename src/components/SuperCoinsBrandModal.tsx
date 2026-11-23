@@ -14,6 +14,7 @@ import SuperCoinExpiryCard, { SUPERCOIN_CLAIM_URL } from "@/components/SuperCoin
 import { superCoinConversionConfig } from "@/config/features.config";
 import SuperCoinOTPModal, { type SuperCoinHoldContext } from "@/components/SuperCoinOTPModal";
 import { getImageUrl, FALLBACK_IMAGE } from "@/utils/imageUrl";
+import RedeemWebsiteCta from "@/components/RedeemWebsiteCta";
 import superCoinIcon from "@/assets/SuperCOin-removebg-preview.png";
 import scScrollableNewImg from "@/assets/ScScrollableNew.png";
 import type { OrderRequest } from "@/types/cart";
@@ -1169,6 +1170,11 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                       ) : (
                         <span>No instructions available.</span>
                       )}
+                      <RedeemWebsiteCta
+                        url={brand?.RedemptionWebsite}
+                        brandName={brand?.BrandName}
+                        className="mt-3"
+                      />
                     </div>
                   )}
 
