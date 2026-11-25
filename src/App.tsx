@@ -31,7 +31,6 @@ import OrderCheckout from "./pages/OrderCheckout";
 import OrderDetails from "./pages/OrderDetails";
 import SupportChatWidget from "./components/SupportChatWidget";
 import FeedbackOrchestrator from "./components/FeedbackOrchestrator";
-import MicroQuestionWidget from "./components/MicroQuestionWidget";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Refund from "./pages/Refund";
@@ -179,7 +178,6 @@ export default function App() {
                   <CheckoutGateDialog />
                   <GlobalSupportChat />
                   <FeedbackOrchestrator />
-                  <MicroQuestionWidget />
                 </ConfigProvider>
               </NotificationProvider>
             </AuthProvider>

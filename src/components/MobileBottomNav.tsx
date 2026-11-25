@@ -18,10 +18,6 @@ export default function MobileBottomNav() {
   const [cartPulse, setCartPulse] = useState(false);
   const previousTotalItemsRef = useRef(totalItems);
 
-  if (location.startsWith('/orders')) {
-    return null;
-  }
-
   useEffect(() => {
     if (totalItems > previousTotalItemsRef.current) {
       setCartPulse(true);
@@ -32,6 +28,12 @@ export default function MobileBottomNav() {
 
     previousTotalItemsRef.current = totalItems;
   }, [totalItems]);
+
+  // Early return must come after every hook (React rules of hooks), otherwise the
+  // hook count changes when the route changes to or from /orders (React error #310).
+  if (location.startsWith('/orders')) {
+    return null;
+  }
 
   return (
     <>
