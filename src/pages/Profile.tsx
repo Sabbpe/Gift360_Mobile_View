@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 import RewardsTab from "@/components/RewardsTab";
 import Header from "@/components/Header";
 import { fetchNewOrders } from "@/api/orderApi";
-import { getProfileVerification, type ProfileVerification } from "@/api/profileApi";
+import { getProfileVerification, updateProfileDetails, type ProfileVerification } from "@/api/profileApi";
 import { getImageUrl as getImageUrlUtil, FALLBACK_IMAGE } from "@/utils/imageUrl";
 
 const DISPLAY_NAME_KEY = "displayName";
@@ -171,6 +171,87 @@ function InputField({ label, value }: { label: string; value: string }) {
   );
 }
 
+function emailUpdateError(error: any): string {
+  const code = error?.response?.data?.error;
+  const message = error?.response?.data?.message;
+  if (message) return message;
+  switch (code) {
+    case "DISPOSABLE": return "Temporary email addresses can't receive vouchers. Use your regular email.";
+    case "NO_MAIL_DOMAIN": return "This email domain can't receive mail. Please check the address.";
+    case "EMAIL_IN_USE":
+    case "TOO_MANY_ACCOUNTS": return "This email is already used by another account.";
+    case "FORMAT": return "Enter a valid email address.";
+    default: return "We couldn't update your email. Please try again.";
+  }
+}
+
+function EditableEmailField({ value, onSave }: { value: string; onSave: (value: string) => Promise<void> }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    setDraft(value);
+    if (!editing) setError("");
+  }, [value, editing]);
+
+  const save = async () => {
+    const email = draft.trim();
+    if (!email) {
+      setError("Enter a valid email address.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    try {
+      await onSave(email);
+      setEditing(false);
+    } catch (e) {
+      setError(emailUpdateError(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <label className="block">
+      <span className="block text-[11px] font-medium leading-none text-[#81789A]">Email</span>
+      <div className="mt-2 flex gap-2">
+        <input
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          maxLength={254}
+          readOnly={!editing || saving}
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && editing) { e.preventDefault(); void save(); } }}
+          className={`h-11 min-w-0 flex-1 rounded-[10px] border px-3 text-sm font-medium text-[#333] outline-none ${editing ? "border-primary ring-1 ring-primary/20" : "border-[#E8E3F2] bg-[#F8F7FB]"}`}
+          aria-label="Email address"
+        />
+        {editing ? (
+          <>
+            <button type="button" onClick={() => { setDraft(value); setEditing(false); setError(""); }} disabled={saving} className="grid h-11 w-11 place-items-center rounded-lg border border-[#E8E3F2] disabled:opacity-50" aria-label="Cancel email edit">
+              <X className="h-4 w-4 text-[#81789A]" />
+            </button>
+            <button type="button" onClick={() => void save()} disabled={saving || draft.trim() === value} className="grid h-11 w-11 place-items-center rounded-lg bg-primary text-white disabled:opacity-50" aria-label="Save email">
+              {saving ? <span className="text-xs">…</span> : <Check className="h-5 w-5" />}
+            </button>
+          </>
+        ) : (
+          <button type="button" onClick={() => { setEditing(true); setDraft(value); }} className="grid h-11 w-11 place-items-center rounded-lg bg-primary/10 text-primary" aria-label="Edit email">
+            <Pencil className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+      {error && <p className="mt-1.5 text-xs text-red-600" role="alert">{error}</p>}
+      {editing && <p className="mt-1.5 text-[11px] text-[#81789A]">A changed email must be verified before your next purchase.</p>}
+    </label>
+  );
+}
+
 function ProfileForm({
   profile,
   clientId,
@@ -178,6 +259,7 @@ function ProfileForm({
   isLoggingOut,
   onLogout,
   onUsernameSave,
+  onEmailSave,
   onContactUs,
   onPartnerUs,
 }: {
@@ -187,6 +269,7 @@ function ProfileForm({
   isLoggingOut: boolean;
   onLogout: () => void;
   onUsernameSave: (name: string) => void;
+  onEmailSave: (email: string) => Promise<void>;
   onContactUs: () => void;
   onPartnerUs: () => void;
 }) {
@@ -216,7 +299,7 @@ function ProfileForm({
       ) : (
       <div className="mt-[20px] space-y-[20px]">
         <EditableField label="Username" value={profile.username} onSave={onUsernameSave} />
-        <InputField label="Email" value={profile.email} />
+        <EditableEmailField value={profile.email} onSave={onEmailSave} />
         <InputField label="Phone Number" value={profile.phone} />
         <InputField
           label="Balance"
@@ -283,7 +366,7 @@ function ProfileForm({
 }
 
 export default function ProfilePage() {
-  const { user, logout: contextLogout, isAuthenticated } = useAuthContext();
+  const { user, setUser, logout: contextLogout, isAuthenticated } = useAuthContext();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { data: walletData } = useFetchWallet(user?.clientId);
@@ -357,6 +440,26 @@ export default function ProfilePage() {
     localStorage.setItem(DISPLAY_NAME_KEY, trimmed);
     setDisplayName(trimmed);
     toast({ title: "Name updated", duration: 2000 });
+  };
+
+  const handleEmailSave = async (email: string) => {
+    const result = await updateProfileDetails({ email });
+    if (user) setUser({ ...user, email: result.email });
+    setVerification((current) => current
+      ? { ...current, emailVerified: result.emailVerified, verified: result.emailVerified && current.locationVerified }
+      : current);
+    try {
+      setVerification(await getProfileVerification());
+    } catch {
+      // The successful update response already carries the authoritative email flag.
+    }
+    toast({
+      title: result.reverificationRequired ? "Email updated" : "Email saved",
+      description: result.reverificationRequired
+        ? "You'll verify this email before your next purchase."
+        : "Your email address is up to date.",
+      duration: 3500,
+    });
   };
 
   const profile = {
@@ -484,7 +587,7 @@ export default function ProfilePage() {
         <section id="profile-details" className="rounded-2xl border border-[#E8E3F2] bg-white p-4">
           <h2 className="text-[16px] font-bold">Profile details</h2>
           <div className="mt-3 space-y-3">
-            <InputField label="Email" value={profile.email} />
+            <EditableEmailField value={profile.email} onSave={handleEmailSave} />
             <InputField label="Phone Number" value={profile.phone} />
             <div className="grid grid-cols-2 gap-2 pt-1">
               <VerificationRow label="Email" ok={!!verification?.emailVerified} />
