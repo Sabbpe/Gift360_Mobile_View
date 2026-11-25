@@ -1,12 +1,76 @@
 <!doctype html>
 <html lang="en">
 <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      Content-Security-Policy: keep the origins below in sync with .env.
+      Tracking/Clarity policy plus Google Fonts, GA/GTM, the backend APIs
+      (auth, valuedesign, payments, notifications), AtomPaynetz, and the
+      localhost HMR websocket used by `vite dev`.
+    -->
+    <meta http-equiv="Content-Security-Policy"
+          content="
+default-src 'self';
+img-src 'self' data: blob: https:;
+media-src 'self' blob: data:;
+worker-src 'self' blob:;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+script-src 'self' 'unsafe-inline'
+  https://www.clarity.ms
+  https://scripts.clarity.ms
+  https://cdnjs.cloudflare.com
+  https://www.googletagmanager.com
+  https://www.google-analytics.com
+  https://psa.atomtech.in
+  https://pgtest.atomtech.in;
+font-src 'self' data: https://fonts.gstatic.com;
+frame-src 'self'
+  https://www.youtube.com
+  https://www.youtube-nocookie.com
+  https://psa.atomtech.in
+  https://pgtest.atomtech.in
+  https://paynetz.atomtech.in;
+connect-src 'self'
+  https://www.clarity.ms
+  https://scripts.clarity.ms
+  https://b.clarity.ms
+  https://*.clarity.ms
+  https://www.google-analytics.com
+  https://region1.google-analytics.com
+  https://www.googletagmanager.com
+  https://gvauthprod.sabbpe.com
+  https://gvauth.sabbpe.com
+  https://vdspbckprod.sabbpe.com
+  https://vdspbck.gift360.io
+  https://vdspbck.sabbpe.com
+  https://pymnts.sabbpe.com
+  https://pymntsuat.sabbpe.com
+  https://notifications.sabbpe.com
+  https://notificationsuat.sabbpe.com
+  https://pay.easebuzz.in
+  https://testpay.easebuzz.in
+  https://psa.atomtech.in
+  https://pgtest.atomtech.in
+  https://paynetz.atomtech.in
+  https://api.postalpincode.in
+  https://nominatim.openstreetmap.org
+  https://ipapi.co
+  https://flipkartsupercoin.woohoo.in
+  https://at.valuedesign.co.in
+  https://cards.vdwebapi.com
+  https://*.amazonaws.com
+  https://*.gift360.io
+  blob:
+  ws://localhost:*
+  ws://127.0.0.1:*;
+base-uri 'self';
+form-action 'self';
+">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Russo+One&family=Exo+2:wght@400;700;900&display=swap" rel="stylesheet">
-    <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/brand-placeholder.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Gift360 Gift Voucher</title>
     <!-- <script src="https://pgtest.atomtech.in/staticdata/ots/js/atomcheckout.js"></script> -->
 
@@ -20,6 +84,15 @@
       // initial automatic pageview would only ever fire once. Page views are
       // sent manually on every route change instead, from src/lib/analytics.ts.
       gtag('config', 'G-5R8D8NMYCQ', { send_page_view: false });
+    </script>
+
+    <!-- Microsoft Clarity -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "zj4bevjsp2");
     </script>
 </head>
   <body>
