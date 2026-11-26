@@ -739,7 +739,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
             {!isLoading && !isError && brand && !burnSuccess && (
               <>
                 {/* Expiry-extension message (Flipkart entry) */}
-                {!superCoinAuthorized && !directFlow && (
+                {!superCoinAuthorized && !directFlow && !cashEarnFullBurn && (
                   <SuperCoinExpiryCard
                     coinsNeeded={superCoinsRequired}
                     voucherValue={totalVoucherValue}
@@ -993,7 +993,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                 )}
 
                 {/* SuperCoin burn info + CTA */}
-                {superCoinIdentity && !superCoinAuthorized && !directFlow && (
+                {superCoinIdentity && !superCoinAuthorized && !directFlow && !cashEarnFullBurn && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
                     <div className="flex items-center justify-between mb-3">
                       <span className="text-[12px] font-medium text-[#667085]">Your balance</span>
@@ -1050,7 +1050,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
                   </div>
                 )}
 
-                {!superCoinIdentity && !superCoinAuthorized && !directFlow && (
+                {!superCoinIdentity && !superCoinAuthorized && !directFlow && !cashEarnFullBurn && (
                   <div className="mt-3 rounded-[12px] bg-white p-3 shadow-[0px_4px_12px_rgba(0,0,0,0.08)]">
                     <p className="mb-3 text-[12px] font-medium leading-snug text-[#667085]">
                       Login to convert your SuperCoins into vouchers.
