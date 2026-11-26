@@ -166,9 +166,11 @@ export default function PaymentDetailsSheet({
   }, []);
   const brandShare = brand ? brandShares[brand.BrandId] : undefined;
   const brandCapShare =
-    typeof brandShare === "number" && brandShare > 0 && brandShare < 100 ? brandShare : null;
+    typeof brandShare === "number" && brandShare > 0 ? Math.min(brandShare, 100) : null;
   const superCoinEligible = brand
-    ? typeof brandShare === "number" && brandShare < 100
+    ? typeof brandShare === "number"
+      // 0 = no SuperCoins; 1..99 = partial cap; 100 = the whole line may be paid
+      // with SuperCoins (all-or-nothing; the backend rejects a partial mix).
       ? brandShare > 0
       : isSuperCoinEligible(brand.BrandId, brand.BrandName)
     : false;

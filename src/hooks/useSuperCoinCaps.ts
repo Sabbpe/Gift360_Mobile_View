@@ -39,7 +39,9 @@ export function useSuperCoinCaps() {
   // Percent of voucher value a brand allows in SuperCoin mode (0 = not allowed).
   const percentFor = (brandId?: string | null): number => {
     const s = brandId ? shares[brandId] : undefined;
-    return s !== undefined && s < 100 ? s : globalCap;
+    if (s === undefined) return globalCap;
+    // 100 = the whole voucher value may be paid with SuperCoins.
+    return Math.min(s, 100);
   };
   return { globalCap, shares, percentFor };
 }

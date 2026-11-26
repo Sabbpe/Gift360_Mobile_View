@@ -389,11 +389,13 @@ useEffect(() => {
   }, []);
   const brandCapShare = (brandId: string): number | null => {
     const share = brandShareMap[brandId];
-    return typeof share === "number" && share > 0 && share < 100 ? share : null;
+    // 100 = the whole line may be paid with SuperCoins (all-or-nothing; the
+    // backend rejects a partial mix for such lines).
+    return typeof share === "number" && share > 0 ? Math.min(share, 100) : null;
   };
   const isScExcluded = (brandId: string, brandName: string): boolean => {
     const share = brandShareMap[brandId];
-    return typeof share === "number" && share < 100 ? share <= 0 : isSuperCoinExcluded(brandName);
+    return typeof share === "number" && share <= 0 ? true : isSuperCoinExcluded(brandName);
   };
   const [superCoinHoldContext, setSuperCoinHoldContext] = useState<SuperCoinHoldContext | null>(null);
   // User-chosen coin count for the hold (1..min(balance, 20% cap in coins)).

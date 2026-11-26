@@ -159,7 +159,12 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   const splitShare =
     typeof voucherShare === "number" && voucherShare > 0 && voucherShare < 100 ? voucherShare : null;
   const isSplit = splitShare !== null;
-  const directFlow = isCashEarn || isSplit;
+  // CASH_EARN with a 100% share means two complete choices — pay entirely in
+  // cash (earning coins) or convert the full value with SuperCoins. Never a
+  // partial split, so the burn CTA must stay visible next to the cash CTA.
+  const selectedBrandShare = brand ? brandShares[brand.BrandId] : undefined;
+  const cashEarnFullBurn = isCashEarn && selectedBrandShare === 100;
+  const directFlow = (isCashEarn && !cashEarnFullBurn) || isSplit;
 
   const totalVoucherValue = amount * quantity;
   const superCoinsRequired = calculateSuperCoinsRequired(totalVoucherValue);

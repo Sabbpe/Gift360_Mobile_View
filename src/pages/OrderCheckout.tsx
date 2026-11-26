@@ -308,11 +308,13 @@ export default function OrderCheckout() {
   }, []);
   const brandCapShare = (brandId: string): number | null => {
     const s = brandShareMap[brandId];
-    return typeof s === "number" && s > 0 && s < 100 ? s : null;
+    // 100 = the whole line may be paid with SuperCoins (all-or-nothing; the
+    // backend rejects a partial mix for such lines).
+    return typeof s === "number" && s > 0 ? Math.min(s, 100) : null;
   };
   const isScExcluded = (brandId: string, brandName: string): boolean => {
     const s = brandShareMap[brandId];
-    return typeof s === "number" && s < 100 ? s <= 0 : isSuperCoinExcluded(brandName);
+    return typeof s === "number" && s <= 0 ? true : isSuperCoinExcluded(brandName);
   };
   useEffect(() => {
     if (rewardMode === "superCoins") {
