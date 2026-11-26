@@ -1,4 +1,4 @@
-import { Switch, Route, Router as WouterRouter, useLocation } from "wouter";
+import { Switch, Route, Router as WouterRouter, useLocation, Redirect } from "wouter";
 import { useState, useEffect } from "react";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -22,7 +22,7 @@ import { TooltipProvider } from "./components/ui/tooltip";
 import { ThemeProvider } from "./contexts/SimpleTheme";
 import { GuideProvider } from "./contexts/GuideContext";
 import { useBrowserLocation } from "wouter/use-browser-location";
-import { AuthProvider } from "./contexts/AuthContext";
+import { AuthProvider, useAuthContext } from "./contexts/AuthContext";
 import PaymentResult from "./pages/PaymentResult";
 import { ConfigProvider } from "./contexts/ConfigContext";
 import Orders from "./pages/Orders";
@@ -40,7 +40,7 @@ import Notifications from "./pages/Notifications";
 import Nearby from "./pages/Nearby";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
-import Onboarding from "./pages/Onboarding";
+// import Onboarding from "./pages/Onboarding"; // Onboarding/splash screens disabled
 import BlogPage from "./pages/BlogPage";
 import SingleBlogPage from "./pages/SingleBlogPage";
 import FAQPage from "./pages/FAQPage";
@@ -65,6 +65,7 @@ const NO_RETURN_PREFIXES = [
 
 function AppRoutes() {
   const [location] = useLocation();
+  const { isAuthenticated } = useAuthContext();
   const [onboardingComplete, setOnboardingComplete] = useState(
     () => localStorage.getItem(ONBOARDING_KEY) === "true"
   );
@@ -97,15 +98,20 @@ function AppRoutes() {
     return () => window.removeEventListener("storage", checkOnboarding);
   }, [location]);
 
-  // First time user - show onboarding on root path
-  if (!onboardingComplete && location === "/") {
-    return <Onboarding />;
+  // Onboarding/splash screens disabled: a signed-out visitor landing on "/"
+  // starts at the registration page instead (never Home, never onboarding).
+  // Signed-in users go straight to Home. Uncomment the blocks below to restore.
+  // if (!onboardingComplete && location === "/") {
+  //   return <Onboarding />;
+  // }
+  if (!isAuthenticated && location === "/") {
+    return <Redirect to="/register" />;
   }
 
-  // Manual navigation to onboarding
-  if (location === "/onboarding") {
-    return <Onboarding />;
-  }
+  // Manual navigation to onboarding (also disabled)
+  // if (location === "/onboarding") {
+  //   return <Onboarding />;
+  // }
 
   return (
     <Switch>
@@ -159,7 +165,8 @@ const NO_SUPPORT_CHAT_PREFIXES = ["/admin", "/onboarding", "/login", "/register"
 
 function GlobalSupportChat() {
   const [location] = useLocation();
-  if (location === "/" && localStorage.getItem(ONBOARDING_KEY) !== "true") return null;
+  // Onboarding disabled — don't hide the chat for first-time visitors.
+  // if (location === "/" && localStorage.getItem(ONBOARDING_KEY) !== "true") return null;
   if (NO_SUPPORT_CHAT_PREFIXES.some((p) => location === p || location.startsWith(p + "/"))) return null;
   return <SupportChatWidget />;
 }

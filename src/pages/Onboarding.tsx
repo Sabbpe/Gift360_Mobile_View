@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { PhoneShell } from "@/components/onboarding/PhoneShell";
-import { SplashScreen } from "@/components/onboarding/SplashScreen";
+// import { SplashScreen } from "@/components/onboarding/SplashScreen";
 import { Onboarding1 } from "@/components/onboarding/Onboarding1";
 import { Onboarding2 } from "@/components/onboarding/Onboarding2";
 import { Onboarding3 } from "@/components/onboarding/Onboarding3";
@@ -24,7 +24,14 @@ type Screen = "splash" | "onb1" | "onb2" | "onb3";
 
 export default function Onboarding() {
   const screens = useMemo<Screen[]>(
-    () => ["splash", "onb1", "onb2", "onb3"],
+    () => [
+      // Splash screen disabled (commented out) — starts on the first
+      // onboarding slide instead. Re-enable by uncommenting below.
+      // "splash",
+      "onb1",
+      "onb2",
+      "onb3",
+    ],
     []
   );
   const [screenIndex, setScreenIndex] = useState(0);
@@ -53,12 +60,13 @@ export default function Onboarding() {
     });
   }, []);
 
-  useEffect(() => {
-    if (screen === "splash") {
-      const timer = setTimeout(() => setScreenIndex(1), 3600);
-      return () => clearTimeout(timer);
-    }
-  }, [screen]);
+  // Splash screen disabled — auto-advance timer kept commented out with it.
+  // useEffect(() => {
+  //   if (screen === "splash") {
+  //     const timer = setTimeout(() => setScreenIndex(1), 3600);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [screen]);
 
   const goNext = () =>
     setScreenIndex((current) => Math.min(current + 1, screens.length - 1));
@@ -74,7 +82,9 @@ export default function Onboarding() {
   const renderScreen = () => {
     switch (screen) {
       case "splash":
-        return <SplashScreen onNext={goNext} onSkip={finish} />;
+        // Splash screen disabled — restore by uncommenting the line below.
+        // return <SplashScreen onNext={goNext} onSkip={finish} />;
+        return null;
       case "onb1":
         return (
           <Onboarding1
