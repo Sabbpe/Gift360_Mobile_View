@@ -14,6 +14,7 @@ import PayUsingSheet from "@/components/PayUsingSheet";
 import PayUsingField, { payMethodSubtext } from "@/components/PayUsingField";
 import { useSuperCoinEarnEstimate } from "@/hooks/useSuperCoinEarnEstimate";
 import { isSuperCoinEligible } from "@/lib/supercoin-excluded-brands";
+import { CONVERT_COINS_PATH, isScOnlyBrand } from "@/lib/scOnlyBrands";
 import AddToCartSuccessModal from "@/components/AddToCartSuccessModal";
 import SuperCoinOTPModal, {
   type SuperCoinHoldContext,
@@ -131,6 +132,22 @@ export default function PaymentDetailsSheet({
   const backendPaymentMutation = useBackendPaymentInitiation();
 
   const brand = initialBrandDetails || fetchedBrand;
+
+  // SC_ONLY brands must never open the cash sheet. This single guard covers
+  // Buy Now from Recently Used, search, promos, brand cards and the details
+  // page, because they all open this sheet with a brand id.
+  useEffect(() => {
+    if (!open || !brandId) return;
+    let cancelled = false;
+    void isScOnlyBrand(brandId).then((scOnly) => {
+      if (cancelled || !scOnly) return;
+      onClose();
+      navigate(CONVERT_COINS_PATH);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, brandId, onClose, navigate]);
 
   const isFixedType = brand?.BrandType?.toLowerCase() === "fixed";
   const discountPercent = Number(brand?.Discount) || cashbackPercent;

@@ -4,7 +4,9 @@ import { getCart, addToCart, updateCartQuantity, removeFromCart, clearCart, merg
 import type { Cart, AddToCartRequest, OrderRequest } from "@/types/cart";
 import { useToast } from "@/hooks/use-toast";
 import { useEffect } from "react";
+import { useLocation } from "wouter";
 import { trackEvent } from "@/lib/analytics";
+import { CONVERT_COINS_PATH, isScOnlyBrand } from "@/lib/scOnlyBrands";
 
 // LocalStorage cart key
 const GUEST_CART_KEY = "guestCart";
@@ -39,6 +41,7 @@ const clearGuestCart = () => {
 export const useCart = (clientId: string | undefined) => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const [, navigate] = useLocation();
 
 
   // Get cart
@@ -334,12 +337,35 @@ useEffect(() => {
     } as OrderRequest;
   };
 
+  // SuperCoins-only brands never enter the cash cart: every Add to Cart entry
+  // point (cards, detail page, buy sheets) funnels through here, so the brand
+  // is checked against the backend SC_ONLY configuration first and sent to the
+  // existing Convert Coins flow instead.
+  const addToCartWithFlowCheck = (item: AddToCartRequest, options?: any) => {
+    void isScOnlyBrand(item.brandId).then((scOnly) => {
+      if (scOnly) {
+        try {
+          sessionStorage.setItem("gift360.scOnlyRedirectBrand", String(item.brandId));
+        } catch {
+          // storage unavailable; the convert page still works
+        }
+        toast({
+          title: "Use SuperCoins",
+          description: "This voucher is purchased with SuperCoins.",
+        });
+        navigate(CONVERT_COINS_PATH);
+        return;
+      }
+      addMutation.mutate(item, options);
+    });
+  };
+
   return {
     cart,
     isLoading,
     isError,
     refetch,
-    addToCart: addMutation.mutate,
+    addToCart: addToCartWithFlowCheck,
     updateQuantity: (itemId: string, quantity: number) =>
       updateMutation.mutate({ itemId, quantity }),
     removeFromCart: removeMutation.mutate,

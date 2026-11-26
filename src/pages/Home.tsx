@@ -45,6 +45,7 @@ import SuperCoinsBrandModal, { SUPERCOIN_FEATURED_BRAND_ID } from "@/components/
 import SuperCoinIntroModal from "@/components/SuperCoinIntroModal";
 import WhatsHotSection, { type MatchedBrand } from "@/components/RecentlyBoughtSection";
 import { cartBrandNames, CartBrandEntry } from "@/data/recentlyBought";
+import { CONVERT_COINS_PATH, isScOnlyBrand } from "@/lib/scOnlyBrands";
 import { Input } from "@/components/ui/input";
 import { useOccasions } from "@/hooks/useOccasions";
 import { useRecommendations } from "@/hooks/useRecommendations";
@@ -780,6 +781,7 @@ function TopBrandsGrid({
 function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
   const [items, setItems] = useState<BrandItem[]>([]);
   const { user, isAuthenticated } = useAuthContext();
+  const [, setLocation] = useLocation();
 
   useEffect(() => {
     if (!user?.clientId) return;
@@ -833,7 +835,16 @@ function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
             <div style={{ height: 1, background: '#E5E7EB', marginTop: 6, marginBottom: 6 }} />
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end' }}>
               <button
-                onClick={() => item.brandId && onBuy?.(item.brandId)}
+                onClick={async () => {
+                  if (!item.brandId) return;
+                  // SC_ONLY brands are bought only through the Convert Coins
+                  // flow; the regular cash sheet/payment would fail for them.
+                  if (await isScOnlyBrand(item.brandId)) {
+                    setLocation(CONVERT_COINS_PATH);
+                    return;
+                  }
+                  onBuy?.(item.brandId);
+                }}
                 style={{ background: 'linear-gradient(90deg,#7C3AED,#3B82F6)', color: 'white', padding: '6px 10px', borderRadius: 18, fontSize: 11, fontWeight: 600 }}
               >
                 Buy Again

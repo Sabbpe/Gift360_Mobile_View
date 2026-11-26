@@ -12,6 +12,8 @@ import { useCreateOrder } from "@/hooks/useCreateOrder";
 import { useBackendPaymentInitiation } from "@/hooks/useBackendPaymentInitiation";
 import { useValidateOrder } from "@/hooks/useValidateOrder";
 import { usePaymentMethodFees } from "@/hooks/usePaymentMethodFees";
+import { useLocation } from "wouter";
+import { CONVERT_COINS_PATH, isScOnlyBrand } from "@/lib/scOnlyBrands";
 
 
 import { useHideSupportFab } from "@/hooks/useHideSupportFab";
@@ -39,6 +41,22 @@ export default function QuickBuyModal({
   const { user } = useAuthContext();
   const { addToCart } = useCart(user?.clientId);
   const { toast } = useToast();
+  const [, navigate] = useLocation();
+
+  // SC_ONLY brands are never bought with cash, even if a caller opens this
+  // modal directly. Route them to the existing Convert Coins flow.
+  useEffect(() => {
+    if (!isOpen || !brand?.BrandId) return;
+    let cancelled = false;
+    void isScOnlyBrand(brand.BrandId).then((scOnly) => {
+      if (cancelled || !scOnly) return;
+      onClose();
+      navigate(CONVERT_COINS_PATH);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, brand?.BrandId, onClose, navigate]);
 const createOrderMutation = useCreateOrder();
 const backendPaymentMutation = useBackendPaymentInitiation();
 // Juspay UPI-intent gateway (new); the Easebuzz path stays as-is.
