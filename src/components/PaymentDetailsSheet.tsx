@@ -139,7 +139,7 @@ export default function PaymentDetailsSheet({
   useEffect(() => {
     if (!open || !brandId) return;
     let cancelled = false;
-    void isScOnlyBrand(brandId).then((scOnly) => {
+    void isScOnlyBrand(brandId, true).then((scOnly) => {
       if (cancelled || !scOnly) return;
       onClose();
       navigate(CONVERT_COINS_PATH);

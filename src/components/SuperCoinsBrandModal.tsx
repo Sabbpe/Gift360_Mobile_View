@@ -55,7 +55,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
     enabled: open && !!selectedBrandId,
   });
   const createOrderMutation = useCreateOrder();
-  const { addToCart } = useCart(user?.clientId);
+  const { addToCartFromSuperCoinModal } = useCart(user?.clientId);
   const burnMutation = useBurnSuperCoinOrder();
   const { identity: scIdentity, searchUserMutation, balanceMutation } = useSuperCoinAccount(user?.mobile);
 
@@ -412,7 +412,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
   // with cashback off and the SuperCoins are credited after the voucher is issued.
   const handleCashEarnBuy = useCallback(() => {
     if (!brand || !isAmountValid) return;
-    addToCart(
+    addToCartFromSuperCoinModal(
       {
         brandId: brand.BrandId,
         brandName: brand.BrandName,
@@ -428,7 +428,7 @@ export default function SuperCoinsBrandModal({ open, brandId, onClose }: Props) 
         },
       }
     );
-  }, [brand, isAmountValid, addToCart, quantity, amount, imageSrc, onClose, setLocation]);
+  }, [brand, isAmountValid, addToCartFromSuperCoinModal, quantity, amount, imageSrc, onClose, setLocation]);
 
   const handleClose = useCallback(() => {
     onClose();

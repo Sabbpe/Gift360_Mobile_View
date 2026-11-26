@@ -839,7 +839,7 @@ function RecentlyUsed({ onBuy }: { onBuy?: (brandId: string) => void }) {
                   if (!item.brandId) return;
                   // SC_ONLY brands are bought only through the Convert Coins
                   // flow; the regular cash sheet/payment would fail for them.
-                  if (await isScOnlyBrand(item.brandId)) {
+                  if (await isScOnlyBrand(item.brandId, true)) {
                     setLocation(CONVERT_COINS_PATH);
                     return;
                   }

@@ -73,9 +73,12 @@ export const ensureScOnlyBrandsLoaded = (force = false): Promise<Set<string>> =>
 };
 
 /** Async membership check used by click handlers before opening a flow. */
-export const isScOnlyBrand = async (brandId?: string | null): Promise<boolean> => {
+export const isScOnlyBrand = async (
+  brandId?: string | null,
+  refresh = false
+): Promise<boolean> => {
   if (!brandId) return false;
-  const ids = await ensureScOnlyBrandsLoaded();
+  const ids = await ensureScOnlyBrandsLoaded(refresh);
   return ids.has(brandId);
 };
 

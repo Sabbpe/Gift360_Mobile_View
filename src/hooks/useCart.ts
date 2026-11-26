@@ -337,18 +337,12 @@ useEffect(() => {
     } as OrderRequest;
   };
 
-  // SuperCoins-only brands never enter the cash cart: every Add to Cart entry
-  // point (cards, detail page, buy sheets) funnels through here, so the brand
-  // is checked against the backend SC_ONLY configuration first and sent to the
-  // existing Convert Coins flow instead.
+  // Regular Add to Cart entry points for SC_ONLY brands route to Convert Coins.
+  // The split CTA inside SuperCoinsBrandModal uses the explicit bypass below
+  // because share 1..99 is intentionally completed in the cart.
   const addToCartWithFlowCheck = (item: AddToCartRequest, options?: any) => {
-    void isScOnlyBrand(item.brandId).then((scOnly) => {
+    void isScOnlyBrand(item.brandId, true).then((scOnly) => {
       if (scOnly) {
-        try {
-          sessionStorage.setItem("gift360.scOnlyRedirectBrand", String(item.brandId));
-        } catch {
-          // storage unavailable; the convert page still works
-        }
         toast({
           title: "Use SuperCoins",
           description: "This voucher is purchased with SuperCoins.",
@@ -360,12 +354,20 @@ useEffect(() => {
     });
   };
 
+  // The Convert Coins modal's explicit split action (share 1..99) intentionally
+  // continues into the cart so the customer can pay the remainder in cash.
+  // This is the only caller that should bypass the SC_ONLY cash-cart redirect.
+  const addToCartFromSuperCoinModal = (item: AddToCartRequest, options?: any) => {
+    addMutation.mutate(item, options);
+  };
+
   return {
     cart,
     isLoading,
     isError,
     refetch,
     addToCart: addToCartWithFlowCheck,
+    addToCartFromSuperCoinModal,
     updateQuantity: (itemId: string, quantity: number) =>
       updateMutation.mutate({ itemId, quantity }),
     removeFromCart: removeMutation.mutate,

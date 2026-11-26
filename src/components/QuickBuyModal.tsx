@@ -48,7 +48,7 @@ export default function QuickBuyModal({
   useEffect(() => {
     if (!isOpen || !brand?.BrandId) return;
     let cancelled = false;
-    void isScOnlyBrand(brand.BrandId).then((scOnly) => {
+    void isScOnlyBrand(brand.BrandId, true).then((scOnly) => {
       if (cancelled || !scOnly) return;
       onClose();
       navigate(CONVERT_COINS_PATH);
