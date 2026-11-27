@@ -123,7 +123,7 @@ export default function BrandDetailsPage() {
   const [, params] = useRoute("/brands/:id");
   const brandId = (params as any)?.id;
 
-  const { data: brand, isLoading, isError } = useBrandDetails(brandId!);
+  const { data: brand, isLoading, isPending, isError, refetch } = useBrandDetails(brandId!);
   const { user, isAuthenticated } = useAuthContext();
   const { brandGuardRail, currentUsage } = useBrandGuardRail(
     brand?.BrandCode || brand?.BrandName,
@@ -383,7 +383,9 @@ useEffect(() => {
 }, [cashbackCalculation.points, couponControls, stampControls]);
 
 
-  if (isLoading) {
+  // "No data yet" is not "not found": while the request has not finished (or is waiting on the
+  // network) keep showing the spinner, so the page can never flip to the dead end below.
+  if (brandId && !isError && (isLoading || isPending)) {
     return (
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-hero-aurora">
@@ -407,6 +409,12 @@ useEffect(() => {
           <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-4" />
           <p className="text-xl font-extrabold mb-2"><span className="text-gold-gradient">Could not load brand details</span></p>
           <p className="text-sm text-white/70 mb-6">Please try again later</p>
+          <button
+            onClick={() => refetch()}
+            className="px-6 py-3 mr-3 bg-white/10 text-white rounded-2xl font-bold border border-white/20"
+          >
+            Try again
+          </button>
           <Link href="/brands">
             <button className="px-6 py-3 bg-gold-gradient text-amber-950 rounded-2xl font-bold shadow-lg shadow-amber-500/30 hover:brightness-110 active:scale-95 transition-all">
               Go Back to Brands
