@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "wouter";
-import { ShieldCheck, Sparkles } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import gift360Logo from "@/assets/gift360full.png";
 import authBg from "@/assets/LoginBackground.png";
 import diwaliGift from "@/assets/diwali-gift.png";
@@ -137,13 +137,8 @@ export default function DiwaliAuthShell({ switchPrompt, children }: Props) {
         </div>
         {/* Auth card */}
         <section className="mx-auto mt-2 w-full max-w-[342px] rounded-2xl border border-[#E5E0D8] bg-white/95 p-3 shadow-[0_18px_40px_-18px_rgba(63,26,85,0.35)] backdrop-blur">
-          <div className="mb-2 flex items-center justify-between">
-            <div>
-              <h2 className="text-[15px] font-semibold leading-tight text-[#3F1A55]">Get Started</h2>
-            </div>
-            <span className="flex items-center gap-1 rounded-full bg-[#D4650F]/10 px-2 py-1 text-[9px] font-semibold text-[#D4650F]">
-              <Sparkles className="h-3 w-3" /> Diwali
-            </span>
+          <div className="mb-2">
+            <h2 className="text-[15px] font-semibold leading-tight text-[#3F1A55]">Get Started</h2>
           </div>
 
           {children}
