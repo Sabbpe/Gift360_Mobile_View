@@ -1146,12 +1146,12 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
 
               {/* No Results */}
               {sortedDisplayBrands.length === 0 && (
-                <div className="text-center py-16 lg:py-20 rounded-3xl bg-blackcard card-edge">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/5 mb-4">
-                    <Search className="h-8 w-8 text-amber-300" />
+                <div className="text-center py-16 lg:py-20 rounded-2xl bg-white border border-gray-100 shadow-[0_4px_10px_rgba(0,0,0,0.06)]">
+                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-[#6C5CE7]/10 mb-4">
+                    <Search className="h-8 w-8 text-[#6C5CE7]" />
                   </div>
-                  <h3 className="text-xl font-extrabold mb-2"><span className="text-gold-gradient">No brands found</span></h3>
-                  <p className="text-white/60 mb-4">
+                  <h3 className="text-xl font-extrabold mb-2 text-[#111827]">No brands found</h3>
+                  <p className="text-[#6b7280] mb-4">
                     {superCoinsOnly
                       ? "No SuperCoins eligible brands matched your current search or filters."
                       : (searchQuery.trim() || submittedSearchQuery.trim())
@@ -1171,7 +1171,7 @@ const handleVoucherSelect = (voucher: TopBrandVoucher) => {
                         sortOrder: "none",
                       });
                     }}
-                    className="h-10 px-5 rounded-xl border border-white/20 bg-white/5 text-white hover:bg-white/10 transition-all"
+                    className="h-10 px-5 rounded-xl bg-[#6C5CE7] text-white text-sm font-semibold shadow-[0_4px_12px_rgba(108,92,231,0.3)] hover:bg-[#5B4BD6] transition-all"
                   >
                     Clear all {searchQuery.trim() || submittedSearchQuery.trim() ? "search and filters" : "filters"}
                   </button>
