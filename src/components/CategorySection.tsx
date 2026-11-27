@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Brand } from '@/types/brand';
 import ProductCard from './ProductCard';
-import BrandCard from './BrandCard';
 
 export default function CategorySection({ title, items, onBuy }: { title: string; items: Brand[]; onBuy?: (id: string) => void }) {
   const [expanded, setExpanded] = useState(false);
@@ -32,9 +31,11 @@ export default function CategorySection({ title, items, onBuy }: { title: string
       </div>
 
       {expanded ? (
-        <div className="grid grid-cols-3 gap-x-4 gap-y-6 pb-4 animate-in fade-in duration-200">
+        /* Same card as the collapsed row: only Buy is active and it opens the purchase sheet.
+           (The old BrandCard here linked the whole card to the /brands/:id page.) */
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] justify-items-center gap-3 pb-4 animate-in fade-in duration-200">
           {items.map((b) => (
-            <BrandCard key={b.BrandId} brand={b} />
+            <ProductCard key={b.BrandId} brand={b} onBuy={onBuy} variant="recommended" />
           ))}
         </div>
       ) : (

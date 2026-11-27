@@ -11,5 +11,8 @@ export const useBrandDetails = (brandId: string, options?: { enabled?: boolean; 
     enabled: options?.enabled !== undefined ? options.enabled : !!brandId,
     refetchOnMount: options?.refetchOnMount ?? true,
     staleTime: 0,
+    // Do not pause when the browser wrongly reports 'offline' (common on mobile WebViews):
+    // try the request anyway, so the customer sees the brand or a clear error, never a frozen page.
+    networkMode: "always",
   });
 };
